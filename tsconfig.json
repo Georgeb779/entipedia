@@ -20,10 +20,24 @@
     //  Path Alias
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "db": ["./db/index.ts"],
+      "db/*": ["./db/*"]
     }
   },
-  "include": ["src", "global.d.ts", "./auto-imports.d.ts"],
+  "include": [
+    "src",
+    "routes",
+    "middleware",
+    "server.ts",
+    "db",
+    "configs",
+    "vite.config.ts",
+    "tailwind.config.ts",
+    "drizzle.config.ts",
+    "global.d.ts",
+    "./auto-imports.d.ts"
+  ],
   "exclude": ["node_modules", "dist"],
 
   "references": [{ "path": "./tsconfig.node.json" }]

@@ -17,6 +17,8 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 🖼️ **SVG as React components** with `vite-plugin-svgr`
 - 🔤 **Google Fonts** integration
 - 📦 **Path aliases** (`@/components`, etc.)
+- 🔑 **Auth Context** for global authentication state
+- 📝 **Form validation** powered by React Hook Form + Zod
 
 ### Backend
 
@@ -26,6 +28,9 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 🔧 **TypeScript** support out of the box
 - 🗄️ **PostgreSQL** with **Drizzle ORM** for type-safe data access
 - 📊 **Database migrations** powered by Drizzle Kit
+- 🔐 **Authentication system** via encrypted H3 sessions
+- 🔒 **Password hashing** with bcrypt
+- 🍪 **HTTP-only cookies** for secure session storage
 
 ### Developer Experience
 
@@ -76,6 +81,41 @@ Available scripts:
 - `npm run db:studio` — Start Drizzle Studio for interactive inspection.
 
 See `db/README.md` for more detailed workflow guidance.
+
+### Authentication
+
+The auth stack combines encrypted server sessions with client-side state management:
+
+1. **Session Management**: H3's `useSession` stores user IDs in encrypted, HTTP-only cookies with configurable TTL.
+2. **Password Security**: Credentials are hashed with bcrypt (cost factor 12) before touching the database.
+3. **API Routes**:
+
+- `POST /api/auth/register` – Create a new user and issue a session cookie.
+- `POST /api/auth/login` – Verify credentials and refresh the session.
+- `POST /api/auth/logout` – Clear the active session cookie.
+- `GET /api/auth/session` – Return the current authenticated user when the session is valid.
+
+4. **Frontend State**: `AuthProvider` exposes `useAuth()` and `useAuthActions()` hooks for global access to auth status and actions.
+5. **Protected Requests**: Middleware hydrates `event.context.user` so API handlers can gate access with a simple null check.
+
+Auth-focused pages:
+
+- `/auth/login` – Sign-in form with validation feedback.
+- `/auth/register` – Registration form with password confirmation.
+
+Security highlights:
+
+- HTTP-only cookies mitigate XSS, while `sameSite="lax"` and `secure` (in production) protect session scope.
+- Session payloads are encrypted with `SESSION_SECRET` on the server.
+- Passwords are never stored in plaintext and comparisons run through bcrypt.
+- API responses use generic error messaging to avoid leaking which credential was invalid.
+
+### Environment Variables
+
+- `DATABASE_URL` – PostgreSQL connection string used by Drizzle and postgres.js.
+- `SESSION_SECRET` – Minimum 32-character secret for encrypting H3 sessions (set locally in `.env` and remotely via hosting provider env config).
+
+> **Tip:** Configure `SESSION_SECRET` in `.env` before running `npm run dev` so authentication works immediately. The middleware skips gracefully when it is missing, but protected routes require the secret.
 
 ---
 
