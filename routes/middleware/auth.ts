@@ -4,19 +4,11 @@ import { eq } from "drizzle-orm";
 
 import { getDb, users } from "db";
 import type { AuthUser } from "@/types";
-import { getSession } from "../routes/utils/session";
+import { getSession } from "../utils/session";
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
   context.user = null;
-
-  const sessionSecret = process.env.SESSION_SECRET;
-
-  if (!sessionSecret) {
-    console.warn("SESSION_SECRET not set; skipping auth middleware");
-    context.user = null;
-    return;
-  }
 
   let session;
 
@@ -24,8 +16,7 @@ export default defineHandler(async (event) => {
     session = await getSession<{ userId?: number }>(event);
   } catch (error) {
     if (error instanceof HTTPError && error.statusCode === 500) {
-      console.warn("SESSION_SECRET not set; skipping auth middleware");
-      context.user = null;
+      console.warn("SESSION_SECRET is not configured; skipping authentication middleware.");
       return;
     }
 
