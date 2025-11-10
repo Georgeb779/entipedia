@@ -4,6 +4,7 @@ import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router";
 import routes from "~react-pages";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // eslint-disable-next-line react-refresh/only-export-components
 function App() {
@@ -14,8 +15,10 @@ const app = createRoot(document.getElementById("root")!);
 
 app.render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </AuthProvider>
   </StrictMode>,
 );
