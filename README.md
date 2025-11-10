@@ -24,6 +24,8 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 🛣️ **File-based API routing** in `/routes`
 - ⚡ **Fast development** with hot module replacement
 - 🔧 **TypeScript** support out of the box
+- 🗄️ **PostgreSQL** with **Drizzle ORM** for type-safe data access
+- 📊 **Database migrations** powered by Drizzle Kit
 
 ### Developer Experience
 
@@ -58,6 +60,22 @@ The dev server runs on:
 
 - **Frontend**: http://localhost:5000
 - **API**: http://localhost:5000/api/\*
+
+## Database Setup
+
+1. Ensure PostgreSQL is available locally or via a managed provider.
+2. Copy `.env.example` to `.env` and update `DATABASE_URL` with your credentials.
+3. Run `npm run db:push` to initialize the schema during development.
+4. Optionally launch Drizzle Studio with `npm run db:studio` for a GUI explorer.
+
+Available scripts:
+
+- `npm run db:generate` — Create SQL migrations from schema changes.
+- `npm run db:migrate` — Apply pending migrations to the database.
+- `npm run db:push` — Push schema changes directly (development only).
+- `npm run db:studio` — Start Drizzle Studio for interactive inspection.
+
+See `db/README.md` for more detailed workflow guidance.
 
 ---
 
@@ -409,6 +427,13 @@ AutoImport({
 │   └── api/           # API endpoints
 ├── configs/            # Configuration files
 │   └── fonts.config.ts
+├── db/                 # Database schema and connection
+│   ├── schema.ts      # Drizzle ORM schema definitions
+│   ├── index.ts       # Database connection utility
+│   └── README.md      # Database documentation
+├── drizzle/           # Generated migration files (git-ignored)
+├── drizzle.config.ts  # Drizzle Kit configuration
+├── .env.example       # Environment variables template
 ├── vite.config.ts      # Vite configuration
 ├── tsconfig.json       # TypeScript config
 └── package.json
