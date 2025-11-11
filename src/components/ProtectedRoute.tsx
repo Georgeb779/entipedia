@@ -23,8 +23,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (auth.status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-        <p>Checking session...</p>
+      <div className="bg-background text-foreground flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Checking session...</p>
       </div>
     );
   }

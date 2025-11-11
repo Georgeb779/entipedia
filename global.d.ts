@@ -3,3 +3,8 @@
 
 // vite-env.d.ts
 /// <reference types="vite-plugin-pages/client-react" />
+
+declare module "*.png" {
+  const src: string;
+  export default src;
+}

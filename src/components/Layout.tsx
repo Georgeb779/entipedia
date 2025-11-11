@@ -4,7 +4,6 @@ import {
   CheckSquare,
   FileText,
   FolderKanban,
-  Home,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -13,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Button } from "@/components";
+import { Button, LogoMark } from "@/components";
 import {
   Avatar,
   AvatarFallback,
@@ -97,12 +96,16 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-white">
-      <aside className="fixed top-0 left-0 z-40 hidden h-screen w-64 border-r border-gray-700 bg-gray-800 md:flex md:flex-col">
-        <div className="flex items-center gap-2 border-b border-gray-700 px-6 py-5 text-lg font-semibold">
-          <Home className="h-5 w-5" aria-hidden="true" />
+    <div className="bg-background text-foreground flex min-h-screen">
+      <aside className="border-sidebar-border bg-sidebar text-sidebar-foreground fixed top-0 left-0 z-40 hidden h-screen w-64 border-r md:flex md:flex-col">
+        <Link
+          to="/dashboard"
+          className="border-sidebar-border flex items-center gap-3 border-b px-6 py-5 text-lg font-semibold"
+          aria-label="Entipedia dashboard"
+        >
+          <LogoMark size="sm" />
           <span>Entipedia</span>
-        </div>
+        </Link>
         <nav className="flex-1 space-y-1 px-4 py-6">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -117,8 +120,8 @@ export default function Layout({ children }: LayoutProps) {
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-400 hover:bg-gray-700 hover:text-white",
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -132,18 +135,18 @@ export default function Layout({ children }: LayoutProps) {
       {isSidebarOpen ? (
         <div className="fixed inset-0 z-40 flex md:hidden" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/50" onClick={closeSidebar} />
-          <aside className="relative ml-0 flex h-full w-64 flex-col border-r border-gray-700 bg-gray-800 p-4">
+          <aside className="border-sidebar-border bg-sidebar relative ml-0 flex h-full w-64 flex-col border-r p-4">
             <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-lg font-semibold">
-                <Home className="h-5 w-5" aria-hidden="true" />
+              <Link to="/dashboard" className="flex items-center gap-3 text-lg font-semibold">
+                <LogoMark size="sm" />
                 <span>Entipedia</span>
-              </div>
+              </Link>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={closeSidebar}
                 aria-label="Close navigation"
-                className="text-gray-300 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </Button>
@@ -162,8 +165,8 @@ export default function Layout({ children }: LayoutProps) {
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       active
-                        ? "bg-gray-700 text-white"
-                        : "text-gray-400 hover:bg-gray-700 hover:text-white",
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     )}
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
@@ -177,26 +180,26 @@ export default function Layout({ children }: LayoutProps) {
       ) : null}
 
       <div className="flex min-h-screen w-full flex-col md:ml-64">
-        <header className="sticky top-0 z-30 border-b border-gray-700 bg-gray-800">
+        <header className="border-border bg-card sticky top-0 z-30 border-b">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex flex-1 items-center gap-6">
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-gray-300 hover:text-white md:hidden"
+                  className="text-muted-foreground hover:text-foreground md:hidden"
                   onClick={() => setIsSidebarOpen(true)}
                   aria-label="Open navigation"
                 >
                   <Menu className="h-5 w-5" aria-hidden="true" />
                 </Button>
-                <span className="text-lg font-semibold text-white md:hidden">Entipedia</span>
+                <LogoMark size="sm" className="md:hidden" />
                 <Link
                   to="/dashboard"
-                  className="hidden items-center gap-2 text-lg font-semibold text-white transition-colors hover:text-gray-200 md:flex"
+                  className="hover:text-foreground/80 hidden items-center gap-3 text-lg font-semibold transition-colors md:flex"
                   aria-label="Entipedia dashboard"
                 >
-                  <Home className="h-5 w-5" aria-hidden="true" />
+                  <LogoMark size="sm" />
                   <span>Entipedia</span>
                 </Link>
               </div>
@@ -215,8 +218,8 @@ export default function Layout({ children }: LayoutProps) {
                             className={cn(
                               "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
                               active
-                                ? "bg-gray-700 text-white"
-                                : "text-gray-300 hover:bg-gray-700 hover:text-white",
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                             )}
                           >
                             {item.label}
@@ -234,7 +237,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full border border-gray-700 text-white"
+                  className="border-border text-foreground h-10 w-10 rounded-full border"
                   aria-label="Open profile menu"
                 >
                   <Avatar className="h-10 w-10">
@@ -245,13 +248,15 @@ export default function Layout({ children }: LayoutProps) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-white">{userName}</p>
-                    {userEmail ? <p className="text-xs text-gray-400">{userEmail}</p> : null}
+                    <p className="text-sm font-medium">{userName}</p>
+                    {userEmail ? (
+                      <p className="text-muted-foreground text-xs">{userEmail}</p>
+                    ) : null}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/users/profile" className="flex items-center gap-2 text-gray-200">
+                  <Link to="/users/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" aria-hidden="true" />
                     <span>Profile</span>
                   </Link>
@@ -262,7 +267,7 @@ export default function Layout({ children }: LayoutProps) {
                     event.preventDefault();
                     void handleLogout();
                   }}
-                  className="text-red-300"
+                  className="text-destructive"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                   <span>Logout</span>

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components";
+import { Button, LogoMark } from "@/components";
 import { useAuth, useAuthActions } from "@/hooks";
 import {
   Form,
@@ -102,11 +102,16 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4 py-12 text-white">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-gray-800 p-8 shadow-xl">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-semibold">Create account</h1>
-          <p className="text-sm text-gray-300">Join Entipedia to manage your projects and tasks.</p>
+    <div className="text-foreground flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdfcf9] via-[#f8f1e6] to-[#f3e6d4] px-4 py-16">
+      <div className="border-border/30 w-full max-w-md space-y-10 rounded-[2.25rem] border bg-white/90 p-10 shadow-[0_32px_80px_rgba(34,31,27,0.08)] backdrop-blur">
+        <div className="space-y-4 text-center">
+          <LogoMark size="md" className="mx-auto" />
+          <div className="space-y-1">
+            <h1 className="text-3xl font-semibold tracking-tight">Create account</h1>
+            <p className="text-muted-foreground text-sm">
+              Join Entipedia to manage your projects and tasks.
+            </p>
+          </div>
         </div>
 
         <Form {...form}>
@@ -191,7 +196,7 @@ const Register = () => {
             />
 
             {form.formState.errors.root ? (
-              <p className="text-sm font-medium text-red-400" role="alert">
+              <p className="text-destructive text-sm font-medium" role="alert">
                 {form.formState.errors.root.message}
               </p>
             ) : null}
@@ -199,23 +204,24 @@ const Register = () => {
             <Button
               type="submit"
               className="w-full"
-              variant="secondary"
               disabled={form.formState.isSubmitting}
+              aria-label={form.formState.isSubmitting ? "Creating account" : "Create account"}
+              role="button"
             >
               {form.formState.isSubmitting ? "Creating account..." : "Create account"}
             </Button>
           </form>
         </Form>
 
-        <div className="space-y-1 text-center text-sm text-gray-400">
+        <div className="text-muted-foreground space-y-1 text-center text-sm">
           <p>
             Already have an account?{" "}
-            <Link to="/auth/login" className="text-blue-400 hover:underline">
+            <Link to="/auth/login" className="text-primary hover:text-primary/80 hover:underline">
               Sign in
             </Link>
           </p>
           <p>
-            <Link to="/" className="text-blue-400 hover:underline">
+            <Link to="/" className="text-primary hover:text-primary/80 hover:underline">
               Return home
             </Link>
           </p>
