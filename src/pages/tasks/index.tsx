@@ -126,7 +126,7 @@ const mapSchemaToTask = (values: TaskFormSchema): TaskFormValues => ({
 type TaskViewMode = "table" | "board";
 
 const resolveViewMode = (value: string | null | undefined): TaskViewMode =>
-  value === "board" ? "board" : "table";
+  value === "table" ? "table" : "board";
 
 function TasksPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -267,17 +267,17 @@ function TasksPage() {
       const nextView = resolveViewMode(value);
       const currentParam = searchParams.get("view");
       if (nextView === activeView) {
-        if (nextView === "table" && !currentParam) {
+        if (nextView === "board" && !currentParam) {
           return;
         }
 
-        if (nextView === "board" && currentParam === "board") {
+        if (nextView === "table" && currentParam === "table") {
           return;
         }
       }
 
       const nextParams = new URLSearchParams(searchParams);
-      if (nextView === "table") {
+      if (nextView === "board") {
         nextParams.delete("view");
       } else {
         nextParams.set("view", nextView);
@@ -376,14 +376,14 @@ function TasksPage() {
               <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                   <h1 className="text-3xl font-semibold">Tasks</h1>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground mb-6 text-sm">
                     Manage your work with statuses, priorities, and due dates.
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <TabsList>
-                    <TabsTrigger value="table">Table</TabsTrigger>
                     <TabsTrigger value="board">Board</TabsTrigger>
+                    <TabsTrigger value="table">Table</TabsTrigger>
                   </TabsList>
                   <Button onClick={openCreateModal} variant="secondary">
                     Create Task

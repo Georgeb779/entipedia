@@ -7,7 +7,7 @@ import {
   type CSSProperties,
   type HTMLAttributes,
 } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -65,6 +65,16 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui";
 import {
   PROJECT_PRIORITY_COLORS,
@@ -126,6 +136,11 @@ const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema =>
 });
 
 type ProjectBuckets = Record<ProjectStatus, ProjectWithTaskCount[]>;
+
+type ProjectViewMode = "board" | "table";
+
+const resolveProjectViewMode = (value: string | null | undefined): ProjectViewMode =>
+  value === "table" ? "table" : "board";
 
 type KanbanColumnProps = {
   title: string;
@@ -340,6 +355,7 @@ const ProjectCardPreview = ({ project }: { project: ProjectWithTaskCount }) => (
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { editProjectId?: number } };
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -351,6 +367,10 @@ const ProjectsPage = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [boardError, setBoardError] = useState<string | null>(null);
+  const activeView = useMemo(
+    () => resolveProjectViewMode(searchParams.get("view")),
+    [searchParams],
+  );
 
   const { data: projects = [], isLoading, error } = useProjects();
   const createProject = useCreateProject();
@@ -515,6 +535,33 @@ const ProjectsPage = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleViewChange = useCallback(
+    (value: string) => {
+      const nextView = resolveProjectViewMode(value);
+      const currentParam = searchParams.get("view");
+
+      if (nextView === activeView) {
+        if (nextView === "board" && !currentParam) {
+          return;
+        }
+
+        if (nextView === "table" && currentParam === "table") {
+          return;
+        }
+      }
+
+      const nextParams = new URLSearchParams(searchParams);
+      if (nextView === "board") {
+        nextParams.delete("view");
+      } else {
+        nextParams.set("view", nextView);
+      }
+
+      setSearchParams(nextParams);
+    },
+    [activeView, searchParams, setSearchParams],
+  );
+
   const sensorsUpdating = updateProject.isPending;
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -658,70 +705,153 @@ const ProjectsPage = () => {
     };
   }, [projectLookup]);
 
+  const renderProjectTableRows = () => {
+    if (projects.length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={7} className="py-10 text-center">
+            <p className="text-muted-foreground text-sm">No projects found.</p>
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    return projects.map((project) => (
+      <TableRow key={project.id}>
+        <TableCell className="text-foreground max-w-xs text-sm font-medium">
+          {project.name}
+        </TableCell>
+        <TableCell className="text-muted-foreground text-sm">
+          {project.description ? project.description : "No description"}
+        </TableCell>
+        <TableCell>
+          <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
+            {PROJECT_STATUS_LABELS[project.status]}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
+            {PROJECT_PRIORITY_LABELS[project.priority]}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-muted-foreground text-sm">{project.taskCount} tasks</TableCell>
+        <TableCell className="text-muted-foreground text-sm">
+          {formatTaskDate(project.createdAt)}
+        </TableCell>
+        <TableCell className="text-right text-sm">
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => handleNavigateToDetails(project)}>
+              View
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(project)}>
+              Edit
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(project)}>
+              Delete
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    ));
+  };
+
   return (
     <ProtectedRoute>
       <Layout>
         <div className="text-foreground px-6 py-10">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-            <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-semibold">Projects</h1>
-                <p className="text-muted-foreground text-sm">
-                  Organize your work into projects, track task progress, and stay on top of
-                  deadlines.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
-                  Create Project
-                </Button>
-              </div>
-            </header>
-
-            <section>
-              {isLoading ? (
-                <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
-              ) : error ? (
-                <div className="text-destructive py-12 text-center">
-                  {error instanceof Error ? error.message : "Failed to load projects."}
+            <Tabs value={activeView} onValueChange={handleViewChange}>
+              <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-semibold">Projects</h1>
+                  <p className="text-muted-foreground mb-6 text-sm">
+                    Organize your work into projects, track task progress, and stay on top of
+                    deadlines.
+                  </p>
                 </div>
-              ) : (
-                <>
-                  {boardError ? (
-                    <div className="text-destructive mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm">
-                      {boardError}
-                    </div>
-                  ) : null}
-                  <DndContext
-                    accessibility={accessibility}
-                    sensors={sensors}
-                    collisionDetection={closestCorners}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragCancel={handleDragCancel}
-                  >
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                      {STATUSES.map((status) => (
-                        <KanbanColumn
-                          key={status}
-                          title={STATUS_TITLES[status]}
-                          status={status}
-                          projects={projectBuckets[status]}
-                          activeId={activeId}
-                          isUpdating={sensorsUpdating}
-                          onView={handleNavigateToDetails}
-                          onEdit={handleOpenEdit}
-                          onDelete={openDeleteDialog}
-                        />
-                      ))}
-                    </div>
-                    <DragOverlay>
-                      {activeProject ? <ProjectCardPreview project={activeProject} /> : null}
-                    </DragOverlay>
-                  </DndContext>
-                </>
-              )}
-            </section>
+                <div className="flex flex-wrap items-center gap-4">
+                  <TabsList>
+                    <TabsTrigger value="board">Board</TabsTrigger>
+                    <TabsTrigger value="table">Table</TabsTrigger>
+                  </TabsList>
+                  <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
+                    Create Project
+                  </Button>
+                </div>
+              </header>
+
+              <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
+                {isLoading ? (
+                  <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
+                ) : error ? (
+                  <div className="text-destructive py-12 text-center">
+                    {error instanceof Error ? error.message : "Failed to load projects."}
+                  </div>
+                ) : (
+                  <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
+                    {boardError ? (
+                      <div className="text-destructive mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm">
+                        {boardError}
+                      </div>
+                    ) : null}
+                    <DndContext
+                      accessibility={accessibility}
+                      sensors={sensors}
+                      collisionDetection={closestCorners}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      onDragCancel={handleDragCancel}
+                    >
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        {STATUSES.map((status) => (
+                          <KanbanColumn
+                            key={status}
+                            title={STATUS_TITLES[status]}
+                            status={status}
+                            projects={projectBuckets[status]}
+                            activeId={activeId}
+                            isUpdating={sensorsUpdating}
+                            onView={handleNavigateToDetails}
+                            onEdit={handleOpenEdit}
+                            onDelete={openDeleteDialog}
+                          />
+                        ))}
+                      </div>
+                      <DragOverlay>
+                        {activeProject ? <ProjectCardPreview project={activeProject} /> : null}
+                      </DragOverlay>
+                    </DndContext>
+                  </section>
+                )}
+              </TabsContent>
+
+              <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
+                {isLoading ? (
+                  <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
+                ) : error ? (
+                  <div className="text-destructive py-12 text-center">
+                    {error instanceof Error ? error.message : "Failed to load projects."}
+                  </div>
+                ) : (
+                  <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Priority</TableHead>
+                          <TableHead>Tasks</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>{renderProjectTableRows()}</TableBody>
+                    </Table>
+                  </section>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 
@@ -734,7 +864,7 @@ const ProjectsPage = () => {
             }
           }}
         >
-          <DialogContent>
+          <DialogContent className="space-y-5">
             <DialogHeader>
               <DialogTitle>Create Project</DialogTitle>
             </DialogHeader>
@@ -865,7 +995,7 @@ const ProjectsPage = () => {
             }
           }}
         >
-          <DialogContent>
+          <DialogContent className="space-y-5">
             <DialogHeader>
               <DialogTitle>Edit Project</DialogTitle>
             </DialogHeader>
@@ -996,7 +1126,7 @@ const ProjectsPage = () => {
             }
           }}
         >
-          <DialogContent>
+          <DialogContent className="space-y-5">
             <DialogHeader>
               <DialogTitle>Delete Project</DialogTitle>
               <DialogDescription>
