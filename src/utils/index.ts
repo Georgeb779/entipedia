@@ -4,3 +4,4 @@ export * from "./auth-user";
 export * from "./task";
 export * from "./project";
 export * from "./file";
+export * from "./client";

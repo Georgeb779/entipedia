@@ -1,4 +1,4 @@
-import type { FileCategory, TaskPriority, TaskStatus } from "@/types";
+import type { ClientType, FileCategory, TaskPriority, TaskStatus } from "@/types";
 
 /*
 Desc:
@@ -128,4 +128,19 @@ export const FILE_CATEGORY_ICONS: Record<FileCategory, string> = {
   audio: "Music",
   archive: "Archive",
   other: "File",
+};
+
+export const CLIENT_TYPE_OPTIONS: Array<{ value: ClientType; label: string }> = [
+  { value: "person", label: "Person" },
+  { value: "company", label: "Company" },
+];
+
+export const CLIENT_TYPE_LABELS: Record<ClientType, string> = {
+  person: "Person",
+  company: "Company",
+};
+
+export const CLIENT_TYPE_COLORS: Record<ClientType, string> = {
+  person: "bg-[#E8EFFC] text-[#1C2431]",
+  company: "bg-[#F0EFEA] text-[#1F1F1F]",
 };

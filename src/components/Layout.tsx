@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   User,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/tasks", label: "Tasks", icon: CheckSquare },
   { path: "/projects", label: "Projects", icon: FolderKanban },
+  { path: "/clients", label: "Clients", icon: Users },
   { path: "/kanban", label: "Kanban", icon: FolderKanban },
   { path: "/files", label: "Files", icon: FileText },
 ];

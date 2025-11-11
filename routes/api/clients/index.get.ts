@@ -1,6 +1,6 @@
 import { defineHandler } from "nitro/h3";
 import { HTTPError, getQuery } from "h3";
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 
 import { getDb, clients } from "db";
 import type { AuthUser } from "@/types";
@@ -26,18 +26,40 @@ export default defineHandler(async (event) => {
     const limit = Math.min(parsedLimit, 100);
     const offset = (page - 1) * limit;
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
+    const typeFilter = (query.type as string | undefined) ?? undefined;
+    const sortByParam = (query.sortBy as string | undefined) ?? "createdAt";
+    const sortOrderParam = (query.sortOrder as string | undefined) ?? "desc";
+
+    const sortColumn =
+      {
+        createdAt: clients.createdAt,
+        name: clients.name,
+        value: clients.value,
+        startDate: clients.startDate,
+      }[sortByParam as "createdAt" | "name" | "value" | "startDate"] ?? clients.createdAt;
+
+    const orderClause = sortOrderParam === "asc" ? asc(sortColumn) : desc(sortColumn);
+
+    const filters = [eq(clients.userId, context.user.id)];
+
+    if (typeFilter === "person" || typeFilter === "company") {
+      filters.push(eq(clients.type, typeFilter));
+    }
+
+    const whereClause = filters.length === 1 ? filters[0] : and(...filters);
+
+    const [{ total: totalCount }] = await db
+      .select({ total: count(clients.id) })
       .from(clients)
-      .where(eq(clients.userId, context.user.id));
+      .where(whereClause);
 
     const clientRows = await db
       .select()
       .from(clients)
-      .where(eq(clients.userId, context.user.id))
+      .where(whereClause)
+      .orderBy(orderClause, asc(clients.id))
       .limit(limit)
-      .offset(offset)
-      .orderBy(desc(clients.createdAt), asc(clients.id));
+      .offset(offset);
 
     const serializedClients = clientRows.map((client) => ({
       ...client,
@@ -47,7 +69,7 @@ export default defineHandler(async (event) => {
       updatedAt: toIsoString(client.updatedAt),
     }));
 
-    const total = Number(count);
+    const total = Number(totalCount);
     const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
     return {
@@ -59,7 +81,14 @@ export default defineHandler(async (event) => {
         totalPages,
       },
     };
-  } catch {
-    throw new HTTPError("Failed to fetch clients.", { statusCode: 500 });
+  } catch (error) {
+    const maybeError = error as { cause?: unknown };
+    const causeMessage =
+      maybeError?.cause && maybeError.cause instanceof Error ? maybeError.cause.message : undefined;
+
+    const message =
+      causeMessage ?? (error instanceof Error ? error.message : "Failed to fetch clients.");
+
+    throw new HTTPError(message, { statusCode: 500, cause: error });
   }
 });
