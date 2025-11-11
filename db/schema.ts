@@ -55,6 +55,7 @@ export const files = pgTable("files", {
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
   size: integer("size").notNull(),
   path: text("path").notNull(),
+  description: text("description"),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

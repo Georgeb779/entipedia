@@ -1,8 +1,9 @@
-import type { ClientFilters, ProjectFilters, TaskFilters } from "@/types";
+import type { ClientFilters, FileFilters, ProjectFilters, TaskFilters } from "@/types";
 
 type ProjectFiltersKey = string;
 type TaskFiltersKey = string;
 type ClientFiltersKey = string;
+type FileFiltersKey = string;
 
 const createProjectFiltersKey = (filters?: ProjectFilters): ProjectFiltersKey =>
   JSON.stringify({
@@ -24,6 +25,12 @@ const createClientFiltersKey = (filters?: ClientFilters): ClientFiltersKey =>
     limit: filters?.limit ?? 10,
     sortBy: filters?.sortBy ?? "createdAt",
     sortOrder: filters?.sortOrder ?? "desc",
+  });
+
+const createFileFiltersKey = (filters?: FileFilters): FileFiltersKey =>
+  JSON.stringify({
+    projectId: filters?.projectId ?? "all",
+    mimeType: filters?.mimeType ?? "all",
   });
 
 export const PROJECT_KEYS = {
@@ -48,4 +55,17 @@ export const CLIENT_KEYS = {
   detail: (id: number) => [...CLIENT_KEYS.details(), id],
 };
 
-export { createProjectFiltersKey, createTaskFiltersKey, createClientFiltersKey };
+export const FILE_KEYS = {
+  all: ["files"],
+  lists: () => [...FILE_KEYS.all, "list"],
+  list: (filters?: FileFilters) => [...FILE_KEYS.lists(), createFileFiltersKey(filters)],
+  details: () => [...FILE_KEYS.all, "detail"],
+  detail: (id: number) => [...FILE_KEYS.details(), id],
+};
+
+export {
+  createProjectFiltersKey,
+  createTaskFiltersKey,
+  createClientFiltersKey,
+  createFileFiltersKey,
+};

@@ -20,6 +20,7 @@ export default defineHandler(async (event) => {
 
   const form = await readFormData(event);
   const fileEntry = form.get("file");
+  const descriptionEntry = form.get("description");
 
   if (!fileEntry || !(fileEntry instanceof Blob) || !("name" in fileEntry)) {
     throw new HTTPError("Invalid file upload payload.", { statusCode: 400 });
@@ -60,6 +61,22 @@ export default defineHandler(async (event) => {
 
   await fs.mkdir(uploadsDir, { recursive: true });
 
+  let description: string | null = null;
+
+  if (descriptionEntry !== null && descriptionEntry !== undefined) {
+    if (typeof descriptionEntry !== "string") {
+      throw new HTTPError("Description must be a string.", { statusCode: 400 });
+    }
+
+    const trimmed = descriptionEntry.trim();
+
+    if (trimmed.length > 2000) {
+      throw new HTTPError("Description must be 2000 characters or fewer.", { statusCode: 400 });
+    }
+
+    description = trimmed.length > 0 ? trimmed : null;
+  }
+
   try {
     await fs.writeFile(filePath, fileBuffer);
   } catch (error) {
@@ -89,6 +106,7 @@ export default defineHandler(async (event) => {
         mimeType: file.type,
         size: fileBuffer.byteLength,
         path: relativePath,
+        description,
         userId: context.user.id,
         projectId,
       })

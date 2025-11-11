@@ -1,7 +1,12 @@
 /**
  * Utility helpers for working with file metadata in the client and server.
  */
-import { ALLOWED_FILE_TYPES, FILE_TYPE_CATEGORIES, MAX_FILE_SIZE } from "@/constants";
+import {
+  ALLOWED_FILE_TYPES,
+  FILE_CATEGORY_ICONS,
+  FILE_TYPE_CATEGORIES,
+  MAX_FILE_SIZE,
+} from "@/constants";
 import type { ApiFile, FileCategory, StoredFile } from "@/types";
 
 const parseDate = (value: Date | string) => (value instanceof Date ? value : new Date(value));
@@ -13,6 +18,28 @@ export const mapApiFile = (file: ApiFile): StoredFile => ({
   ...file,
   createdAt: parseDate(file.createdAt),
 });
+
+const displayDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+export const formatFileDate = (value: Date | string | null): string => {
+  if (!value) {
+    return "-";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return displayDateFormatter.format(date);
+};
 
 /**
  * Formats a raw byte size into a human readable string.
@@ -47,6 +74,20 @@ export const formatFileSize = (bytes: number): string => {
  */
 export const getFileCategory = (mimeType: string): FileCategory => {
   return FILE_TYPE_CATEGORIES[mimeType] ?? "other";
+};
+
+export const getFileExtension = (filename: string): string => {
+  const lastDotIndex = filename.lastIndexOf(".");
+
+  if (lastDotIndex <= 0 || lastDotIndex === filename.length - 1) {
+    return "";
+  }
+
+  return filename.slice(lastDotIndex).toLowerCase();
+};
+
+export const getFileCategoryIcon = (category: FileCategory) => {
+  return FILE_CATEGORY_ICONS[category];
 };
 
 /**

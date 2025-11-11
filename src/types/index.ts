@@ -110,6 +110,7 @@ export type ApiFile = Omit<StoredFile, "createdAt"> & {
 export type FileFormValues = {
   file: File;
   projectId: number | null;
+  description: string | null;
 };
 
 export type FileFilters = {
