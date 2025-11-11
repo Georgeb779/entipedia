@@ -4,6 +4,8 @@ import type {
   NewTask as DbNewTask,
   Project as DbProject,
   NewProject as DbNewProject,
+  File as DbFile,
+  NewFile as DbNewFile,
 } from "db/schema";
 
 export type ApiAuthUser = Omit<User, "password" | "createdAt" | "updatedAt"> & {
@@ -18,6 +20,9 @@ export type NewTask = DbNewTask;
 
 export type Project = DbProject;
 export type NewProject = DbNewProject;
+
+export type StoredFile = DbFile;
+export type NewStoredFile = DbNewFile;
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";
@@ -67,6 +72,28 @@ export type ProjectFilters = {
   sortBy?: "name" | "createdAt" | "taskCount";
   sortOrder?: "asc" | "desc";
 };
+
+export type ApiFile = Omit<StoredFile, "createdAt"> & {
+  createdAt: string;
+};
+
+export type FileFormValues = {
+  file: File;
+  projectId: number | null;
+};
+
+export type FileFilters = {
+  projectId?: number | "all";
+  mimeType?: string | "all";
+};
+
+export type FileUploadProgress = {
+  loaded: number;
+  total: number;
+  percentage: number;
+};
+
+export type FileCategory = "image" | "document" | "video" | "audio" | "archive" | "other";
 
 export type AuthState =
   | { status: "loading" }

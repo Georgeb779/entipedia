@@ -37,6 +37,10 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 📋 **Task management API** with CRUD operations
 - 🔒 **User-scoped tasks** enforced at the database layer
 - 📊 **Task status tracking** (To Do, In Progress, Done)
+- 📁 **File management API** with upload, download, and delete operations
+- 💾 **Local file storage** backed by the Node.js filesystem
+- 🔒 **File validation** via MIME-type whitelist and size limits
+- 📊 **File metadata persistence** inside PostgreSQL with Drizzle
 
 ### Developer Experience
 
@@ -156,6 +160,55 @@ Handle personal workstreams end-to-end with the built-in task manager:
 - Ownership is revalidated before updates and deletes
 
 Relevant code: `routes/api/tasks`, `src/hooks/useTasks.ts`, `src/utils/task.ts`, `src/constants/index.ts`, and the `/tasks` page.
+
+### File Management
+
+Bring secure, metadata-aware file handling to the platform with the dedicated file API and local storage pipeline.
+
+1. **API Routes**
+
+- `GET /api/files` – Retrieve all files owned by the authenticated user
+- `POST /api/files` – Upload a file via multipart/form-data with validation
+- `GET /api/files/:id` – Stream the stored file back with download headers
+- `DELETE /api/files/:id` – Remove a file from both disk storage and the database
+
+2. **File Properties**
+
+- Original filename (displayed in the UI)
+- Stored filename (unique, collision-resistant)
+- MIME type and size for validation and headers
+- Relative storage path (`uploads/<name>`)
+- Optional project association for contextual filtering
+- Upload timestamp
+
+3. **Storage Model**
+
+- Files are persisted beneath the project `uploads/` directory
+- Unique filenames generated with timestamp + random suffix
+- Metadata lives in PostgreSQL via the existing `files` table
+- Cleanup ensures disk and database stay in sync
+
+4. **Validation Rules**
+
+- Whitelisted MIME types guard against unsafe uploads
+- 10 MB maximum size (configurable via `MAX_FILE_SIZE`)
+- Server-side guards mirror client validation for defense in depth
+
+5. **Security**
+
+- Each request is scoped by `event.context.user`
+- Ownership verified before download or deletion
+- Filesystem writes occur in a controlled directory outside the repo
+- Cleanup handles partial failures to avoid orphaned files
+
+Relevant code: `routes/api/files`, `src/constants/index.ts`, `src/utils/file.ts`.
+
+### File Upload Limits
+
+- **Maximum size**: 10 MB per file (configured via `MAX_FILE_SIZE` in `src/constants/index.ts`)
+- **Allowed types**: Images, documents, archives, JSON, and web text assets (see `ALLOWED_FILE_TYPES`)
+- **Storage location**: Files persist under the git-ignored `uploads/` directory
+- **Production tip**: For multi-instance or cloud deployments, back the upload path with persistent storage (e.g., S3, R2, or mounted volumes)
 
 ### Environment Variables
 
@@ -511,11 +564,13 @@ AutoImport({
 │   ├── hooks/          # Custom React hooks
 │   │   ├── index.ts
 │   │   ├── use-auth.ts
-│   │   └── useTasks.ts        # Task CRUD hooks
+│   │   ├── use-tasks.ts       # Task CRUD hooks
+│   │   └── use-files.ts       # File CRUD hooks
 │   ├── utils/          # Utility functions
 │   │   ├── auth-user.ts
 │   │   ├── cn.ts
-│   │   └── task.ts            # Task data helpers
+│   │   ├── task.ts            # Task data helpers
+│   │   └── file.ts            # File data helpers
 │   ├── types/          # TypeScript types
 │   ├── constants/      # App constants
 │   ├── data/           # Static data
@@ -523,6 +578,11 @@ AutoImport({
 │   └── main.tsx        # App entry point
 ├── routes/             # Backend API routes (file-based)
 │   └── api/           # API endpoints
+│       ├── files/          # File CRUD API routes
+│       │   ├── index.get.ts
+│       │   ├── index.post.ts
+│       │   ├── [id].get.ts
+│       │   └── [id].delete.ts
 │       └── tasks/          # Task CRUD API routes
 │           ├── index.get.ts
 │           ├── index.post.ts
@@ -534,6 +594,8 @@ AutoImport({
 │   ├── schema.ts      # Drizzle ORM schema definitions
 │   ├── index.ts       # Database connection utility
 │   └── README.md      # Database documentation
+├── uploads/            # Local file storage (git-ignored)
+│   └── .gitkeep
 ├── drizzle/           # Generated migration files (git-ignored)
 ├── drizzle.config.ts  # Drizzle Kit configuration
 ├── .env.example       # Environment variables template

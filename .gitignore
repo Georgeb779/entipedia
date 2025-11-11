@@ -17,6 +17,7 @@ dist-ssr
 .env.local
 drizzle/
 configs/
+uploads/
 
 # Editor directories and files
 .idea

@@ -1,4 +1,4 @@
-import type { TaskPriority, TaskStatus } from "@/types";
+import type { FileCategory, TaskPriority, TaskStatus } from "@/types";
 
 /*
 Desc:
@@ -44,4 +44,88 @@ export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
   low: "bg-gray-400 text-gray-900",
   medium: "bg-yellow-500 text-gray-900",
   high: "bg-red-600 text-white",
+};
+
+// Maximum upload size limit (10 MB)
+export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+export const ALLOWED_FILE_TYPES: readonly string[] = [
+  // Images
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  // Documents
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+  "text/csv",
+  // Archives
+  "application/zip",
+  "application/x-rar-compressed",
+  "application/x-7z-compressed",
+  // Other
+  "application/json",
+  "text/html",
+  "text/css",
+  "text/javascript",
+];
+
+export const FILE_TYPE_CATEGORIES: Record<string, FileCategory> = {
+  // Images
+  "image/jpeg": "image",
+  "image/png": "image",
+  "image/gif": "image",
+  "image/webp": "image",
+  "image/svg+xml": "image",
+  // Documents
+  "application/pdf": "document",
+  "application/msword": "document",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "document",
+  "application/vnd.ms-excel": "document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "document",
+  "application/vnd.ms-powerpoint": "document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "document",
+  "text/plain": "document",
+  "text/csv": "document",
+  "application/json": "document",
+  "text/html": "document",
+  "text/css": "document",
+  "text/javascript": "document",
+  // Archives
+  "application/zip": "archive",
+  "application/x-rar-compressed": "archive",
+  "application/x-7z-compressed": "archive",
+  // Audio
+  "audio/mpeg": "audio",
+  "audio/wav": "audio",
+  "audio/ogg": "audio",
+  // Video
+  "video/mp4": "video",
+  "video/webm": "video",
+  "video/quicktime": "video",
+};
+
+export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
+  image: "Image",
+  document: "Document",
+  video: "Video",
+  audio: "Audio",
+  archive: "Archive",
+  other: "Other",
+};
+
+export const FILE_CATEGORY_ICONS: Record<FileCategory, string> = {
+  image: "Image",
+  document: "FileText",
+  video: "Video",
+  audio: "Music",
+  archive: "Archive",
+  other: "File",
 };
