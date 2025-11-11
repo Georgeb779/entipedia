@@ -1,23 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { MoreHorizontal } from "lucide-react";
 
 import { Button, Layout, ProtectedRoute } from "@/components";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Form,
   FormControl,
   FormField,
@@ -96,6 +96,11 @@ const ProjectsPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectWithTaskCount | null>(null);
+  const [projectPendingDeletion, setProjectPendingDeletion] = useState<ProjectWithTaskCount | null>(
+    null,
+  );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: projects = [], isLoading, error } = useProjects(filters);
   const createProject = useCreateProject();
@@ -190,21 +195,30 @@ const ProjectsPage = () => {
     }
   };
 
-  const handleDeleteProject = async (project: ProjectWithTaskCount) => {
-    const confirmed = window.confirm(
-      `Delete project "${project.name}"? This will remove all tasks in the project as well.`,
-    );
+  const openDeleteDialog = (project: ProjectWithTaskCount) => {
+    setProjectPendingDeletion(project);
+    setDeleteError(null);
+    setIsDeleteDialogOpen(true);
+  };
 
-    if (!confirmed) {
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setProjectPendingDeletion(null);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!projectPendingDeletion) {
       return;
     }
 
     try {
-      await deleteProject.mutateAsync(project.id);
+      await deleteProject.mutateAsync(projectPendingDeletion.id);
+      closeDeleteDialog();
     } catch (mutationError) {
-      window.alert(
-        mutationError instanceof Error ? mutationError.message : "Failed to delete project.",
-      );
+      const message =
+        mutationError instanceof Error ? mutationError.message : "Failed to delete project.";
+      setDeleteError(message);
     }
   };
 
@@ -297,60 +311,89 @@ const ProjectsPage = () => {
                       project.taskCount,
                     );
 
+                    const handleOpenEdit = () => {
+                      setEditingProject(project);
+                      setIsEditModalOpen(true);
+                    };
+
+                    const handleNavigateToDetails = () => {
+                      navigate(`/projects/${project.id}`);
+                    };
+
                     return (
-                      <Card
+                      <div
                         key={project.id}
-                        className="flex h-full flex-col border border-[rgba(0,0,0,0.06)] bg-white shadow-sm transition-shadow hover:shadow-md"
+                        className="flex h-full flex-col rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                       >
-                        <CardHeader className="space-y-2 p-5 pb-3">
-                          <CardTitle className="line-clamp-1 text-lg font-semibold">
-                            {project.name}
-                          </CardTitle>
-                          <CardDescription className="text-muted-foreground line-clamp-2 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="w-full space-y-3">
+                            <div className="flex items-baseline justify-between gap-3">
+                              <h3 className="line-clamp-1 text-lg font-semibold text-[#1C2431]">
+                                {project.name}
+                              </h3>
+                              <span className="text-sm font-semibold text-[#1C2431]">
+                                {progress}%
+                              </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-[rgba(28,36,49,0.08)]">
+                              <div
+                                className="h-full rounded-full bg-[#E8B90D]"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-[#1C2431]"
+                                aria-label="Project actions"
+                              >
+                                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-36">
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault();
+                                  handleNavigateToDetails();
+                                }}
+                              >
+                                View details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault();
+                                  handleOpenEdit();
+                                }}
+                              >
+                                Edit project
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={(event) => {
+                                  event.preventDefault();
+                                  openDeleteDialog(project);
+                                }}
+                              >
+                                Delete project
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        <div className="text-muted-foreground mt-4 space-y-3 border-t border-[rgba(0,0,0,0.06)] pt-4 text-sm">
+                          <p className="font-medium text-[#1C2431]">
+                            {project.taskCount} tasks ({project.completedTaskCount} completed)
+                          </p>
+                          <p className="leading-relaxed">
                             {project.description ?? "No description provided."}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-1 flex-col gap-4 p-5 pt-0">
-                          <div className="text-muted-foreground flex items-center justify-between text-sm">
-                            <span>
-                              {project.taskCount} tasks ({project.completedTaskCount} completed)
-                            </span>
-                            <span className="font-medium text-[#1C2431]">{progress}% complete</span>
-                          </div>
-                          <div className="h-2 w-full rounded-full bg-[rgba(28,36,49,0.08)]">
-                            <div
-                              className="bg-primary h-2 rounded-full"
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                          <div className="text-muted-foreground space-y-1 text-xs">
-                            <p>Created {formatTaskDate(project.createdAt)}</p>
-                            <p>Updated {formatTaskDate(project.updatedAt)}</p>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex flex-wrap items-center gap-2 p-5 pt-0">
-                          <Link to={`/projects/${project.id}`} className="flex-1 sm:flex-none">
-                            <Button className="w-full" variant="secondary">
-                              View Details
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="accent"
-                            onClick={() => {
-                              setEditingProject(project);
-                              setIsEditModalOpen(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => handleDeleteProject(project)}
-                          >
-                            Delete
-                          </Button>
-                        </CardFooter>
-                      </Card>
+                          </p>
+                          <p className="text-xs">Created {formatTaskDate(project.createdAt)}</p>
+                          <p className="text-xs">Updated {formatTaskDate(project.updatedAt)}</p>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -504,6 +547,45 @@ const ProjectsPage = () => {
                 </DialogFooter>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeDeleteDialog();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Project</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. The project and its tasks will be permanently removed.
+              </DialogDescription>
+            </DialogHeader>
+
+            <p className="text-sm font-medium text-[#1C2431]">
+              {projectPendingDeletion ? projectPendingDeletion.name : "Selected project"}
+            </p>
+            {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={deleteProject.isPending}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => void handleConfirmDelete()}
+                disabled={deleteProject.isPending}
+              >
+                {deleteProject.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </Layout>
