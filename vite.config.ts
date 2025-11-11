@@ -14,6 +14,7 @@ import svgr from "vite-plugin-svgr";
 import { fonts } from "./configs/fonts.config";
 
 export default defineConfig({
+  appType: "custom",
   server: {
     host: "0.0.0.0",
     port: 5000,

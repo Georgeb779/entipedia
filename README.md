@@ -61,17 +61,30 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 # Install dependencies
 npm install
 
+# Provision a local Postgres instance for development (optional helper command)
+docker run --name entipedia-postgres \
+  -e POSTGRES_PASSWORD=$(openssl rand -hex 16) \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=entipedia \
+  -p 5432:5432 \
+  -d postgres:16
+
 # Start development server (frontend + backend)
 npm run dev
+```
 
 # Build for production
+
 npm run build
 
 # Preview production build
+
 npm run preview
 
 # Lint code
+
 npm run lint
+
 ```
 
 The dev server runs on:
@@ -83,6 +96,7 @@ The dev server runs on:
 
 1. Ensure PostgreSQL is available locally or via a managed provider.
 2. Copy `.env.example` to `.env` and update `DATABASE_URL` with your credentials.
+  - When using the Docker helper above, inspect the generated password with `docker inspect entipedia-postgres --format='{{ index .Config.Env 0 }}'` or set it explicitly to a strong value you control. Update `DATABASE_URL` accordingly.
 3. Run `npm run db:push` to initialize the schema during development.
 4. Optionally launch Drizzle Studio with `npm run db:studio` for a GUI explorer.
 
@@ -291,15 +305,17 @@ Routes are automatically generated from files in `src/pages/`. Each `.tsx` file 
 ### Route Structure
 
 ```
+
 src/pages/
-├── index.tsx           → /
-├── about.tsx           → /about
+├── index.tsx → /
+├── about.tsx → /about
 ├── users/
-│   ├── index.tsx       → /users
-│   ├── [id].tsx        → /users/:id (dynamic route)
-│   └── profile.tsx     → /users/profile
-└── [...all].tsx        → /* (catch-all/404)
-```
+│ ├── index.tsx → /users
+│ ├── [id].tsx → /users/:id (dynamic route)
+│ └── profile.tsx → /users/profile
+└── [...all].tsx → /\* (catch-all/404)
+
+````
 
 ### Creating Pages
 
@@ -316,7 +332,7 @@ const About = () => {
 };
 
 export default About;
-```
+````
 
 ### Dynamic Routes
 

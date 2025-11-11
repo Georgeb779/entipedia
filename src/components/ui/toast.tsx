@@ -14,7 +14,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed inset-x-0 top-0 z-100 flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:top-auto sm:right-0 sm:flex-col",
+      "fixed inset-x-0 top-0 z-50 flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:top-auto sm:right-0 sm:flex-col",
       "sm:bottom-0 sm:w-full sm:max-w-sm sm:p-6",
       className,
     )}
@@ -52,8 +52,8 @@ const Toast = React.forwardRef<React.ComponentRef<typeof ToastPrimitives.Root>, 
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full",
         "data-[state=open]:slide-in-from-bottom-full sm:[data-state=open]:slide-in-from-right-full",
-        "data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition data-[swipe=end]:translate-x-(--radix-toast-swipe-end-x)",
-        "data-[swipe=move]:translate-x-(--radix-toast-swipe-move-x)",
+        "data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition data-[swipe=end]:translate-x-[--radix-toast-swipe-end-x]",
+        "data-[swipe=move]:translate-x-[--radix-toast-swipe-move-x]",
         className,
       )}
       {...props}
