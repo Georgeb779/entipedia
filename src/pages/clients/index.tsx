@@ -996,7 +996,7 @@ function ClientsPage() {
         </Dialog>
 
         <Dialog open={isDeleteModalOpen} onOpenChange={handleDeleteOpenChange}>
-          <DialogContent>
+          <DialogContent className="space-y-5">
             <DialogHeader>
               <DialogTitle>Delete Client</DialogTitle>
             </DialogHeader>

@@ -138,7 +138,9 @@ function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [taskBeingEdited, setTaskBeingEdited] = useState<Task | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [taskBeingDeleted, setTaskBeingDeleted] = useState<Task | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const activeView = useMemo(() => resolveViewMode(searchParams.get("view")), [searchParams]);
 
   const { data: tasks = [], isLoading, error } = useTasks(filters);
@@ -176,7 +178,6 @@ function TasksPage() {
   };
 
   const handleCreateSubmit = async (values: TaskFormSchema) => {
-    setActionError(null);
     try {
       await createTask.mutateAsync(mapSchemaToTask(values));
       setIsCreateModalOpen(false);
@@ -217,7 +218,6 @@ function TasksPage() {
       return;
     }
 
-    setActionError(null);
     try {
       await updateTask.mutateAsync({
         taskId: taskBeingEdited.id,
@@ -232,19 +232,33 @@ function TasksPage() {
   };
 
   const handleDeleteTask = async (task: Task) => {
-    const confirmed = window.confirm(`Delete "${task.title}"? This action cannot be undone.`);
+    setTaskBeingDeleted(task);
+    setDeleteError(null);
+    setIsDeleteModalOpen(true);
+  };
 
-    if (!confirmed) {
+  const handleDeleteOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsDeleteModalOpen(false);
+      setTaskBeingDeleted(null);
+      setDeleteError(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!taskBeingDeleted) {
       return;
     }
 
-    setActionError(null);
+    setDeleteError(null);
     try {
-      await deleteTask.mutateAsync(task.id);
+      await deleteTask.mutateAsync(taskBeingDeleted.id);
+      setIsDeleteModalOpen(false);
+      setTaskBeingDeleted(null);
     } catch (mutationError) {
       const message =
         mutationError instanceof Error ? mutationError.message : "Failed to delete task.";
-      setActionError(message);
+      setDeleteError(message);
     }
   };
 
@@ -342,7 +356,7 @@ function TasksPage() {
                 variant="destructive"
                 size="sm"
                 onClick={() => handleDeleteTask(task)}
-                disabled={deleteTask.isPending && taskBeingEdited?.id === task.id}
+                disabled={deleteTask.isPending && taskBeingDeleted?.id === task.id}
               >
                 Delete
               </Button>
@@ -356,7 +370,7 @@ function TasksPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-6 py-10">
+        <div className="text-foreground px-5 py-10 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -377,7 +391,7 @@ function TasksPage() {
                 </div>
               </header>
 
-              <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+              <section className="flex flex-wrap gap-5 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                 <div className="w-full max-w-xs">
                   <Label className="text-muted-foreground mb-2 block text-sm">Status</Label>
                   <Select
@@ -460,10 +474,8 @@ function TasksPage() {
                 </div>
               </section>
 
-              {actionError ? <p className="text-destructive text-sm">{actionError}</p> : null}
-
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
-                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
+                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
                     <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
                   ) : error ? (
@@ -489,7 +501,7 @@ function TasksPage() {
               </TabsContent>
 
               <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
-                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
+                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
                     <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
                   ) : error ? (
@@ -517,7 +529,7 @@ function TasksPage() {
           </div>
 
           <Dialog open={isCreateModalOpen} onOpenChange={handleCreateOpenChange}>
-            <DialogContent>
+            <DialogContent className="space-y-5">
               <DialogHeader>
                 <DialogTitle>Create Task</DialogTitle>
               </DialogHeader>
@@ -678,7 +690,7 @@ function TasksPage() {
           </Dialog>
 
           <Dialog open={isEditModalOpen} onOpenChange={handleEditOpenChange}>
-            <DialogContent>
+            <DialogContent className="space-y-5">
               <DialogHeader>
                 <DialogTitle>Edit Task</DialogTitle>
               </DialogHeader>
@@ -833,6 +845,34 @@ function TasksPage() {
                   </DialogFooter>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDeleteModalOpen} onOpenChange={handleDeleteOpenChange}>
+            <DialogContent className="space-y-5">
+              <DialogHeader>
+                <DialogTitle>Delete Task</DialogTitle>
+              </DialogHeader>
+              <p className="text-muted-foreground text-sm">
+                Are you sure you want to delete "{taskBeingDeleted?.title ?? "this task"}"? This
+                action cannot be undone.
+              </p>
+              {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
+              <DialogFooter className="gap-2">
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => void handleConfirmDelete()}
+                  disabled={deleteTask.isPending}
+                >
+                  {deleteTask.isPending ? "Deleting..." : "Delete"}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
