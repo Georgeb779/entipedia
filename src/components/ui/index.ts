@@ -9,3 +9,6 @@ export * from "./select";
 export * from "./textarea";
 export * from "./badge";
 export { badgeVariants } from "./badge-variants";
+export * from "./card";
+export * from "./tabs";
+export * from "./separator";
