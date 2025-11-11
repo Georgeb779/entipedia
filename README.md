@@ -19,6 +19,9 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 📦 **Path aliases** (`@/components`, etc.)
 - 🔑 **Auth Context** for global authentication state
 - 📝 **Form validation** powered by React Hook Form + Zod
+- ⚡ **TanStack Query** for data fetching, caching, and synchronization
+- 📝 **Task management UI** with filters, table view, and modals
+- 🎛️ **shadcn/ui Table, Dialog, Select, Textarea, Badge** components ready to compose
 
 ### Backend
 
@@ -31,6 +34,9 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 🔐 **Authentication system** via encrypted H3 sessions
 - 🔒 **Password hashing** with bcrypt
 - 🍪 **HTTP-only cookies** for secure session storage
+- 📋 **Task management API** with CRUD operations
+- 🔒 **User-scoped tasks** enforced at the database layer
+- 📊 **Task status tracking** (To Do, In Progress, Done)
 
 ### Developer Experience
 
@@ -110,6 +116,47 @@ Security highlights:
 - Passwords are never stored in plaintext and comparisons run through bcrypt.
 - API responses use generic error messaging to avoid leaking which credential was invalid.
 
+### Task Management
+
+Handle personal workstreams end-to-end with the built-in task manager:
+
+1. **API Routes**
+
+- `GET /api/tasks` – Fetch all tasks for the authenticated user
+- `POST /api/tasks` – Create a new task
+- `PATCH /api/tasks/:id` – Update an existing task
+- `DELETE /api/tasks/:id` – Remove a task
+
+2. **Task Properties**
+
+- Title (required) and description (optional)
+- Status: To Do, In Progress, Done
+- Priority: Low, Medium, High (optional)
+- Due date (optional) and future project association
+
+3. **React Query Integration**
+
+- `useTasks()` – Fetch and filter tasks with caching
+- `useCreateTask()` – Create mutation with automatic cache invalidation
+- `useUpdateTask()` – Partial updates with consistent cache refresh
+- `useDeleteTask()` – Remove tasks and refresh stale data
+
+4. **UI Features**
+
+- Task table with status and priority badges
+- Filters for status and priority
+- Create/edit dialogs powered by React Hook Form + Zod
+- Due date formatting via shared utilities
+- Delete confirmation for protection against accidental removal
+
+5. **Security**
+
+- Middleware hydrates `event.context.user` before handlers run
+- All queries scope tasks by the authenticated user ID
+- Ownership is revalidated before updates and deletes
+
+Relevant code: `routes/api/tasks`, `src/hooks/useTasks.ts`, `src/utils/task.ts`, `src/constants/index.ts`, and the `/tasks` page.
+
 ### Environment Variables
 
 - `DATABASE_URL` – PostgreSQL connection string used by Drizzle and postgres.js.
@@ -181,7 +228,7 @@ export default UserDetail;
 Use `[...all].tsx` for 404 pages or catch-all routes:
 
 ```tsx
-// src/pages/[...all].tsx or NotFound.tsx
+// src/pages/[...all].tsx or not-found.tsx
 const NotFound = () => {
   return (
     <div>
@@ -455,9 +502,20 @@ AutoImport({
 │   ├── assets/          # Static assets (images, SVGs)
 │   ├── components/      # React components
 │   │   └── ui/         # shadcn/ui components
+│   ├── contexts/
+│   │   ├── AuthContext.tsx
+│   │   └── QueryProvider.tsx  # React Query provider
 │   ├── pages/          # Frontend routes (file-based)
+│   │   └── tasks/
+│   │       └── index.tsx      # Task management page
 │   ├── hooks/          # Custom React hooks
+│   │   ├── index.ts
+│   │   ├── use-auth.ts
+│   │   └── useTasks.ts        # Task CRUD hooks
 │   ├── utils/          # Utility functions
+│   │   ├── auth-user.ts
+│   │   ├── cn.ts
+│   │   └── task.ts            # Task data helpers
 │   ├── types/          # TypeScript types
 │   ├── constants/      # App constants
 │   ├── data/           # Static data
@@ -465,6 +523,11 @@ AutoImport({
 │   └── main.tsx        # App entry point
 ├── routes/             # Backend API routes (file-based)
 │   └── api/           # API endpoints
+│       └── tasks/          # Task CRUD API routes
+│           ├── index.get.ts
+│           ├── index.post.ts
+│           ├── [id].patch.ts
+│           └── [id].delete.ts
 ├── configs/            # Configuration files
 │   └── fonts.config.ts
 ├── db/                 # Database schema and connection

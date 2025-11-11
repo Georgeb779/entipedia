@@ -16,6 +16,7 @@ dist-ssr
 .env
 .env.local
 drizzle/
+configs/
 
 # Editor directories and files
 .idea
@@ -38,6 +39,9 @@ package-lock.json
 
 auto-imports.d.ts
 .eslintrc-auto-import.json
+tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
+vite.config.d.ts
 
 .output
 .nitro

@@ -76,8 +76,8 @@ routes/
   - Example: `src/pages/[...all].tsx` → `/*` (404 page)
 - Special files:
   - `index.tsx` - Root route (`/`)
-  - `NotFound.tsx` or `[...all].tsx` - 404 page
-  - `RootErrorBoundary.tsx` - Error boundary
+  - `not-found.tsx` or `[...all].tsx` - 404 page
+  - `root-error-boundary.tsx` - Error boundary
 
 ### Backend Routes (Server-Side)
 
