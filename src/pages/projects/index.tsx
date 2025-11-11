@@ -51,10 +51,14 @@ const projectSchema = z
       .max(2000, "Description must be 2000 characters or fewer.")
       .optional()
       .nullable(),
+    status: z.enum(["todo", "in_progress", "done"]).default("todo"),
+    priority: z.enum(["low", "medium", "high"]).default("medium"),
   })
   .transform((values) => ({
     name: values.name.trim(),
     description: values.description ? values.description.trim() : null,
+    status: values.status,
+    priority: values.priority,
   }));
 
 type ProjectSchema = z.infer<typeof projectSchema>;
@@ -62,6 +66,8 @@ type ProjectSchema = z.infer<typeof projectSchema>;
 const defaultFormValues: ProjectSchema = {
   name: "",
   description: null,
+  status: "todo",
+  priority: "medium",
 };
 
 const defaultFilters: ProjectFilters = {
@@ -86,6 +92,8 @@ const sortOrderOptions: Array<{
 const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema => ({
   name: project.name,
   description: project.description ?? null,
+  status: project.status,
+  priority: project.priority,
 });
 
 const ProjectsPage = () => {

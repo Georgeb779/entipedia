@@ -2,13 +2,19 @@ import { defineHandler } from "nitro/h3";
 import { HTTPError, readBody } from "h3";
 
 import { getDb, projects } from "db";
-import type { AuthUser } from "@/types";
+import type { NewProject } from "db/schema";
+import type { AuthUser, ProjectPriority, ProjectStatus } from "@/types";
 import { toIsoString } from "../../_utils/dates.ts";
 
 type CreateProjectPayload = {
   name?: string;
   description?: string | null;
+  status?: ProjectStatus;
+  priority?: ProjectPriority;
 };
+
+const allowedStatuses: ReadonlyArray<ProjectStatus> = ["todo", "in_progress", "done"];
+const allowedPriorities: ReadonlyArray<ProjectPriority> = ["low", "medium", "high"];
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -28,19 +34,59 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Project name must be 255 characters or fewer.", { statusCode: 400 });
   }
 
-  const description = payload?.description?.trim() ?? null;
+  const rawDesc = typeof payload?.description === "string" ? payload.description.trim() : null;
+  const description = rawDesc ? rawDesc : null;
+
+  let status: ProjectStatus | undefined;
+
+  if (typeof payload?.status === "string") {
+    const statusValue = payload.status as ProjectStatus;
+
+    if (!allowedStatuses.includes(statusValue)) {
+      throw new HTTPError("Invalid project status. Must be 'todo', 'in_progress', or 'done'.", {
+        statusCode: 400,
+      });
+    }
+
+    status = statusValue;
+  }
+
+  let priority: ProjectPriority | undefined;
+
+  if (typeof payload?.priority === "string") {
+    const priorityValue = payload.priority as ProjectPriority;
+
+    if (!allowedPriorities.includes(priorityValue)) {
+      throw new HTTPError("Invalid project priority. Must be 'low', 'medium', or 'high'.", {
+        statusCode: 400,
+      });
+    }
+
+    priority = priorityValue;
+  }
 
   const db = getDb();
 
   try {
-    const [newProject] = await db
-      .insert(projects)
-      .values({
-        name,
-        description,
-        userId: context.user.id,
-      })
-      .returning();
+    const insertValues: Partial<NewProject> & {
+      name: string;
+      description: string | null;
+      userId: number;
+    } = {
+      name,
+      description,
+      userId: context.user.id,
+    };
+
+    if (status !== undefined) {
+      insertValues.status = status;
+    }
+
+    if (priority !== undefined) {
+      insertValues.priority = priority;
+    }
+
+    const [newProject] = await db.insert(projects).values(insertValues).returning();
 
     if (!newProject) {
       throw new HTTPError("Failed to create project.", { statusCode: 500 });

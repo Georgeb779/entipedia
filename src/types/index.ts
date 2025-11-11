@@ -57,6 +57,9 @@ export type ClientFilters = {
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";
 
+export type ProjectStatus = "todo" | "in_progress" | "done";
+export type ProjectPriority = "low" | "medium" | "high";
+
 export type ApiTask = Omit<Task, "dueDate" | "createdAt" | "updatedAt"> & {
   dueDate: string | null;
   createdAt: string;
@@ -96,11 +99,15 @@ export type ApiProjectWithTaskCount = Omit<ProjectWithTaskCount, "createdAt" | "
 export type ProjectFormValues = {
   name: string;
   description: string | null;
+  status: ProjectStatus;
+  priority: ProjectPriority;
 };
 
 export type ProjectFilters = {
   sortBy?: "name" | "createdAt" | "taskCount";
   sortOrder?: "asc" | "desc";
+  status?: ProjectStatus | "all";
+  priority?: ProjectPriority | "all";
 };
 
 export type ApiFile = Omit<StoredFile, "createdAt"> & {

@@ -3,13 +3,19 @@ import { HTTPError, readBody } from "h3";
 import { and, eq } from "drizzle-orm";
 
 import { getDb, projects } from "db";
-import type { AuthUser } from "@/types";
+import type { NewProject } from "db/schema";
+import type { AuthUser, ProjectPriority, ProjectStatus } from "@/types";
 import { toIsoString } from "../../_utils/dates.ts";
 
 type UpdateProjectPayload = {
   name?: string;
   description?: string | null;
+  status?: ProjectStatus;
+  priority?: ProjectPriority;
 };
+
+const allowedStatuses: ReadonlyArray<ProjectStatus> = ["todo", "in_progress", "done"];
+const allowedPriorities: ReadonlyArray<ProjectPriority> = ["low", "medium", "high"];
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -26,7 +32,7 @@ export default defineHandler(async (event) => {
   }
 
   const payload = await readBody<UpdateProjectPayload>(event);
-  const updateData: Record<string, unknown> = {};
+  const updateData: Partial<NewProject> = {};
 
   if (typeof payload?.name === "string") {
     const trimmed = payload.name.trim();
@@ -43,7 +49,38 @@ export default defineHandler(async (event) => {
   }
 
   if (payload?.description !== undefined) {
-    updateData.description = payload.description ? payload.description.trim() : null;
+    if (payload.description === null) {
+      updateData.description = null;
+    } else if (typeof payload.description === "string") {
+      const rawDesc = payload.description.trim();
+      updateData.description = rawDesc ? rawDesc : null;
+    } else {
+      throw new HTTPError("Description must be a string or null.", { statusCode: 400 });
+    }
+  }
+
+  if (typeof payload?.status === "string") {
+    const statusValue = payload.status as ProjectStatus;
+
+    if (!allowedStatuses.includes(statusValue)) {
+      throw new HTTPError("Invalid project status. Must be 'todo', 'in_progress', or 'done'.", {
+        statusCode: 400,
+      });
+    }
+
+    updateData.status = statusValue;
+  }
+
+  if (typeof payload?.priority === "string") {
+    const priorityValue = payload.priority as ProjectPriority;
+
+    if (!allowedPriorities.includes(priorityValue)) {
+      throw new HTTPError("Invalid project priority. Must be 'low', 'medium', or 'high'.", {
+        statusCode: 400,
+      });
+    }
+
+    updateData.priority = priorityValue;
   }
 
   if (Object.keys(updateData).length === 0) {

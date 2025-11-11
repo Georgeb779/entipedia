@@ -2,6 +2,8 @@ import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const taskStatusEnum = pgEnum("taskStatus", ["todo", "in_progress", "done"]);
+export const projectStatusEnum = pgEnum("projectStatus", ["todo", "in_progress", "done"]);
+export const projectPriorityEnum = pgEnum("projectPriority", ["low", "medium", "high"]);
 export const clientTypeEnum = pgEnum("clientType", ["person", "company"]);
 
 export const users = pgTable("users", {
@@ -20,6 +22,8 @@ export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
+  status: projectStatusEnum("status").notNull().default("todo"),
+  priority: projectPriorityEnum("priority").notNull().default("medium"),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

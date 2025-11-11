@@ -1,4 +1,11 @@
-import type { ClientType, FileCategory, TaskPriority, TaskStatus } from "@/types";
+import type {
+  ClientType,
+  FileCategory,
+  ProjectPriority,
+  ProjectStatus,
+  TaskPriority,
+  TaskStatus,
+} from "@/types";
 
 /*
 Desc:
@@ -41,6 +48,42 @@ export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
 };
 
 export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
+  low: "bg-[#F0EFEA] text-[#1F1F1F]",
+  medium: "bg-[rgba(246,201,14,0.18)] text-[#1C2431]",
+  high: "bg-[#FDE6E6] text-[#A61B1B]",
+};
+
+export const PROJECT_STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string }> = [
+  { value: "todo", label: "To Do" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "done", label: "Done" },
+];
+
+export const PROJECT_PRIORITY_OPTIONS: Array<{ value: ProjectPriority; label: string }> = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+];
+
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  todo: "To Do",
+  in_progress: "In Progress",
+  done: "Done",
+};
+
+export const PROJECT_PRIORITY_LABELS: Record<ProjectPriority, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
+
+export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
+  todo: "bg-[rgba(28,36,49,0.08)] text-[#1C2431]",
+  in_progress: "bg-[rgba(246,201,14,0.2)] text-[#1C2431]",
+  done: "bg-[#E1F3EA] text-[#1C2431]",
+};
+
+export const PROJECT_PRIORITY_COLORS: Record<ProjectPriority, string> = {
   low: "bg-[#F0EFEA] text-[#1F1F1F]",
   medium: "bg-[rgba(246,201,14,0.18)] text-[#1C2431]",
   high: "bg-[#FDE6E6] text-[#A61B1B]",

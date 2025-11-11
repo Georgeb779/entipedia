@@ -24,6 +24,8 @@ export default defineHandler(async (event) => {
         userId: projects.userId,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
+        status: projects.status,
+        priority: projects.priority,
         taskCount: count(tasks.id),
         completedTaskCount: sql<number>`count(case when ${tasks.status} = 'done' then 1 end)`,
       })

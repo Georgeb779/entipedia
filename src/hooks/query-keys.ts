@@ -9,6 +9,8 @@ const createProjectFiltersKey = (filters?: ProjectFilters): ProjectFiltersKey =>
   JSON.stringify({
     sortBy: filters?.sortBy ?? "createdAt",
     sortOrder: filters?.sortOrder ?? "desc",
+    status: filters?.status ?? "all",
+    priority: filters?.priority ?? "all",
   });
 
 const createTaskFiltersKey = (filters?: TaskFilters): TaskFiltersKey =>

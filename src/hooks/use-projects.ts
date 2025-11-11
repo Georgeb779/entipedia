@@ -54,6 +54,23 @@ const sortProjects = (projects: ProjectWithTaskCount[], filters?: ProjectFilters
   });
 };
 
+const filterProjects = (projects: ProjectWithTaskCount[], filters?: ProjectFilters) => {
+  const statusFilter = filters?.status ?? "all";
+  const priorityFilter = filters?.priority ?? "all";
+
+  return projects.filter((project) => {
+    if (statusFilter !== "all" && project.status !== statusFilter) {
+      return false;
+    }
+
+    if (priorityFilter !== "all" && project.priority !== priorityFilter) {
+      return false;
+    }
+
+    return true;
+  });
+};
+
 type UpdateProjectVariables = {
   projectId: number;
   data: Partial<ProjectFormValues>;
@@ -79,8 +96,9 @@ export const useProjects = (filters?: ProjectFilters): UseQueryResult<ProjectWit
 
       const data = (await response.json()) as { projects: ApiProjectWithTaskCount[] };
       const mapped = data.projects.map(mapApiProjectWithTaskCount);
+      const filtered = filterProjects(mapped, filters);
 
-      return sortProjects(mapped, filters);
+      return sortProjects(filtered, filters);
     },
   });
 };
@@ -134,6 +152,8 @@ export const useCreateProject = (): UseMutationResult<Project, Error, ProjectFor
         body: JSON.stringify({
           name: payload.name,
           description: payload.description ?? null,
+          status: payload.status,
+          priority: payload.priority,
         }),
       });
 
@@ -166,6 +186,8 @@ export const useUpdateProject = (): UseMutationResult<Project, Error, UpdateProj
         body: JSON.stringify({
           name: data.name,
           description: data.description ?? null,
+          status: data.status,
+          priority: data.priority,
         }),
       });
 
