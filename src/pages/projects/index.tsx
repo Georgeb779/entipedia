@@ -1,12 +1,46 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type HTMLAttributes,
+} from "react";
 import { useLocation, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MoreHorizontal } from "lucide-react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragCancelEvent,
+  DragOverEvent,
+  DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { Button, Layout, ProtectedRoute } from "@/components";
 import {
+  Badge,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogClose,
   DialogContent,
@@ -25,18 +59,24 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Separator,
   Textarea,
 } from "@/components/ui";
+import {
+  PROJECT_PRIORITY_COLORS,
+  PROJECT_PRIORITY_LABELS,
+  PROJECT_PRIORITY_OPTIONS,
+  PROJECT_STATUS_COLORS,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_OPTIONS,
+} from "@/constants";
 import { useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "@/hooks";
-import type { ProjectFilters, ProjectWithTaskCount } from "@/types";
-import { calculateProjectProgress, formatTaskDate } from "@/utils";
+import type { ProjectStatus, ProjectWithTaskCount } from "@/types";
+import { cn, formatTaskDate, resolveStatusValue } from "@/utils";
 
 const projectSchema = z
   .object({
@@ -70,24 +110,13 @@ const defaultFormValues: ProjectSchema = {
   priority: "medium",
 };
 
-const defaultFilters: ProjectFilters = {
-  sortBy: "createdAt",
-  sortOrder: "desc",
+const STATUSES: readonly ProjectStatus[] = ["todo", "in_progress", "done"];
+
+const STATUS_TITLES: Record<ProjectStatus, string> = {
+  todo: "To Do",
+  in_progress: "In Progress",
+  done: "Done",
 };
-
-const sortByOptions: Array<{ label: string; value: NonNullable<ProjectFilters["sortBy"]> }> = [
-  { label: "Created Date", value: "createdAt" },
-  { label: "Name", value: "name" },
-  { label: "Task Count", value: "taskCount" },
-];
-
-const sortOrderOptions: Array<{
-  label: string;
-  value: NonNullable<ProjectFilters["sortOrder"]>;
-}> = [
-  { label: "Descending", value: "desc" },
-  { label: "Ascending", value: "asc" },
-];
 
 const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema => ({
   name: project.name,
@@ -96,11 +125,222 @@ const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema =>
   priority: project.priority,
 });
 
+type ProjectBuckets = Record<ProjectStatus, ProjectWithTaskCount[]>;
+
+type KanbanColumnProps = {
+  title: string;
+  status: ProjectStatus;
+  projects: ProjectWithTaskCount[];
+  activeId: number | null;
+  isUpdating?: boolean;
+  onView: (project: ProjectWithTaskCount) => void;
+  onEdit: (project: ProjectWithTaskCount) => void;
+  onDelete: (project: ProjectWithTaskCount) => void;
+};
+
+type ProjectCardProps = {
+  project: ProjectWithTaskCount;
+  isActive: boolean;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+};
+
+type ProjectCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
+  project: ProjectWithTaskCount;
+  onView?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  showActions?: boolean;
+};
+
+const resolveProjectStatus = (value: unknown): ProjectStatus | null =>
+  resolveStatusValue<ProjectStatus>(value, STATUSES);
+
+const KanbanColumn = ({
+  title,
+  status,
+  projects,
+  activeId,
+  isUpdating,
+  onView,
+  onEdit,
+  onDelete,
+}: KanbanColumnProps) => {
+  const { isOver, setNodeRef } = useDroppable({ id: status, data: { status } });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">{title}</h2>
+        <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">{projects.length}</Badge>
+      </div>
+      <SortableContext
+        id={status}
+        items={projects.map((project) => project.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div
+          ref={setNodeRef}
+          className={cn(
+            "flex min-h-[400px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-4 shadow-sm transition-colors",
+            isOver ? "ring-2 ring-[#F6C90E]" : "ring-1 ring-transparent",
+            isUpdating ? "opacity-80" : "",
+          )}
+          aria-label={`${title} column`}
+          aria-busy={Boolean(isUpdating)}
+          role="list"
+        >
+          {projects.length === 0 ? (
+            <p className="text-muted-foreground rounded border border-dashed border-[rgba(28,36,49,0.15)] p-4 text-center text-sm">
+              No projects in this column
+            </p>
+          ) : (
+            projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                isActive={activeId === project.id}
+                onView={() => onView(project)}
+                onEdit={() => onEdit(project)}
+                onDelete={() => onDelete(project)}
+              />
+            ))
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  );
+};
+
+const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
+  ({ project, className, onView, onEdit, onDelete, showActions = true, ...rest }, ref) => (
+    <Card
+      ref={ref}
+      className={cn(
+        "text-foreground border border-[rgba(0,0,0,0.05)] bg-white shadow-sm",
+        className,
+      )}
+      {...rest}
+    >
+      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-4">
+        <CardTitle className="text-lg leading-tight font-semibold">
+          <span className="line-clamp-2">{project.name}</span>
+        </CardTitle>
+        {showActions ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-[#1C2431]"
+                aria-label={`Actions for project ${project.name}`}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-36">
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  onView?.();
+                }}
+              >
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  onEdit?.();
+                }}
+              >
+                Edit project
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  onDelete?.();
+                }}
+              >
+                Delete project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </CardHeader>
+      <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
+        <p className="line-clamp-3 text-left">
+          {project.description ? project.description : "No description provided."}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
+            {PROJECT_STATUS_LABELS[project.status]}
+          </Badge>
+          <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
+            {PROJECT_PRIORITY_LABELS[project.priority]}
+          </Badge>
+          <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">
+            {project.taskCount} tasks
+          </Badge>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          Created {formatTaskDate(project.createdAt)} · {project.completedTaskCount} completed tasks
+        </p>
+      </CardContent>
+    </Card>
+  ),
+);
+
+ProjectCardLayout.displayName = "ProjectCardLayout";
+
+const ProjectCard = ({ project, isActive, onView, onEdit, onDelete }: ProjectCardProps) => {
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+    id: project.id,
+    data: { status: project.status },
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? "grabbing" : "grab",
+  };
+
+  return (
+    <ProjectCardLayout
+      ref={setNodeRef}
+      project={project}
+      onView={onView}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      className={cn(
+        "transition-all select-none focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:outline-none",
+        "hover:scale-[1.02] hover:shadow-lg",
+        isActive ? "ring-2 ring-[#F6C90E]" : "border border-transparent",
+      )}
+      style={style}
+      data-status={project.status}
+      {...attributes}
+      {...listeners}
+      aria-label={`Project: ${project.name}`}
+    />
+  );
+};
+
+const ProjectCardPreview = ({ project }: { project: ProjectWithTaskCount }) => (
+  <ProjectCardLayout
+    project={project}
+    showActions={false}
+    className="pointer-events-none shadow-2xl ring-2 ring-[#F6C90E] select-none"
+  />
+);
+
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { editProjectId?: number } };
 
-  const [filters, setFilters] = useState<ProjectFilters>(defaultFilters);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectWithTaskCount | null>(null);
@@ -109,8 +349,10 @@ const ProjectsPage = () => {
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [boardError, setBoardError] = useState<string | null>(null);
 
-  const { data: projects = [], isLoading, error } = useProjects(filters);
+  const { data: projects = [], isLoading, error } = useProjects();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -151,7 +393,41 @@ const ProjectsPage = () => {
     }
   }, [editingProject, editForm]);
 
-  const sortedProjects = useMemo(() => projects, [projects]);
+  const projectBuckets = useMemo<ProjectBuckets>(() => {
+    const initial: ProjectBuckets = {
+      todo: [],
+      in_progress: [],
+      done: [],
+    };
+
+    projects.forEach((project) => {
+      initial[project.status].push(project);
+    });
+
+    return initial;
+  }, [projects]);
+
+  const projectLookup = useMemo(() => {
+    const lookup = new Map<number, ProjectWithTaskCount>();
+    projects.forEach((project) => {
+      lookup.set(project.id, project);
+    });
+    return lookup;
+  }, [projects]);
+
+  const activeProject = useMemo(
+    () => (activeId ? (projectLookup.get(activeId) ?? null) : null),
+    [activeId, projectLookup],
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   const resetCreateForm = useCallback(() => {
     createForm.reset(defaultFormValues);
@@ -230,19 +506,157 @@ const ProjectsPage = () => {
     }
   };
 
-  const handleSortByChange = (value: string) => {
-    setFilters((current) => ({
-      ...current,
-      sortBy: value as NonNullable<ProjectFilters["sortBy"]>,
-    }));
+  const handleNavigateToDetails = (project: ProjectWithTaskCount) => {
+    navigate(`/projects/${project.id}`);
   };
 
-  const handleSortOrderChange = (value: string) => {
-    setFilters((current) => ({
-      ...current,
-      sortOrder: value as NonNullable<ProjectFilters["sortOrder"]>,
-    }));
+  const handleOpenEdit = (project: ProjectWithTaskCount) => {
+    setEditingProject(project);
+    setIsEditModalOpen(true);
   };
+
+  const sensorsUpdating = updateProject.isPending;
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const sourceId = Number(event.active.id);
+
+    if (Number.isInteger(sourceId) && sourceId > 0) {
+      setActiveId(sourceId);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveId(null);
+
+      if (!over) {
+        return;
+      }
+
+      const projectId = Number(active.id);
+
+      if (!Number.isInteger(projectId) || projectId <= 0) {
+        return;
+      }
+
+      const dataStatus = resolveProjectStatus(
+        (over.data?.current as { status?: unknown } | undefined)?.status ?? null,
+      );
+      const idStatus = resolveProjectStatus(over.id);
+      const nextStatus = dataStatus ?? idStatus;
+
+      if (!nextStatus) {
+        return;
+      }
+
+      const currentProject = projectLookup.get(projectId);
+
+      if (!currentProject || currentProject.status === nextStatus) {
+        return;
+      }
+
+      try {
+        setBoardError(null);
+        await updateProject.mutateAsync({ projectId, data: { status: nextStatus } });
+      } catch (mutationError) {
+        const message =
+          mutationError instanceof Error ? mutationError.message : "Failed to update project.";
+        setBoardError(message);
+      }
+    },
+    [projectLookup, updateProject],
+  );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+  }, []);
+
+  const accessibility = useMemo(() => {
+    const getProject = (id: unknown) => {
+      const numericId = Number(id);
+
+      if (!Number.isInteger(numericId) || numericId <= 0) {
+        return undefined;
+      }
+
+      return projectLookup.get(numericId);
+    };
+
+    const describeColumn = (status: ProjectStatus | null) =>
+      status ? STATUS_TITLES[status] : undefined;
+
+    const resolveFromOver = (over: DragOverEvent["over"] | DragEndEvent["over"]) => {
+      if (!over) {
+        return null;
+      }
+
+      const dataStatus = resolveProjectStatus(
+        (over.data?.current as { status?: unknown } | undefined)?.status ?? null,
+      );
+
+      return dataStatus ?? resolveProjectStatus(over.id);
+    };
+
+    return {
+      screenReaderInstructions: {
+        draggable:
+          "To pick up a project, press space or enter. Use the arrow keys to move between columns, then press space or enter again to drop the project.",
+      },
+      announcements: {
+        onDragStart: ({ active }: DragStartEvent) => {
+          const project = getProject(active.id);
+
+          if (!project) {
+            return undefined;
+          }
+
+          const columnTitle = describeColumn(project.status);
+          return columnTitle
+            ? `Picked up ${project.name}. Current column ${columnTitle}.`
+            : `Picked up ${project.name}.`;
+        },
+        onDragOver: ({ active, over }: DragOverEvent) => {
+          if (!over) {
+            return undefined;
+          }
+
+          const project = getProject(active.id);
+
+          if (!project) {
+            return undefined;
+          }
+
+          const status = resolveFromOver(over);
+          const columnTitle = describeColumn(status);
+
+          return columnTitle ? `${project.name} is over column ${columnTitle}.` : undefined;
+        },
+        onDragEnd: ({ active, over }: DragEndEvent) => {
+          const project = getProject(active.id);
+
+          if (!project) {
+            return undefined;
+          }
+
+          if (!over) {
+            return `${project.name} was dropped outside of any column.`;
+          }
+
+          const status = resolveFromOver(over);
+          const columnTitle = describeColumn(status);
+
+          return columnTitle
+            ? `${project.name} was dropped in column ${columnTitle}.`
+            : `${project.name} was dropped, but the destination column is unknown.`;
+        },
+        onDragCancel: ({ active }: DragCancelEvent) => {
+          const project = getProject(active.id);
+          return project ? `Cancelled dragging ${project.name}.` : undefined;
+        },
+      },
+    };
+  }, [projectLookup]);
 
   return (
     <ProtectedRoute>
@@ -264,42 +678,6 @@ const ProjectsPage = () => {
               </div>
             </header>
 
-            <section className="bg-card flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] p-4 shadow-sm">
-              <div className="w-full max-w-xs">
-                <Label className="text-muted-foreground">Sort By</Label>
-                <Select value={filters.sortBy ?? "createdAt"} onValueChange={handleSortByChange}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Sort projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortByOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="w-full max-w-xs">
-                <Label className="text-muted-foreground">Order</Label>
-                <Select value={filters.sortOrder ?? "desc"} onValueChange={handleSortOrderChange}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select order" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOrderOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </section>
-
-            <Separator />
-
             <section>
               {isLoading ? (
                 <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
@@ -307,104 +685,41 @@ const ProjectsPage = () => {
                 <div className="text-destructive py-12 text-center">
                   {error instanceof Error ? error.message : "Failed to load projects."}
                 </div>
-              ) : sortedProjects.length === 0 ? (
-                <div className="bg-card text-muted-foreground rounded-xl p-12 text-center shadow-sm">
-                  <p>No projects found. Create your first project to get started.</p>
-                </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {sortedProjects.map((project) => {
-                    const progress = calculateProjectProgress(
-                      project.completedTaskCount,
-                      project.taskCount,
-                    );
-
-                    const handleOpenEdit = () => {
-                      setEditingProject(project);
-                      setIsEditModalOpen(true);
-                    };
-
-                    const handleNavigateToDetails = () => {
-                      navigate(`/projects/${project.id}`);
-                    };
-
-                    return (
-                      <div
-                        key={project.id}
-                        className="flex h-full flex-col rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="w-full space-y-3">
-                            <div className="flex items-baseline justify-between gap-3">
-                              <h3 className="line-clamp-1 text-lg font-semibold text-[#1C2431]">
-                                {project.name}
-                              </h3>
-                              <span className="text-sm font-semibold text-[#1C2431]">
-                                {progress}%
-                              </span>
-                            </div>
-                            <div className="h-2 w-full rounded-full bg-[rgba(28,36,49,0.08)]">
-                              <div
-                                className="h-full rounded-full bg-[#E8B90D]"
-                                style={{ width: `${progress}%` }}
-                              />
-                            </div>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-[#1C2431]"
-                                aria-label="Project actions"
-                              >
-                                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="min-w-36">
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  handleNavigateToDetails();
-                                }}
-                              >
-                                View details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  handleOpenEdit();
-                                }}
-                              >
-                                Edit project
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  openDeleteDialog(project);
-                                }}
-                              >
-                                Delete project
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-
-                        <div className="text-muted-foreground mt-4 space-y-3 border-t border-[rgba(0,0,0,0.06)] pt-4 text-sm">
-                          <p className="font-medium text-[#1C2431]">
-                            {project.taskCount} tasks ({project.completedTaskCount} completed)
-                          </p>
-                          <p className="leading-relaxed">
-                            {project.description ?? "No description provided."}
-                          </p>
-                          <p className="text-xs">Created {formatTaskDate(project.createdAt)}</p>
-                          <p className="text-xs">Updated {formatTaskDate(project.updatedAt)}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <>
+                  {boardError ? (
+                    <div className="text-destructive mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm">
+                      {boardError}
+                    </div>
+                  ) : null}
+                  <DndContext
+                    accessibility={accessibility}
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragCancel={handleDragCancel}
+                  >
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                      {STATUSES.map((status) => (
+                        <KanbanColumn
+                          key={status}
+                          title={STATUS_TITLES[status]}
+                          status={status}
+                          projects={projectBuckets[status]}
+                          activeId={activeId}
+                          isUpdating={sensorsUpdating}
+                          onView={handleNavigateToDetails}
+                          onEdit={handleOpenEdit}
+                          onDelete={openDeleteDialog}
+                        />
+                      ))}
+                    </div>
+                    <DragOverlay>
+                      {activeProject ? <ProjectCardPreview project={activeProject} /> : null}
+                    </DragOverlay>
+                  </DndContext>
+                </>
               )}
             </section>
           </div>
@@ -412,7 +727,7 @@ const ProjectsPage = () => {
 
         <Dialog
           open={isCreateModalOpen}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             setIsCreateModalOpen(open);
             if (!open) {
               resetCreateForm();
@@ -463,6 +778,64 @@ const ProjectsPage = () => {
                   )}
                 />
 
+                <FormField
+                  control={createForm.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value as ProjectStatus)}
+                        disabled={createProject.isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PROJECT_STATUS_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createForm.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value)}
+                        disabled={createProject.isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PROJECT_PRIORITY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {createForm.formState.errors.root ? (
                   <p className="text-destructive text-sm" role="alert">
                     {createForm.formState.errors.root.message}
@@ -483,10 +856,9 @@ const ProjectsPage = () => {
             </Form>
           </DialogContent>
         </Dialog>
-
         <Dialog
           open={isEditModalOpen}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             setIsEditModalOpen(open);
             if (!open) {
               closeEditModal();
@@ -532,6 +904,64 @@ const ProjectsPage = () => {
                           onChange={(event) => field.onChange(event.target.value)}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value as ProjectStatus)}
+                        disabled={updateProject.isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PROJECT_STATUS_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value)}
+                        disabled={updateProject.isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PROJECT_PRIORITY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

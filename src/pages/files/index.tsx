@@ -413,19 +413,19 @@ export default function FilesPage() {
                 <TableBody>
                   {filesLoading ? (
                     <TableRow>
-                      <TableCell className="py-8 text-center" colSpan={6}>
+                      <TableCell className="py-8 text-center" colSpan={7}>
                         <span className="text-muted-foreground text-sm">Loading files...</span>
                       </TableCell>
                     </TableRow>
                   ) : filesError ? (
                     <TableRow>
-                      <TableCell className="py-8 text-center" colSpan={6}>
+                      <TableCell className="py-8 text-center" colSpan={7}>
                         <span className="text-destructive text-sm">{filesError}</span>
                       </TableCell>
                     </TableRow>
                   ) : filteredFiles.length === 0 ? (
                     <TableRow>
-                      <TableCell className="py-8 text-center" colSpan={6}>
+                      <TableCell className="py-8 text-center" colSpan={7}>
                         <span className="text-muted-foreground text-sm">No files found.</span>
                       </TableCell>
                     </TableRow>

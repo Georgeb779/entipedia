@@ -176,6 +176,24 @@ export const useUpdateProject = (): UseMutationResult<Project, Error, UpdateProj
 
   return useMutation({
     mutationFn: async ({ projectId, data }) => {
+      const requestPayload: Record<string, unknown> = {};
+
+      if (typeof data.name === "string") {
+        requestPayload.name = data.name;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(data, "description")) {
+        requestPayload.description = data.description;
+      }
+
+      if (typeof data.status === "string") {
+        requestPayload.status = data.status;
+      }
+
+      if (typeof data.priority === "string") {
+        requestPayload.priority = data.priority;
+      }
+
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "PATCH",
         credentials: "include",
@@ -183,20 +201,15 @@ export const useUpdateProject = (): UseMutationResult<Project, Error, UpdateProj
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({
-          name: data.name,
-          description: data.description ?? null,
-          status: data.status,
-          priority: data.priority,
-        }),
+        body: JSON.stringify(requestPayload),
       });
 
       await ensureOk(response, "Failed to update project.", () => {
         void refreshSession();
       });
 
-      const payload = (await response.json()) as { project: ApiProject };
-      const mapped = mapApiProject(payload.project);
+      const responsePayload = (await response.json()) as { project: ApiProject };
+      const mapped = mapApiProject(responsePayload.project);
 
       void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
       void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(projectId) });

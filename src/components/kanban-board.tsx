@@ -36,7 +36,7 @@ import {
   TASK_STATUS_LABELS,
 } from "@/constants";
 import type { Task, TaskStatus } from "@/types";
-import { cn, formatTaskDate } from "@/utils";
+import { cn, formatTaskDate, resolveStatusValue } from "@/utils";
 
 const STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
 const STATUS_TITLES: Record<TaskStatus, string> = {
@@ -45,10 +45,8 @@ const STATUS_TITLES: Record<TaskStatus, string> = {
   done: "Done",
 };
 
-const resolveStatus = (value: unknown): TaskStatus | null =>
-  typeof value === "string" && (STATUSES as readonly string[]).includes(value)
-    ? (value as TaskStatus)
-    : null;
+const resolveTaskStatus = (value: unknown): TaskStatus | null =>
+  resolveStatusValue<TaskStatus>(value, STATUSES);
 
 const getStatusTitle = (status: TaskStatus | null | undefined): string | undefined =>
   status ? STATUS_TITLES[status] : undefined;
@@ -262,10 +260,10 @@ const KanbanBoard = ({ tasks, onTaskStatusChange, isUpdating = false }: KanbanBo
         return;
       }
 
-      const dataStatus = resolveStatus(
+      const dataStatus = resolveTaskStatus(
         (over.data?.current as { status?: unknown } | undefined)?.status ?? null,
       );
-      const idStatus = resolveStatus(over.id);
+      const idStatus = resolveTaskStatus(over.id);
       const nextStatus = dataStatus ?? idStatus;
 
       if (!nextStatus) {
@@ -307,11 +305,11 @@ const KanbanBoard = ({ tasks, onTaskStatusChange, isUpdating = false }: KanbanBo
         return null;
       }
 
-      const dataStatus = resolveStatus(
+      const dataStatus = resolveTaskStatus(
         (over.data?.current as { status?: unknown } | undefined)?.status ?? null,
       );
 
-      return dataStatus ?? resolveStatus(over.id);
+      return dataStatus ?? resolveTaskStatus(over.id);
     };
 
     return {
