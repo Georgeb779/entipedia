@@ -3,9 +3,7 @@ import { HTTPError, readBody } from "h3";
 
 import { getDb, projects } from "db";
 import type { AuthUser } from "@/types";
-
-const toIsoString = (value: Date | string) =>
-  value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+import { toIsoString } from "../../_utils/dates.ts";
 
 type CreateProjectPayload = {
   name?: string;
