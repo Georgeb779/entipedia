@@ -20,7 +20,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui";
-import { useAuth, useProject } from "@/hooks";
+import { useAuth, useDeleteProject, useProject } from "@/hooks";
 import {
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
@@ -44,6 +44,7 @@ const ProjectDetailPage = () => {
   }, [navigate, projectId]);
 
   const { data, isLoading, error } = useProject(projectId);
+  const deleteProject = useDeleteProject();
 
   useEffect(() => {
     if (auth.status === "unauthenticated") {
@@ -97,6 +98,29 @@ const ProjectDetailPage = () => {
     tasks.length,
   );
 
+  const handleEditProject = () => {
+    navigate("/projects", { state: { editProjectId: project.id } });
+  };
+
+  const handleDeleteProject = async () => {
+    const confirmed = window.confirm(
+      `Delete project "${project.name}"? This will remove all tasks in the project as well.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProject.mutateAsync(project.id);
+      navigate("/projects", { replace: true });
+    } catch (mutationError) {
+      window.alert(
+        mutationError instanceof Error ? mutationError.message : "Failed to delete project.",
+      );
+    }
+  };
+
   const resolvePriority = (priority: Task["priority"]): TaskPriority | null => {
     if (!priority) {
       return null;
@@ -148,11 +172,15 @@ const ProjectDetailPage = () => {
             ← Back to Projects
           </Button>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => navigate("/projects")}>
+            <Button variant="secondary" onClick={handleEditProject}>
               Edit Project
             </Button>
-            <Button variant="destructive" onClick={() => navigate("/projects")}>
-              Delete Project
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProject}
+              disabled={deleteProject.isPending}
+            >
+              {deleteProject.isPending ? "Deleting..." : "Delete Project"}
             </Button>
           </div>
         </div>

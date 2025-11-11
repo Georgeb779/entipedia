@@ -8,19 +8,8 @@ import {
 
 import type { ApiTask, Task, TaskFilters, TaskFormValues } from "@/types";
 import { mapApiTask } from "@/utils";
+import { PROJECT_KEYS, TASK_KEYS } from "./query-keys";
 import { useAuthActions } from "./use-auth";
-
-const createFiltersKey = (filters?: TaskFilters) =>
-  JSON.stringify({
-    status: filters?.status ?? "all",
-    priority: filters?.priority ?? "all",
-  });
-
-const TASK_KEYS = {
-  all: ["tasks"],
-  lists: () => [...TASK_KEYS.all, "list"],
-  list: (filters?: TaskFilters) => [...TASK_KEYS.lists(), createFiltersKey(filters)],
-};
 
 const ensureOk = async (response: Response, fallback: string, onUnauthorized?: () => void) => {
   if (response.ok) {
@@ -52,7 +41,12 @@ const applyFilters = (tasks: Task[], filters?: TaskFilters) => {
     const priorityMatches =
       !filters.priority || filters.priority === "all" || task.priority === filters.priority;
 
-    return statusMatches && priorityMatches;
+    const projectMatches =
+      !filters.projectId ||
+      filters.projectId === "all" ||
+      (task.projectId !== null && task.projectId === filters.projectId);
+
+    return statusMatches && priorityMatches && projectMatches;
   });
 };
 
@@ -117,8 +111,13 @@ export const useCreateTask = (): UseMutationResult<Task, Error, CreateTaskVariab
       const data = (await response.json()) as { task: ApiTask };
       return mapApiTask(data.task);
     },
-    onSuccess: () => {
+    onSuccess: (task) => {
       void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
+      void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
+
+      if (task.projectId) {
+        void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(task.projectId) });
+      }
     },
   });
 };
@@ -172,8 +171,13 @@ export const useUpdateTask = (): UseMutationResult<Task, Error, UpdateTaskVariab
       const payload = (await response.json()) as { task: ApiTask };
       return mapApiTask(payload.task);
     },
-    onSuccess: () => {
+    onSuccess: (task) => {
       void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
+      void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
+
+      if (task.projectId) {
+        void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(task.projectId) });
+      }
     },
   });
 };

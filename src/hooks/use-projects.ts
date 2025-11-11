@@ -17,21 +17,8 @@ import type {
   Task,
 } from "@/types";
 import { mapApiProject, mapApiProjectWithTaskCount, mapApiTask } from "@/utils";
+import { PROJECT_KEYS, TASK_KEYS } from "./query-keys";
 import { useAuthActions } from "./use-auth";
-
-const serializeFilters = (filters?: ProjectFilters) =>
-  JSON.stringify({
-    sortBy: filters?.sortBy ?? "createdAt",
-    sortOrder: filters?.sortOrder ?? "desc",
-  });
-
-const PROJECT_KEYS = {
-  all: ["projects"] as const,
-  lists: () => [...PROJECT_KEYS.all, "list"] as const,
-  list: (filters?: ProjectFilters) => [...PROJECT_KEYS.lists(), serializeFilters(filters)] as const,
-  details: () => [...PROJECT_KEYS.all, "detail"] as const,
-  detail: (id: number) => [...PROJECT_KEYS.details(), id] as const,
-} as const;
 
 const ensureOk = async (response: Response, fallback: string, onUnauthorized?: () => void) => {
   if (response.ok) {
@@ -217,6 +204,7 @@ export const useDeleteProject = (): UseMutationResult<void, Error, number> => {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
+      void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
     },
   });
 };
