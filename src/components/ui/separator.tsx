@@ -5,7 +5,7 @@ import { cn } from "@/utils";
 
 type SeparatorProps = React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>;
 
-type SeparatorElement = React.ElementRef<typeof SeparatorPrimitive.Root>;
+type SeparatorElement = React.ComponentRef<typeof SeparatorPrimitive.Root>;
 
 const Separator = React.forwardRef<SeparatorElement, SeparatorProps>(
   ({ className, orientation = "horizontal", decorative = false, ...props }, ref) => (

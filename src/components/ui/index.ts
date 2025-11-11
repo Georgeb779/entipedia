@@ -12,3 +12,6 @@ export { badgeVariants } from "./badge-variants";
 export * from "./card";
 export * from "./tabs";
 export * from "./separator";
+export * from "./avatar";
+export * from "./dropdown-menu";
+export * from "./navigation-menu";

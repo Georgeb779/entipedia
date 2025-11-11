@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components";
+import { Button, Layout, ProtectedRoute } from "@/components";
 import {
   Badge,
   Card,
@@ -34,13 +34,7 @@ import {
   Separator,
   Textarea,
 } from "@/components/ui";
-import {
-  useAuth,
-  useCreateProject,
-  useDeleteProject,
-  useProjects,
-  useUpdateProject,
-} from "@/hooks";
+import { useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "@/hooks";
 import type { ProjectFilters, ProjectWithTaskCount } from "@/types";
 import { calculateProjectProgress, formatTaskDate } from "@/utils";
 
@@ -97,7 +91,6 @@ const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema =>
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { editProjectId?: number } };
-  const auth = useAuth();
 
   const [filters, setFilters] = useState<ProjectFilters>(defaultFilters);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -118,12 +111,6 @@ const ProjectsPage = () => {
     resolver: zodResolver(projectSchema),
     defaultValues: defaultFormValues,
   });
-
-  useEffect(() => {
-    if (auth.status === "unauthenticated") {
-      navigate("/auth/login", { replace: true });
-    }
-  }, [auth.status, navigate]);
 
   useEffect(() => {
     const editProjectId = location.state?.editProjectId;
@@ -235,287 +222,287 @@ const ProjectsPage = () => {
     }));
   };
 
-  if (auth.status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-        <p>Checking session...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 px-6 py-10 text-white">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold">Projects</h1>
-            <p className="text-sm text-gray-400">
-              Organize your work into projects, track task progress, and stay on top of deadlines.
-            </p>
+    <ProtectedRoute>
+      <Layout>
+        <div className="px-6 py-10 text-white">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+            <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold">Projects</h1>
+                <p className="text-sm text-gray-400">
+                  Organize your work into projects, track task progress, and stay on top of
+                  deadlines.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
+                  Create Project
+                </Button>
+              </div>
+            </header>
+
+            <section className="flex flex-wrap gap-4 rounded-lg bg-gray-800 p-4">
+              <div className="w-full max-w-xs">
+                <FormLabel className="text-gray-300">Sort By</FormLabel>
+                <Select value={filters.sortBy ?? "createdAt"} onValueChange={handleSortByChange}>
+                  <SelectTrigger className="mt-2 bg-gray-900 text-white">
+                    <SelectValue placeholder="Sort projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortByOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-full max-w-xs">
+                <FormLabel className="text-gray-300">Order</FormLabel>
+                <Select value={filters.sortOrder ?? "desc"} onValueChange={handleSortOrderChange}>
+                  <SelectTrigger className="mt-2 bg-gray-900 text-white">
+                    <SelectValue placeholder="Select order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOrderOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </section>
+
+            <Separator />
+
+            <section>
+              {isLoading ? (
+                <div className="py-12 text-center text-gray-400">Loading projects...</div>
+              ) : error ? (
+                <div className="py-12 text-center text-red-400">
+                  {error instanceof Error ? error.message : "Failed to load projects."}
+                </div>
+              ) : sortedProjects.length === 0 ? (
+                <div className="rounded-lg bg-gray-800 p-12 text-center text-gray-400">
+                  <p>No projects found. Create your first project to get started.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {sortedProjects.map((project) => {
+                    const progress = calculateProjectProgress(
+                      project.completedTaskCount,
+                      project.taskCount,
+                    );
+
+                    return (
+                      <Card key={project.id} className="flex h-full flex-col">
+                        <CardHeader>
+                          <CardTitle className="line-clamp-1">{project.name}</CardTitle>
+                          <CardDescription className="line-clamp-2">
+                            {project.description ?? "No description provided."}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-1 flex-col gap-4">
+                          <div className="flex items-center justify-between text-sm text-gray-300">
+                            <span>
+                              {project.taskCount} tasks ({project.completedTaskCount} completed)
+                            </span>
+                            <Badge className="bg-blue-600">{progress}% complete</Badge>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-gray-700">
+                            <div
+                              className="h-2 rounded-full bg-blue-500"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <div className="space-y-2 text-sm text-gray-400">
+                            <p>Created {formatTaskDate(project.createdAt)}</p>
+                            <p>Updated {formatTaskDate(project.updatedAt)}</p>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex flex-wrap justify-between gap-2">
+                          <Link to={`/projects/${project.id}`} className="flex-1">
+                            <Button className="w-full" variant="outline">
+                              View Details
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              setEditingProject(project);
+                              setIsEditModalOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => handleDeleteProject(project)}
+                          >
+                            Delete
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
-              Create Project
-            </Button>
-          </div>
-        </header>
+        </div>
 
-        <section className="flex flex-wrap gap-4 rounded-lg bg-gray-800 p-4">
-          <div className="w-full max-w-xs">
-            <FormLabel className="text-gray-300">Sort By</FormLabel>
-            <Select value={filters.sortBy ?? "createdAt"} onValueChange={handleSortByChange}>
-              <SelectTrigger className="mt-2 bg-gray-900 text-white">
-                <SelectValue placeholder="Sort projects" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortByOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <Dialog
+          open={isCreateModalOpen}
+          onOpenChange={(open) => {
+            setIsCreateModalOpen(open);
+            if (!open) {
+              resetCreateForm();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Project</DialogTitle>
+            </DialogHeader>
 
-          <div className="w-full max-w-xs">
-            <FormLabel className="text-gray-300">Order</FormLabel>
-            <Select value={filters.sortOrder ?? "desc"} onValueChange={handleSortOrderChange}>
-              <SelectTrigger className="mt-2 bg-gray-900 text-white">
-                <SelectValue placeholder="Select order" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOrderOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </section>
-
-        <Separator />
-
-        <section>
-          {isLoading ? (
-            <div className="py-12 text-center text-gray-400">Loading projects...</div>
-          ) : error ? (
-            <div className="py-12 text-center text-red-400">
-              {error instanceof Error ? error.message : "Failed to load projects."}
-            </div>
-          ) : sortedProjects.length === 0 ? (
-            <div className="rounded-lg bg-gray-800 p-12 text-center text-gray-400">
-              <p>No projects found. Create your first project to get started.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {sortedProjects.map((project) => {
-                const progress = calculateProjectProgress(
-                  project.completedTaskCount,
-                  project.taskCount,
-                );
-
-                return (
-                  <Card key={project.id} className="flex h-full flex-col">
-                    <CardHeader>
-                      <CardTitle className="line-clamp-1">{project.name}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {project.description ?? "No description provided."}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-1 flex-col gap-4">
-                      <div className="flex items-center justify-between text-sm text-gray-300">
-                        <span>
-                          {project.taskCount} tasks ({project.completedTaskCount} completed)
-                        </span>
-                        <Badge className="bg-blue-600">{progress}% complete</Badge>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-gray-700">
-                        <div
-                          className="h-2 rounded-full bg-blue-500"
-                          style={{ width: `${progress}%` }}
+            <Form {...createForm}>
+              <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
+                <FormField
+                  control={createForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Project name"
+                          disabled={createProject.isPending}
+                          {...field}
                         />
-                      </div>
-                      <div className="space-y-2 text-sm text-gray-400">
-                        <p>Created {formatTaskDate(project.createdAt)}</p>
-                        <p>Updated {formatTaskDate(project.updatedAt)}</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex flex-wrap justify-between gap-2">
-                      <Link to={`/projects/${project.id}`} className="flex-1">
-                        <Button className="w-full" variant="outline">
-                          View Details
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          setEditingProject(project);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button variant="destructive" onClick={() => handleDeleteProject(project)}>
-                        Delete
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-      <Dialog
-        open={isCreateModalOpen}
-        onOpenChange={(open) => {
-          setIsCreateModalOpen(open);
-          if (!open) {
-            resetCreateForm();
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Project</DialogTitle>
-          </DialogHeader>
+                <FormField
+                  control={createForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Optional project description"
+                          disabled={createProject.isPending}
+                          value={field.value ?? ""}
+                          onChange={(event) => field.onChange(event.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
-              <FormField
-                control={createForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Project name"
-                        disabled={createProject.isPending}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {createForm.formState.errors.root ? (
+                  <p className="text-sm text-red-400" role="alert">
+                    {createForm.formState.errors.root.message}
+                  </p>
+                ) : null}
 
-              <FormField
-                control={createForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Optional project description"
-                        disabled={createProject.isPending}
-                        value={field.value ?? ""}
-                        onChange={(event) => field.onChange(event.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {createForm.formState.errors.root ? (
-                <p className="text-sm text-red-400" role="alert">
-                  {createForm.formState.errors.root.message}
-                </p>
-              ) : null}
-
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="outline" disabled={createProject.isPending}>
-                    Cancel
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline" disabled={createProject.isPending}>
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit" variant="secondary" disabled={createProject.isPending}>
+                    {createProject.isPending ? "Creating..." : "Create"}
                   </Button>
-                </DialogClose>
-                <Button type="submit" variant="secondary" disabled={createProject.isPending}>
-                  {createProject.isPending ? "Creating..." : "Create"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog
-        open={isEditModalOpen}
-        onOpenChange={(open) => {
-          setIsEditModalOpen(open);
-          if (!open) {
-            closeEditModal();
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Project</DialogTitle>
-          </DialogHeader>
+        <Dialog
+          open={isEditModalOpen}
+          onOpenChange={(open) => {
+            setIsEditModalOpen(open);
+            if (!open) {
+              closeEditModal();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Project</DialogTitle>
+            </DialogHeader>
 
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Project name"
-                        disabled={updateProject.isPending}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Project name"
+                          disabled={updateProject.isPending}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={editForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Optional project description"
-                        disabled={updateProject.isPending}
-                        value={field.value ?? ""}
-                        onChange={(event) => field.onChange(event.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Optional project description"
+                          disabled={updateProject.isPending}
+                          value={field.value ?? ""}
+                          onChange={(event) => field.onChange(event.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {editForm.formState.errors.root ? (
-                <p className="text-sm text-red-400" role="alert">
-                  {editForm.formState.errors.root.message}
-                </p>
-              ) : null}
+                {editForm.formState.errors.root ? (
+                  <p className="text-sm text-red-400" role="alert">
+                    {editForm.formState.errors.root.message}
+                  </p>
+                ) : null}
 
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="outline" disabled={updateProject.isPending}>
-                    Cancel
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline" disabled={updateProject.isPending}>
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit" variant="secondary" disabled={updateProject.isPending}>
+                    {updateProject.isPending ? "Saving..." : "Save changes"}
                   </Button>
-                </DialogClose>
-                <Button type="submit" variant="secondary" disabled={updateProject.isPending}>
-                  {updateProject.isPending ? "Saving..." : "Save changes"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </div>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </Layout>
+    </ProtectedRoute>
   );
 };
 
