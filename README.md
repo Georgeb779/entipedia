@@ -69,8 +69,17 @@ docker run --name entipedia-postgres \
   -p 5432:5432 \
   -d postgres:16
 
-# Start development server (frontend + backend)
+# Start frontend + backend (dual-server mode)
 npm run dev
+
+# Run only the React frontend (Vite on http://localhost:5000)
+npm run dev:client
+
+# Run only the Nitro API server (defaults to http://localhost:5999)
+npm run dev:server
+
+# Legacy integrated mode with Nitro running inside Vite
+npm run dev:integrated
 ```
 
 # Build for production
@@ -87,10 +96,13 @@ npm run lint
 
 ```
 
-The dev server runs on:
+The dev servers run on:
 
 - **Frontend**: http://localhost:5000
-- **API**: http://localhost:5000/api/\*
+- **API (dual-server mode)**: http://localhost:5999/api/* (proxied from Vite during development)
+- **API (integrated mode)**: http://localhost:5000/api/*
+
+> Vite automatically proxies `/api/*` requests to the standalone Nitro server when it is running on port 5999.
 
 ## Database Setup
 

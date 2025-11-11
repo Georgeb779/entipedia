@@ -27,6 +27,7 @@
     "server.ts",
     "db",
     "configs",
+    "nitro.config.ts",
     "vite.config.ts",
     "tailwind.config.ts",
     "drizzle.config.ts",
