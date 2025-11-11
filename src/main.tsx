@@ -4,21 +4,23 @@ import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router";
 import routes from "~react-pages";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/auth-context";
+import { QueryProvider } from "@/contexts/query-provider";
 
-// eslint-disable-next-line react-refresh/only-export-components
-function App() {
+export const App = () => {
   return <Suspense fallback={<p>...</p>}>{useRoutes(routes)}</Suspense>;
-}
+};
 
 const app = createRoot(document.getElementById("root")!);
 
 app.render(
   <StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryProvider>
   </StrictMode>,
 );
