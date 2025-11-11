@@ -10,14 +10,17 @@ import type { ApiTask, Task, TaskFilters, TaskFormValues } from "@/types";
 import { mapApiTask } from "@/utils";
 import { useAuthActions } from "./use-auth";
 
-const TASK_QUERY_ROOT = ["tasks"] as const;
-const TASK_LIST_KEY = [...TASK_QUERY_ROOT, "list"] as const;
-
 const createFiltersKey = (filters?: TaskFilters) =>
   JSON.stringify({
     status: filters?.status ?? "all",
     priority: filters?.priority ?? "all",
   });
+
+const TASK_KEYS = {
+  all: ["tasks"],
+  lists: () => [...TASK_KEYS.all, "list"],
+  list: (filters?: TaskFilters) => [...TASK_KEYS.lists(), createFiltersKey(filters)],
+};
 
 const ensureOk = async (response: Response, fallback: string, onUnauthorized?: () => void) => {
   if (response.ok) {
@@ -62,10 +65,9 @@ type UpdateTaskVariables = {
 
 export const useTasks = (filters?: TaskFilters): UseQueryResult<Task[]> => {
   const { refreshSession } = useAuthActions();
-  const filtersKey = createFiltersKey(filters);
 
   return useQuery({
-    queryKey: [...TASK_LIST_KEY, filtersKey] as const,
+    queryKey: TASK_KEYS.list(filters),
     queryFn: async () => {
       const response = await fetch("/api/tasks", {
         method: "GET",
@@ -80,10 +82,9 @@ export const useTasks = (filters?: TaskFilters): UseQueryResult<Task[]> => {
       });
 
       const data = (await response.json()) as { tasks: ApiTask[] };
-      const mappedTasks = data.tasks.map(mapApiTask);
-
-      return applyFilters(mappedTasks, filters);
+      return data.tasks.map(mapApiTask);
     },
+    select: (tasks) => applyFilters(tasks, filters),
   });
 };
 
@@ -117,7 +118,7 @@ export const useCreateTask = (): UseMutationResult<Task, Error, CreateTaskVariab
       return mapApiTask(data.task);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: TASK_LIST_KEY });
+      void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
     },
   });
 };
@@ -172,7 +173,7 @@ export const useUpdateTask = (): UseMutationResult<Task, Error, UpdateTaskVariab
       return mapApiTask(payload.task);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: TASK_LIST_KEY });
+      void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
     },
   });
 };
@@ -196,7 +197,7 @@ export const useDeleteTask = (): UseMutationResult<void, Error, number> => {
       });
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: TASK_LIST_KEY });
+      void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
     },
   });
 };
