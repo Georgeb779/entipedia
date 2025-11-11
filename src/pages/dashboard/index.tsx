@@ -273,7 +273,7 @@ const DashboardPage = () => {
               <Link to="/projects">Create Project</Link>
             </Button>
             <Button asChild variant="ghost" className="text-[#d09a00] hover:text-[#c08600]">
-              <Link to="/kanban">View Kanban</Link>
+              <Link to="/tasks?view=board">View Board</Link>
             </Button>
           </section>
         </div>

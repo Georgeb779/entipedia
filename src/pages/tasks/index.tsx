@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useSearchParams } from "react-router";
 
-import { Button, Layout, ProtectedRoute } from "@/components";
+import { Button, KanbanBoard, Layout, ProtectedRoute } from "@/components";
 import {
   Badge,
   Dialog,
@@ -32,6 +33,10 @@ import {
   TableHeader,
   TableRow,
   Textarea,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui";
 import {
   TASK_PRIORITY_COLORS,
@@ -41,8 +46,15 @@ import {
   TASK_STATUS_LABELS,
   TASK_STATUS_OPTIONS,
 } from "@/constants";
-import { useCreateTask, useDeleteTask, useProjects, useTasks, useUpdateTask } from "@/hooks";
-import type { Task, TaskFilters, TaskFormValues, TaskPriority } from "@/types";
+import {
+  useCreateTask,
+  useDeleteTask,
+  useProjects,
+  useTasks,
+  useUpdateTask,
+  useUpdateTaskStatus,
+} from "@/hooks";
+import type { Task, TaskFilters, TaskFormValues, TaskPriority, TaskStatus } from "@/types";
 import { cn, formatDateForInput, formatTaskDate } from "@/utils";
 
 const taskSchema = z.object({
@@ -111,7 +123,13 @@ const mapSchemaToTask = (values: TaskFormSchema): TaskFormValues => ({
     values.projectId && values.projectId !== "none" ? Number.parseInt(values.projectId, 10) : null,
 });
 
+type TaskViewMode = "table" | "board";
+
+const resolveViewMode = (value: string | null | undefined): TaskViewMode =>
+  value === "board" ? "board" : "table";
+
 function TasksPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<TaskFilters>({
     status: "all",
     priority: "all",
@@ -121,12 +139,14 @@ function TasksPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [taskBeingEdited, setTaskBeingEdited] = useState<Task | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const activeView = useMemo(() => resolveViewMode(searchParams.get("view")), [searchParams]);
 
   const { data: tasks = [], isLoading, error } = useTasks(filters);
   const { data: projects = [] } = useProjects();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const updateTaskStatus = useUpdateTaskStatus();
 
   const createForm = useForm<TaskFormSchema>({
     resolver: zodResolver(taskSchema),
@@ -228,6 +248,43 @@ function TasksPage() {
     }
   };
 
+  const handleViewChange = useCallback(
+    (value: string) => {
+      const nextView = resolveViewMode(value);
+      const currentParam = searchParams.get("view");
+      if (nextView === activeView) {
+        if (nextView === "table" && !currentParam) {
+          return;
+        }
+
+        if (nextView === "board" && currentParam === "board") {
+          return;
+        }
+      }
+
+      const nextParams = new URLSearchParams(searchParams);
+      if (nextView === "table") {
+        nextParams.delete("view");
+      } else {
+        nextParams.set("view", nextView);
+      }
+
+      setSearchParams(nextParams);
+    },
+    [activeView, searchParams, setSearchParams],
+  );
+
+  const handleTaskStatusChange = useCallback(
+    async (taskId: number, newStatus: TaskStatus) => {
+      try {
+        await updateTaskStatus.mutateAsync({ taskId, status: newStatus });
+      } catch {
+        // Mutation hook performs optimistic rollback on failure.
+      }
+    },
+    [updateTaskStatus],
+  );
+
   const activeTasks = useMemo(() => tasks, [tasks]);
 
   const renderTaskRows = () => {
@@ -301,126 +358,162 @@ function TasksPage() {
       <Layout>
         <div className="text-foreground px-6 py-10">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-            <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <h1 className="text-3xl font-semibold">Tasks</h1>
-                <p className="text-muted-foreground text-sm">
-                  Manage your work with statuses, priorities, and due dates.
-                </p>
-              </div>
-              <Button onClick={openCreateModal} variant="secondary">
-                Create Task
-              </Button>
-            </header>
-
-            <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
-              <div className="w-full max-w-xs">
-                <Label className="text-muted-foreground mb-2 block text-sm">Status</Label>
-                <Select
-                  value={filters.status ?? "all"}
-                  onValueChange={(value) =>
-                    setFilters((current) => ({
-                      ...current,
-                      status: value as TaskFilters["status"],
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {TASK_STATUS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="w-full max-w-xs">
-                <Label className="text-muted-foreground mb-2 block text-sm">Priority</Label>
-                <Select
-                  value={filters.priority ?? "all"}
-                  onValueChange={(value) =>
-                    setFilters((current) => ({
-                      ...current,
-                      priority: value as TaskFilters["priority"],
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {TASK_PRIORITY_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="w-full max-w-xs">
-                <Label className="text-muted-foreground mb-2 block text-sm">Project</Label>
-                <Select
-                  value={
-                    filters.projectId === undefined || filters.projectId === null
-                      ? "all"
-                      : filters.projectId === "all"
-                        ? "all"
-                        : filters.projectId.toString()
-                  }
-                  onValueChange={(value) =>
-                    setFilters((current) => ({
-                      ...current,
-                      projectId: value === "all" ? "all" : Number.parseInt(value, 10),
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id.toString()}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </section>
-
-            {actionError ? <p className="text-destructive text-sm">{actionError}</p> : null}
-
-            <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
-              {isLoading ? (
-                <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
-              ) : error ? (
-                <div className="text-destructive py-12 text-center">
-                  {error instanceof Error ? error.message : "Failed to load tasks."}
+            <Tabs value={activeView} onValueChange={handleViewChange}>
+              <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                  <h1 className="text-3xl font-semibold">Tasks</h1>
+                  <p className="text-muted-foreground text-sm">
+                    Manage your work with statuses, priorities, and due dates.
+                  </p>
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Task</TableHead>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>{renderTaskRows()}</TableBody>
-                </Table>
-              )}
-            </section>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <TabsList>
+                    <TabsTrigger value="table">Table</TabsTrigger>
+                    <TabsTrigger value="board">Board</TabsTrigger>
+                  </TabsList>
+                  <Button onClick={openCreateModal} variant="secondary">
+                    Create Task
+                  </Button>
+                </div>
+              </header>
+
+              <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+                <div className="w-full max-w-xs">
+                  <Label className="text-muted-foreground mb-2 block text-sm">Status</Label>
+                  <Select
+                    value={filters.status ?? "all"}
+                    onValueChange={(value) =>
+                      setFilters((current) => ({
+                        ...current,
+                        status: value as TaskFilters["status"],
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {TASK_STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full max-w-xs">
+                  <Label className="text-muted-foreground mb-2 block text-sm">Priority</Label>
+                  <Select
+                    value={filters.priority ?? "all"}
+                    onValueChange={(value) =>
+                      setFilters((current) => ({
+                        ...current,
+                        priority: value as TaskFilters["priority"],
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {TASK_PRIORITY_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full max-w-xs">
+                  <Label className="text-muted-foreground mb-2 block text-sm">Project</Label>
+                  <Select
+                    value={
+                      filters.projectId === undefined || filters.projectId === null
+                        ? "all"
+                        : filters.projectId === "all"
+                          ? "all"
+                          : filters.projectId.toString()
+                    }
+                    onValueChange={(value) =>
+                      setFilters((current) => ({
+                        ...current,
+                        projectId: value === "all" ? "all" : Number.parseInt(value, 10),
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </section>
+
+              {actionError ? <p className="text-destructive text-sm">{actionError}</p> : null}
+
+              <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
+                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
+                  {isLoading ? (
+                    <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
+                  ) : error ? (
+                    <div className="text-destructive py-12 text-center">
+                      {error instanceof Error ? error.message : "Failed to load tasks."}
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task</TableHead>
+                          <TableHead>Project</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Priority</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>{renderTaskRows()}</TableBody>
+                    </Table>
+                  )}
+                </section>
+              </TabsContent>
+
+              <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
+                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
+                  {isLoading ? (
+                    <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
+                  ) : error ? (
+                    <div className="text-destructive py-12 text-center">
+                      {error instanceof Error ? error.message : "Failed to load tasks."}
+                    </div>
+                  ) : activeTasks.length === 0 ? (
+                    <div className="text-muted-foreground py-12 text-center">
+                      No tasks match the current filters.
+                    </div>
+                  ) : (
+                    <KanbanBoard
+                      tasks={activeTasks}
+                      onTaskStatusChange={handleTaskStatusChange}
+                      isUpdating={updateTaskStatus.isPending}
+                    />
+                  )}
+                </section>
+                <p className="text-muted-foreground mt-3 text-center text-xs">
+                  Use mouse or keyboard (Tab + Arrow keys + Space/Enter) to move tasks between
+                  columns.
+                </p>
+              </TabsContent>
+            </Tabs>
           </div>
 
           <Dialog open={isCreateModalOpen} onOpenChange={handleCreateOpenChange}>

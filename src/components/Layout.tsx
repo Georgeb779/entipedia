@@ -42,7 +42,6 @@ const navItems: NavItem[] = [
   { path: "/tasks", label: "Tasks", icon: CheckSquare },
   { path: "/projects", label: "Projects", icon: FolderKanban },
   { path: "/clients", label: "Clients", icon: Users },
-  { path: "/kanban", label: "Kanban", icon: FolderKanban },
   { path: "/files", label: "Files", icon: FileText },
 ];
 
