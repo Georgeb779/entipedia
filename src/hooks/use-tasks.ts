@@ -2,11 +2,12 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryFilters,
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { ApiTask, Task, TaskFilters, TaskFormValues } from "@/types";
+import type { ApiTask, Task, TaskFilters, TaskFormValues, TaskStatus } from "@/types";
 import { mapApiTask } from "@/utils";
 import { PROJECT_KEYS, TASK_KEYS } from "./query-keys";
 import { useAuthActions } from "./use-auth";
@@ -55,6 +56,14 @@ type CreateTaskVariables = TaskFormValues;
 type UpdateTaskVariables = {
   taskId: number;
   data: Partial<TaskFormValues>;
+};
+
+const taskListQueryFilters: QueryFilters = {
+  predicate: (query) => {
+    const queryKey = query.queryKey as readonly unknown[];
+    const [scope, type] = queryKey;
+    return scope === TASK_KEYS.all[0] && type === TASK_KEYS.lists()[1];
+  },
 };
 
 export const useTasks = (filters?: TaskFilters): UseQueryResult<Task[]> => {
@@ -202,6 +211,74 @@ export const useDeleteTask = (): UseMutationResult<void, Error, number> => {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
+    },
+  });
+};
+
+type UpdateTaskStatusVariables = {
+  taskId: number;
+  status: TaskStatus;
+};
+
+/**
+ * Mutation hook optimized for Kanban drag-and-drop status changes with optimistic cache updates.
+ */
+export const useUpdateTaskStatus = (): UseMutationResult<
+  Task,
+  Error,
+  UpdateTaskStatusVariables
+> => {
+  const queryClient = useQueryClient();
+  const { refreshSession } = useAuthActions();
+
+  return useMutation({
+    mutationFn: async ({ taskId, status }) => {
+      const response = await fetch(`/api/tasks/${taskId}/status`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      await ensureOk(response, "Failed to update task status.", () => {
+        void refreshSession();
+      });
+
+      const payload = (await response.json()) as { task: ApiTask };
+      return mapApiTask(payload.task);
+    },
+    onMutate: async ({ taskId, status }) => {
+      await queryClient.cancelQueries(taskListQueryFilters);
+
+      const previousTasks = queryClient.getQueriesData<Task[]>(taskListQueryFilters);
+
+      queryClient.setQueriesData<Task[]>(taskListQueryFilters, (old) => {
+        if (!old) {
+          return old;
+        }
+
+        return old.map((task) => (task.id === taskId ? { ...task, status } : task));
+      });
+
+      return { previousTasks };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        context.previousTasks.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSuccess: (task) => {
+      void queryClient.invalidateQueries({ queryKey: TASK_KEYS.lists() });
+      void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
+
+      if (task.projectId) {
+        void queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(task.projectId) });
+      }
     },
   });
 };

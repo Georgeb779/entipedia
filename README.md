@@ -21,7 +21,10 @@ A production-ready full-stack starter template combining React 19 with TypeScrip
 - 📝 **Form validation** powered by React Hook Form + Zod
 - ⚡ **TanStack Query** for data fetching, caching, and synchronization
 - 📝 **Task management UI** with filters, table view, and modals
-- 🎛️ **shadcn/ui Table, Dialog, Select, Textarea, Badge** components ready to compose
+- � **Kanban board** with drag-and-drop task management
+- ⌨️ **Keyboard accessible** drag-and-drop using dnd-kit
+- ⚡ **Optimistic updates** for instant UI feedback
+- �🎛️ **shadcn/ui Table, Dialog, Select, Textarea, Badge** components ready to compose
 
 ### Backend
 
@@ -160,6 +163,64 @@ Handle personal workstreams end-to-end with the built-in task manager:
 - Ownership is revalidated before updates and deletes
 
 Relevant code: `routes/api/tasks`, `src/hooks/useTasks.ts`, `src/utils/task.ts`, `src/constants/index.ts`, and the `/tasks` page.
+
+### Kanban Board
+
+Deliver a visual workflow for tasks with a fully interactive Kanban experience.
+
+1. **Drag-and-Drop Interface**
+
+- Three-column layout: To Do, In Progress, Done
+- Drag tasks between columns to instantly update status
+- Smooth motion and hover feedback for card moves
+- Drag overlay previews the card currently in motion
+
+2. **Accessibility**
+
+- Full keyboard support (Tab to focus, Space/Enter to pick/drop, Arrow keys to move)
+- Screen reader-friendly roles, labels, and announcements
+- 8px pointer activation threshold to avoid accidental drags
+- High-contrast styling consistent with the dark theme
+
+3. **Performance Optimizations**
+
+- Dedicated status endpoint (`PATCH /api/tasks/:id/status`) keeps payloads minimal
+- Optimistic cache updates for immediate visual feedback
+- Automatic rollback when the mutation fails
+- React Query manages cache invalidation to stay in sync with the server
+
+4. **React Query Integration**
+
+- `useUpdateTaskStatus()` handles status mutations with optimistic updates
+- Shared query keys ensure list and project summaries stay fresh
+- Pending states surface to the board for subtle visual feedback
+- Session refresh triggers on 401 responses for resilient UX
+
+5. **Component Architecture**
+
+- Reusable `KanbanBoard` component at `src/components/KanbanBoard.tsx`
+- Internal column and card components keep responsibilities focused
+- Props-driven design to hook into any page
+- Dark theme matches existing task and project views
+
+6. **dnd-kit Integration**
+
+- `DndContext` powers drag events with `closestCorners` collision detection
+- `PointerSensor` and `KeyboardSensor` deliver inclusive interactions
+- `SortableContext` + `useSortable` handle per-column ordering
+- `@dnd-kit/utilities` smooths animations with CSS transforms
+
+Kanban routes live at `/kanban`, providing a drag-and-drop alternative to the table view.
+
+Relevant code: `routes/api/tasks/[id]/status.patch.ts`, `src/hooks/use-tasks.ts`, `src/components/KanbanBoard.tsx`, and `src/pages/kanban/index.tsx`.
+
+### Keyboard Navigation
+
+- **Tab**: Move focus between task cards across columns
+- **Arrow keys**: Navigate within a column while a card is focused
+- **Space / Enter**: Pick up or drop the focused task
+- **Escape**: Cancel the current drag interaction
+- **Mouse / Touch**: Click or tap and drag tasks between columns
 
 ### File Management
 
@@ -554,17 +615,20 @@ AutoImport({
 ├── src/
 │   ├── assets/          # Static assets (images, SVGs)
 │   ├── components/      # React components
-│   │   └── ui/         # shadcn/ui components
+│   │   ├── KanbanBoard.tsx     # Kanban board component
+│   │   └── ui/          # shadcn/ui components
 │   ├── contexts/
 │   │   ├── AuthContext.tsx
 │   │   └── QueryProvider.tsx  # React Query provider
 │   ├── pages/          # Frontend routes (file-based)
+│   │   ├── kanban/
+│   │   │   └── index.tsx      # Kanban board page
 │   │   └── tasks/
 │   │       └── index.tsx      # Task management page
 │   ├── hooks/          # Custom React hooks
 │   │   ├── index.ts
 │   │   ├── use-auth.ts
-│   │   ├── use-tasks.ts       # Task CRUD hooks
+│   │   ├── use-tasks.ts       # Task CRUD hooks + status mutation helper
 │   │   └── use-files.ts       # File CRUD hooks
 │   ├── utils/          # Utility functions
 │   │   ├── auth-user.ts
@@ -586,8 +650,10 @@ AutoImport({
 │       └── tasks/          # Task CRUD API routes
 │           ├── index.get.ts
 │           ├── index.post.ts
+│           ├── [id].delete.ts
 │           ├── [id].patch.ts
-│           └── [id].delete.ts
+│           └── [id]/
+│               └── status.patch.ts  # Status-only update endpoint
 ├── configs/            # Configuration files
 │   └── fonts.config.ts
 ├── db/                 # Database schema and connection
