@@ -1,0 +1,98 @@
+import { defineHandler } from "nitro/h3";
+import { HTTPError, readBody } from "h3";
+
+import { getDb, tasks } from "db";
+import type { AuthUser, TaskPriority, TaskStatus } from "@/types";
+
+const toIsoString = (value: Date | string) =>
+  value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+
+const ALLOWED_STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"] as const;
+const ALLOWED_PRIORITIES: readonly TaskPriority[] = ["low", "medium", "high"] as const;
+
+type CreateTaskPayload = {
+  title?: string;
+  description?: string | null;
+  status?: TaskStatus;
+  priority?: TaskPriority | null;
+  dueDate?: string | null;
+  projectId?: number | null;
+};
+
+export default defineHandler(async (event) => {
+  const context = event.context as { user: AuthUser | null };
+
+  if (!context.user) {
+    throw new HTTPError("Authentication required.", { statusCode: 401 });
+  }
+
+  const payload = await readBody<CreateTaskPayload>(event);
+  const title = payload?.title?.trim();
+
+  if (!title) {
+    throw new HTTPError("Title is required.", { statusCode: 400 });
+  }
+
+  const status = payload?.status ?? "todo";
+
+  if (!ALLOWED_STATUSES.includes(status)) {
+    throw new HTTPError("Invalid task status provided.", { statusCode: 400 });
+  }
+
+  const priority = payload?.priority ?? null;
+
+  if (priority && !ALLOWED_PRIORITIES.includes(priority)) {
+    throw new HTTPError("Invalid task priority provided.", { statusCode: 400 });
+  }
+
+  let dueDate: Date | null = null;
+
+  if (payload?.dueDate) {
+    const parsed = new Date(payload.dueDate);
+
+    if (Number.isNaN(parsed.getTime())) {
+      throw new HTTPError("Invalid due date.", { statusCode: 400 });
+    }
+
+    dueDate = parsed;
+  }
+
+  const description = payload?.description?.trim() ?? null;
+  const projectId = typeof payload?.projectId === "number" ? payload.projectId : null;
+
+  const db = getDb();
+
+  try {
+    const [newTask] = await db
+      .insert(tasks)
+      .values({
+        title,
+        description,
+        status,
+        priority,
+        dueDate,
+        projectId,
+        userId: context.user.id,
+      })
+      .returning();
+
+    if (!newTask) {
+      throw new HTTPError("Failed to create task.", { statusCode: 500 });
+    }
+
+    return {
+      task: {
+        ...newTask,
+        dueDate: newTask.dueDate ? toIsoString(newTask.dueDate) : null,
+        createdAt: toIsoString(newTask.createdAt),
+        updatedAt: toIsoString(newTask.updatedAt),
+      },
+    };
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      throw error;
+    }
+
+    throw new HTTPError("Failed to create task.", { statusCode: 500 });
+  }
+});
