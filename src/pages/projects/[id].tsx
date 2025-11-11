@@ -28,7 +28,7 @@ import {
   TASK_STATUS_LABELS,
 } from "@/constants";
 import type { Task, TaskPriority } from "@/types";
-import { calculateProjectProgress, formatTaskDate } from "@/utils";
+import { calculateProjectProgress, cn, formatTaskDate } from "@/utils";
 
 function resolvePriorityToken(priority: Task["priority"]): TaskPriority | null {
   if (!priority) return null;
@@ -69,9 +69,9 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
     return (
       <ProtectedRoute>
         <Layout>
-          <div className="px-6 py-10 text-white">
+          <div className="text-foreground px-6 py-10">
             <div className="mx-auto flex w-full max-w-5xl justify-center py-12">
-              <p className="text-sm text-gray-400">Loading project...</p>
+              <p className="text-muted-foreground text-sm">Loading project...</p>
             </div>
           </div>
         </Layout>
@@ -83,9 +83,9 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
     return (
       <ProtectedRoute>
         <Layout>
-          <div className="px-6 py-10 text-white">
+          <div className="text-foreground px-6 py-10">
             <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center">
-              <p className="text-lg text-red-400">
+              <p className="text-destructive text-lg">
                 {error instanceof Error ? error.message : "Failed to load project."}
               </p>
               <Button variant="secondary" onClick={() => navigate("/projects", { replace: true })}>
@@ -103,9 +103,9 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
     return (
       <ProtectedRoute>
         <Layout>
-          <div className="px-6 py-10 text-white">
+          <div className="text-foreground px-6 py-10">
             <div className="mx-auto flex w-full max-w-5xl justify-center py-12">
-              <p className="text-sm text-gray-400">Redirecting...</p>
+              <p className="text-muted-foreground text-sm">Redirecting...</p>
             </div>
           </div>
         </Layout>
@@ -140,35 +140,36 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
   const renderTaskRow = (task: Task) => {
     const resolvedPriority = resolvePriorityToken(task.priority);
     const priorityLabel = resolvedPriority ? TASK_PRIORITY_LABELS[resolvedPriority] : "None";
-    const priorityToken = resolvedPriority ? TASK_PRIORITY_COLORS[resolvedPriority] : "gray";
+    const priorityClasses = resolvedPriority
+      ? cn("text-xs uppercase", TASK_PRIORITY_COLORS[resolvedPriority])
+      : "text-xs uppercase bg-[rgba(28,36,49,0.08)] text-muted-foreground";
 
     return (
       <TableRow key={task.id}>
-        <TableCell>
+        <TableCell className="align-top">
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-white">{task.title}</p>
-            {task.description ? <p className="text-sm text-gray-400">{task.description}</p> : null}
+            <p className="text-foreground text-sm font-semibold">{task.title}</p>
+            {task.description ? (
+              <p className="text-muted-foreground text-sm">{task.description}</p>
+            ) : null}
           </div>
         </TableCell>
         <TableCell>
-          <Badge className={TASK_STATUS_COLORS[task.status]}>
+          <Badge className={cn("text-xs uppercase", TASK_STATUS_COLORS[task.status])}>
             {TASK_STATUS_LABELS[task.status]}
           </Badge>
         </TableCell>
         <TableCell>
-          <Badge className={`bg-${priorityToken}-600/20 text-${priorityToken}-300`}>
-            {priorityLabel}
-          </Badge>
+          <Badge className={priorityClasses}>{priorityLabel}</Badge>
         </TableCell>
-        <TableCell>
-          {task.dueDate ? (
-            <span className="text-sm">{formatTaskDate(task.dueDate)}</span>
-          ) : (
-            <span className="text-xs text-gray-400">No date</span>
-          )}
+        <TableCell className="text-muted-foreground text-sm">
+          {task.dueDate ? formatTaskDate(task.dueDate) : <span className="text-xs">No date</span>}
         </TableCell>
         <TableCell className="text-right">
-          <Link to={`/tasks`} className="text-sm underline">
+          <Link
+            to="/tasks"
+            className="text-sm font-medium text-[#1C2431] underline-offset-4 hover:underline"
+          >
             View
           </Link>
         </TableCell>
@@ -179,14 +180,17 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="px-6 py-10 text-white">
+        <div className="text-foreground px-6 py-10">
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-            {/* Header actions */}
-            <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={() => navigate("/projects")}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/projects")}
+                className="w-full justify-center sm:w-auto"
+              >
                 ← Back to Projects
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-3">
                 <Button variant="secondary" onClick={handleEditProject}>
                   Edit Project
                 </Button>
@@ -200,14 +204,16 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
               </div>
             </div>
 
-            <Card>
+            <Card className="border border-[rgba(0,0,0,0.06)] bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>{project.name}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-foreground text-2xl font-semibold">
+                  {project.name}
+                </CardTitle>
+                <CardDescription className="text-muted-foreground text-sm">
                   {project.description ?? "No description provided."}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-gray-300">
+              <CardContent className="text-muted-foreground space-y-2 text-sm">
                 <p>Created {formatTaskDate(project.createdAt)}</p>
                 <p>Updated {formatTaskDate(project.updatedAt)}</p>
               </CardContent>
@@ -219,39 +225,43 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
                 <TabsTrigger value="tasks">Tasks</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="bg-gray-800">
+              <TabsContent value="overview">
                 <div className="space-y-6">
-                  <Card className="bg-transparent">
+                  <Card className="border border-[rgba(0,0,0,0.06)] bg-white shadow-sm">
                     <CardHeader>
-                      <CardTitle>Project Statistics</CardTitle>
-                      <CardDescription>Understand how this project is progressing.</CardDescription>
+                      <CardTitle className="text-foreground text-xl font-semibold">
+                        Project Statistics
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground text-sm">
+                        Understand how this project is progressing.
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300">
-                        <Badge className="bg-blue-600">
+                      <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
+                        <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">
                           {tasks.length} total {tasks.length === 1 ? "task" : "tasks"}
                         </Badge>
-                        <Badge className="bg-green-600">{doneCount} completed</Badge>
+                        <Badge className="bg-[#E1F3EA] text-[#1C2431]">{doneCount} completed</Badge>
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-sm text-gray-300">Progress</p>
-                        <div className="h-2 w-full rounded-full bg-gray-700">
+                        <p className="text-muted-foreground text-sm">Progress</p>
+                        <div className="h-2 w-full rounded-full bg-[rgba(28,36,49,0.08)]">
                           <div
-                            className="h-2 rounded-full bg-blue-500"
+                            className="bg-primary h-2 rounded-full"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <p className="text-xs text-gray-400">{progress}% complete</p>
+                        <p className="text-muted-foreground text-xs">{progress}% complete</p>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
               </TabsContent>
 
-              <TabsContent value="tasks" className="bg-gray-800">
+              <TabsContent value="tasks">
                 {tasks.length === 0 ? (
-                  <div className="rounded-lg bg-gray-900 p-8 text-center text-gray-400">
+                  <div className="text-muted-foreground rounded-xl border border-dashed border-[rgba(28,36,49,0.15)] bg-white p-8 text-center">
                     <p>
                       No tasks in this project yet. Create tasks and assign them to this project.
                     </p>

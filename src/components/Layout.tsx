@@ -22,10 +22,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
 } from "@/components/ui";
 import { useAuth, useAuthActions } from "@/hooks";
 import { cn } from "@/utils";
@@ -118,13 +114,16 @@ export default function Layout({ children }: LayoutProps) {
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md border-l-[3px] border-l-transparent px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-3 rounded-md border-l-4 border-l-transparent px-4 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "border-l-[#F6C90E] bg-[#FFF4C4] font-semibold text-[#1C2431] shadow-sm"
-                    : "text-muted-foreground hover:bg-[#FFF7D6] hover:text-[#1C2431]",
+                    ? "border-l-[#E8B90D] bg-[rgba(246,201,14,0.15)] text-[#1C2431]"
+                    : "text-muted-foreground hover:bg-[rgba(28,36,49,0.06)] hover:text-[#1C2431]",
                 )}
               >
-                <Icon className="h-4 w-4" aria-hidden="true" />
+                <Icon
+                  className={cn("h-4 w-4", active ? "text-[#1C2431]" : "text-muted-foreground")}
+                  aria-hidden="true"
+                />
                 <span>{item.label}</span>
               </Link>
             );
@@ -163,13 +162,16 @@ export default function Layout({ children }: LayoutProps) {
                     aria-label={item.label}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-md border-l-[3px] border-l-transparent px-3 py-2 text-sm transition-colors",
+                      "flex items-center gap-3 rounded-md border-l-4 border-l-transparent px-4 py-2 text-sm font-medium transition-colors",
                       active
-                        ? "border-l-[#F6C90E] bg-[#FFF4C4] font-semibold text-[#1C2431] shadow-sm"
-                        : "text-muted-foreground hover:bg-[#FFF7D6] hover:text-[#1C2431]",
+                        ? "border-l-[#E8B90D] bg-[rgba(246,201,14,0.18)] text-[#1C2431]"
+                        : "text-muted-foreground hover:bg-[rgba(28,36,49,0.08)] hover:text-[#1C2431]",
                     )}
                   >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    <Icon
+                      className={cn("h-4 w-4", active ? "text-[#1C2431]" : "text-muted-foreground")}
+                      aria-hidden="true"
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -180,56 +182,21 @@ export default function Layout({ children }: LayoutProps) {
       ) : null}
 
       <div className="flex min-h-screen w-full flex-col md:ml-64">
-        <header className="sticky top-0 z-30 border-b border-black/5 bg-white">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex flex-1 items-center gap-6">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground md:hidden"
-                  onClick={() => setIsSidebarOpen(true)}
-                  aria-label="Open navigation"
-                >
-                  <Menu className="h-5 w-5" aria-hidden="true" />
-                </Button>
-                <LogoMark size="sm" className="md:hidden" />
-                <Link
-                  to="/dashboard"
-                  className="hover:text-foreground/80 hidden items-center gap-3 text-lg font-semibold transition-colors md:flex"
-                  aria-label="Entipedia dashboard"
-                >
-                  <LogoMark size="sm" />
-                  <span>Entipedia</span>
-                </Link>
-              </div>
-
-              <NavigationMenu className="hidden md:flex">
-                <NavigationMenuList>
-                  {navItems.map((item) => {
-                    const active = isActiveRoute(item.path);
-
-                    return (
-                      <NavigationMenuItem key={item.path}>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to={item.path}
-                            aria-current={active ? "page" : undefined}
-                            className={cn(
-                              "block rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                              active
-                                ? "bg-[rgba(246,201,14,0.12)] text-[#1C2431]"
-                                : "text-muted-foreground hover:bg-[#FFF7D6] hover:text-[#1C2431]",
-                            )}
-                          >
-                            {item.label}
-                          </Link>
-                        </NavigationMenuLink>
-                      </NavigationMenuItem>
-                    );
-                  })}
-                </NavigationMenuList>
-              </NavigationMenu>
+        <main className="bg-background flex-1 overflow-y-auto p-6 pt-4">
+          <div className="mb-6 flex items-center justify-between md:justify-end">
+            <div className="flex items-center gap-3 md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="Open navigation"
+              >
+                <Menu className="h-5 w-5" aria-hidden="true" />
+              </Button>
+              <Link to="/dashboard" aria-label="Entipedia dashboard">
+                <LogoMark size="sm" />
+              </Link>
             </div>
 
             <DropdownMenu>
@@ -275,10 +242,8 @@ export default function Layout({ children }: LayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </header>
 
-        <main className="flex-1">
-          <div className="min-h-[calc(100vh-4rem)]">{children}</div>
+          {children}
         </main>
       </div>
     </div>

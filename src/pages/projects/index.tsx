@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { Button, Layout, ProtectedRoute } from "@/components";
 import {
-  Badge,
   Card,
   CardContent,
   CardDescription,
@@ -299,39 +298,44 @@ const ProjectsPage = () => {
                     );
 
                     return (
-                      <Card key={project.id} className="flex h-full flex-col shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="line-clamp-1">{project.name}</CardTitle>
-                          <CardDescription className="line-clamp-2">
+                      <Card
+                        key={project.id}
+                        className="flex h-full flex-col border border-[rgba(0,0,0,0.06)] bg-white shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <CardHeader className="space-y-2 p-5 pb-3">
+                          <CardTitle className="line-clamp-1 text-lg font-semibold">
+                            {project.name}
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground line-clamp-2 text-sm">
                             {project.description ?? "No description provided."}
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex flex-1 flex-col gap-4">
+                        <CardContent className="flex flex-1 flex-col gap-4 p-5 pt-0">
                           <div className="text-muted-foreground flex items-center justify-between text-sm">
                             <span>
                               {project.taskCount} tasks ({project.completedTaskCount} completed)
                             </span>
-                            <Badge>{progress}% complete</Badge>
+                            <span className="font-medium text-[#1C2431]">{progress}% complete</span>
                           </div>
-                          <div className="bg-muted h-2 w-full rounded-full">
+                          <div className="h-2 w-full rounded-full bg-[rgba(28,36,49,0.08)]">
                             <div
                               className="bg-primary h-2 rounded-full"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
-                          <div className="text-muted-foreground space-y-2 text-sm">
+                          <div className="text-muted-foreground space-y-1 text-xs">
                             <p>Created {formatTaskDate(project.createdAt)}</p>
                             <p>Updated {formatTaskDate(project.updatedAt)}</p>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex flex-wrap justify-between gap-2">
-                          <Link to={`/projects/${project.id}`} className="flex-1">
-                            <Button className="w-full" variant="outline">
+                        <CardFooter className="flex flex-wrap items-center gap-2 p-5 pt-0">
+                          <Link to={`/projects/${project.id}`} className="flex-1 sm:flex-none">
+                            <Button className="w-full" variant="secondary">
                               View Details
                             </Button>
                           </Link>
                           <Button
-                            variant="secondary"
+                            variant="accent"
                             onClick={() => {
                               setEditingProject(project);
                               setIsEditModalOpen(true);
