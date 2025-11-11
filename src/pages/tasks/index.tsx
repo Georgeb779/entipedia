@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -41,7 +41,14 @@ import {
   TASK_STATUS_LABELS,
   TASK_STATUS_OPTIONS,
 } from "@/constants";
-import { useAuth, useCreateTask, useDeleteTask, useTasks, useUpdateTask } from "@/hooks";
+import {
+  useAuth,
+  useCreateTask,
+  useDeleteTask,
+  useProjects,
+  useTasks,
+  useUpdateTask,
+} from "@/hooks";
 import type { Task, TaskFilters, TaskFormValues, TaskPriority } from "@/types";
 import { formatDateForInput, formatTaskDate } from "@/utils";
 
@@ -150,6 +157,14 @@ const TasksPage = () => {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const { data: projects = [] } = useProjects();
+
+  const projectLookup = useMemo(() => {
+    return projects.reduce<Map<number, string>>((lookup, project) => {
+      lookup.set(project.id, project.name);
+      return lookup;
+    }, new Map());
+  }, [projects]);
 
   const createForm = useForm<TaskSchema>({
     resolver: zodResolver(taskSchema),
@@ -282,6 +297,9 @@ const TasksPage = () => {
           </div>
         </TableCell>
         <TableCell>
+          {task.projectId ? (projectLookup.get(task.projectId) ?? "Unknown project") : "No project"}
+        </TableCell>
+        <TableCell>
           <StatusBadge status={task.status} />
         </TableCell>
         <TableCell>{getPriorityDisplay(normalizePriority(task.priority))}</TableCell>
@@ -387,6 +405,7 @@ const TasksPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Task</TableHead>
+                  <TableHead>Project</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Due Date</TableHead>
@@ -496,6 +515,41 @@ const TasksPage = () => {
                   )}
                 />
               </div>
+
+              <FormField
+                control={createForm.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project</FormLabel>
+                    <Select
+                      value={
+                        field.value !== null && field.value !== undefined
+                          ? field.value.toString()
+                          : "none"
+                      }
+                      onValueChange={(value) =>
+                        field.onChange(value === "none" ? null : Number.parseInt(value, 10))
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={createForm.control}
@@ -627,6 +681,41 @@ const TasksPage = () => {
                   )}
                 />
               </div>
+
+              <FormField
+                control={editForm.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project</FormLabel>
+                    <Select
+                      value={
+                        field.value !== null && field.value !== undefined
+                          ? field.value.toString()
+                          : "none"
+                      }
+                      onValueChange={(value) =>
+                        field.onChange(value === "none" ? null : Number.parseInt(value, 10))
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={editForm.control}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -96,6 +96,7 @@ const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema =>
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation() as { state?: { editProjectId?: number } };
   const auth = useAuth();
 
   const [filters, setFilters] = useState<ProjectFilters>(defaultFilters);
@@ -123,6 +124,26 @@ const ProjectsPage = () => {
       navigate("/auth/login", { replace: true });
     }
   }, [auth.status, navigate]);
+
+  useEffect(() => {
+    const editProjectId = location.state?.editProjectId;
+
+    if (!editProjectId) {
+      return;
+    }
+
+    const projectToEdit = projects.find((project) => project.id === editProjectId);
+
+    if (!projectToEdit) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      setEditingProject(projectToEdit);
+      setIsEditModalOpen(true);
+      navigate("/projects", { replace: true, state: null });
+    });
+  }, [location.state, projects, navigate]);
 
   useEffect(() => {
     if (editingProject) {
