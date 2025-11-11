@@ -6,6 +6,8 @@ import type {
   NewProject as DbNewProject,
   File as DbFile,
   NewFile as DbNewFile,
+  Client as DbClient,
+  NewClient as DbNewClient,
 } from "db/schema";
 
 export type ApiAuthUser = Omit<User, "password" | "createdAt" | "updatedAt"> & {
@@ -23,6 +25,34 @@ export type NewProject = DbNewProject;
 
 export type StoredFile = DbFile;
 export type NewStoredFile = DbNewFile;
+
+export type Client = DbClient;
+export type NewClient = DbNewClient;
+
+export type ClientType = "person" | "company";
+
+export type ApiClient = Omit<Client, "startDate" | "endDate" | "createdAt" | "updatedAt"> & {
+  startDate: string;
+  endDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ClientFormValues = {
+  name: string;
+  type: ClientType;
+  value: number;
+  startDate: string;
+  endDate: string | null;
+};
+
+export type ClientFilters = {
+  type?: ClientType | "all";
+  page?: number;
+  limit?: number;
+  sortBy?: "name" | "createdAt" | "value";
+  sortOrder?: "asc" | "desc";
+};
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";

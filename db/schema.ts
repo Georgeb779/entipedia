@@ -2,6 +2,7 @@ import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const taskStatusEnum = pgEnum("taskStatus", ["todo", "in_progress", "done"]);
+export const clientTypeEnum = pgEnum("clientType", ["person", "company"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -61,6 +62,23 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: clientTypeEnum("type").notNull(),
+  value: integer("value").notNull(),
+  startDate: timestamp("start_date", { withTimezone: true }).notNull(),
+  endDate: timestamp("end_date", { withTimezone: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;
 
@@ -72,3 +90,6 @@ export type NewTask = InferInsertModel<typeof tasks>;
 
 export type File = InferSelectModel<typeof files>;
 export type NewFile = InferInsertModel<typeof files>;
+
+export type Client = InferSelectModel<typeof clients>;
+export type NewClient = InferInsertModel<typeof clients>;
