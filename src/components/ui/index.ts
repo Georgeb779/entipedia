@@ -15,3 +15,7 @@ export * from "./separator";
 export * from "./avatar";
 export * from "./dropdown-menu";
 export * from "./navigation-menu";
+export * from "./progress";
+export * from "./toast";
+export * from "./toaster";
+export * from "./use-toast";
