@@ -17,7 +17,10 @@ type CardContentProps = React.ComponentPropsWithoutRef<"div">;
 const Card = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("rounded-xl border border-gray-700 bg-gray-800 text-white shadow-lg", className)}
+    className={cn(
+      "text-foreground rounded-xl border border-[rgba(0,0,0,0.05)] bg-white shadow-sm",
+      className,
+    )}
     {...props}
   />
 ));
@@ -39,7 +42,7 @@ CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<HTMLParagraphElement, CardDescriptionProps>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn("text-sm text-gray-300", className)} {...props} />
+    <p ref={ref} className={cn("text-muted-foreground text-sm", className)} {...props} />
   ),
 );
 CardDescription.displayName = "CardDescription";

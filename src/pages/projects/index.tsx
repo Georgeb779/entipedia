@@ -26,6 +26,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
@@ -225,12 +226,12 @@ const ProjectsPage = () => {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="px-6 py-10 text-white">
+        <div className="text-foreground px-6 py-10">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold">Projects</h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-muted-foreground text-sm">
                   Organize your work into projects, track task progress, and stay on top of
                   deadlines.
                 </p>
@@ -242,11 +243,11 @@ const ProjectsPage = () => {
               </div>
             </header>
 
-            <section className="flex flex-wrap gap-4 rounded-lg bg-gray-800 p-4">
+            <section className="bg-card flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] p-4 shadow-sm">
               <div className="w-full max-w-xs">
-                <FormLabel className="text-gray-300">Sort By</FormLabel>
+                <Label className="text-muted-foreground">Sort By</Label>
                 <Select value={filters.sortBy ?? "createdAt"} onValueChange={handleSortByChange}>
-                  <SelectTrigger className="mt-2 bg-gray-900 text-white">
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Sort projects" />
                   </SelectTrigger>
                   <SelectContent>
@@ -260,9 +261,9 @@ const ProjectsPage = () => {
               </div>
 
               <div className="w-full max-w-xs">
-                <FormLabel className="text-gray-300">Order</FormLabel>
+                <Label className="text-muted-foreground">Order</Label>
                 <Select value={filters.sortOrder ?? "desc"} onValueChange={handleSortOrderChange}>
-                  <SelectTrigger className="mt-2 bg-gray-900 text-white">
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Select order" />
                   </SelectTrigger>
                   <SelectContent>
@@ -280,13 +281,13 @@ const ProjectsPage = () => {
 
             <section>
               {isLoading ? (
-                <div className="py-12 text-center text-gray-400">Loading projects...</div>
+                <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
               ) : error ? (
-                <div className="py-12 text-center text-red-400">
+                <div className="text-destructive py-12 text-center">
                   {error instanceof Error ? error.message : "Failed to load projects."}
                 </div>
               ) : sortedProjects.length === 0 ? (
-                <div className="rounded-lg bg-gray-800 p-12 text-center text-gray-400">
+                <div className="bg-card text-muted-foreground rounded-xl p-12 text-center shadow-sm">
                   <p>No projects found. Create your first project to get started.</p>
                 </div>
               ) : (
@@ -298,7 +299,7 @@ const ProjectsPage = () => {
                     );
 
                     return (
-                      <Card key={project.id} className="flex h-full flex-col">
+                      <Card key={project.id} className="flex h-full flex-col shadow-sm">
                         <CardHeader>
                           <CardTitle className="line-clamp-1">{project.name}</CardTitle>
                           <CardDescription className="line-clamp-2">
@@ -306,19 +307,19 @@ const ProjectsPage = () => {
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-1 flex-col gap-4">
-                          <div className="flex items-center justify-between text-sm text-gray-300">
+                          <div className="text-muted-foreground flex items-center justify-between text-sm">
                             <span>
                               {project.taskCount} tasks ({project.completedTaskCount} completed)
                             </span>
-                            <Badge className="bg-blue-600">{progress}% complete</Badge>
+                            <Badge>{progress}% complete</Badge>
                           </div>
-                          <div className="h-2 w-full rounded-full bg-gray-700">
+                          <div className="bg-muted h-2 w-full rounded-full">
                             <div
-                              className="h-2 rounded-full bg-blue-500"
+                              className="bg-primary h-2 rounded-full"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
-                          <div className="space-y-2 text-sm text-gray-400">
+                          <div className="text-muted-foreground space-y-2 text-sm">
                             <p>Created {formatTaskDate(project.createdAt)}</p>
                             <p>Updated {formatTaskDate(project.updatedAt)}</p>
                           </div>
@@ -408,7 +409,7 @@ const ProjectsPage = () => {
                 />
 
                 {createForm.formState.errors.root ? (
-                  <p className="text-sm text-red-400" role="alert">
+                  <p className="text-destructive text-sm" role="alert">
                     {createForm.formState.errors.root.message}
                   </p>
                 ) : null}
@@ -482,7 +483,7 @@ const ProjectsPage = () => {
                 />
 
                 {editForm.formState.errors.root ? (
-                  <p className="text-sm text-red-400" role="alert">
+                  <p className="text-destructive text-sm" role="alert">
                     {editForm.formState.errors.root.message}
                   </p>
                 ) : null}

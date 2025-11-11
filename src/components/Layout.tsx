@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/tasks", label: "Tasks", icon: CheckSquare },
   { path: "/projects", label: "Projects", icon: FolderKanban },
-  { path: "/kanban", label: "Kanban", icon: LayoutDashboard },
+  { path: "/kanban", label: "Kanban", icon: FolderKanban },
   { path: "/files", label: "Files", icon: FileText },
 ];
 
@@ -118,10 +118,10 @@ export default function Layout({ children }: LayoutProps) {
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-md border-l-[3px] border-l-transparent px-3 py-2 text-sm transition-colors",
                   active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    ? "border-l-[#F6C90E] bg-[#FFF4C4] font-semibold text-[#1C2431] shadow-sm"
+                    : "text-muted-foreground hover:bg-[#FFF7D6] hover:text-[#1C2431]",
                 )}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -163,10 +163,10 @@ export default function Layout({ children }: LayoutProps) {
                     aria-label={item.label}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-md border-l-[3px] border-l-transparent px-3 py-2 text-sm transition-colors",
                       active
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        ? "border-l-[#F6C90E] bg-[#FFF4C4] font-semibold text-[#1C2431] shadow-sm"
+                        : "text-muted-foreground hover:bg-[#FFF7D6] hover:text-[#1C2431]",
                     )}
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
@@ -180,7 +180,7 @@ export default function Layout({ children }: LayoutProps) {
       ) : null}
 
       <div className="flex min-h-screen w-full flex-col md:ml-64">
-        <header className="border-border bg-card sticky top-0 z-30 border-b">
+        <header className="sticky top-0 z-30 border-b border-black/5 bg-white">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex flex-1 items-center gap-6">
               <div className="flex items-center gap-3">
@@ -216,10 +216,10 @@ export default function Layout({ children }: LayoutProps) {
                             to={item.path}
                             aria-current={active ? "page" : undefined}
                             className={cn(
-                              "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                              "block rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
                               active
-                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                ? "bg-[rgba(246,201,14,0.12)] text-[#1C2431]"
+                                : "text-muted-foreground hover:bg-[#FFF7D6] hover:text-[#1C2431]",
                             )}
                           >
                             {item.label}

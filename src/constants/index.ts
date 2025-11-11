@@ -35,15 +35,15 @@ export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  todo: "bg-gray-500 text-white",
-  in_progress: "bg-blue-500 text-white",
-  done: "bg-green-500 text-white",
+  todo: "bg-[rgba(28,36,49,0.08)] text-[#1C2431]",
+  in_progress: "bg-[rgba(246,201,14,0.2)] text-[#1C2431]",
+  done: "bg-[#E1F3EA] text-[#1C2431]",
 };
 
 export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: "bg-gray-400 text-gray-900",
-  medium: "bg-yellow-500 text-gray-900",
-  high: "bg-red-600 text-white",
+  low: "bg-[#F0EFEA] text-[#1F1F1F]",
+  medium: "bg-[rgba(246,201,14,0.18)] text-[#1C2431]",
+  high: "bg-[#FDE6E6] text-[#A61B1B]",
 };
 
 // Maximum upload size limit (10 MB)

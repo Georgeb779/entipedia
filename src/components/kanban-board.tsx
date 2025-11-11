@@ -85,7 +85,7 @@ const KanbanColumn = ({ title, status, tasks, activeId, isUpdating }: KanbanColu
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">{title}</h2>
-        <Badge className="bg-gray-700 text-gray-200">{tasks.length}</Badge>
+        <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">{tasks.length}</Badge>
       </div>
       <SortableContext
         id={status}
@@ -95,8 +95,8 @@ const KanbanColumn = ({ title, status, tasks, activeId, isUpdating }: KanbanColu
         <div
           ref={setNodeRef}
           className={cn(
-            "flex min-h-[400px] flex-col gap-4 rounded-lg bg-gray-800 p-4 transition-colors",
-            isOver ? "ring-2 ring-blue-500" : "ring-1 ring-gray-700",
+            "flex min-h-[400px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-4 shadow-sm transition-colors",
+            isOver ? "ring-2 ring-[#F6C90E]" : "ring-1 ring-transparent",
             isUpdating ? "opacity-80" : "",
           )}
           aria-label={`${title} column`}
@@ -104,7 +104,7 @@ const KanbanColumn = ({ title, status, tasks, activeId, isUpdating }: KanbanColu
           role="list"
         >
           {tasks.length === 0 ? (
-            <p className="rounded border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+            <p className="text-muted-foreground rounded border border-dashed border-[rgba(28,36,49,0.15)] p-4 text-center text-sm">
               No tasks in this column
             </p>
           ) : (
@@ -123,14 +123,21 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
     const priority = task.priority;
 
     return (
-      <Card ref={ref} className={cn("bg-gray-700 text-white", className)} {...rest}>
+      <Card
+        ref={ref}
+        className={cn(
+          "text-foreground border border-[rgba(0,0,0,0.05)] bg-white shadow-sm",
+          className,
+        )}
+        {...rest}
+      >
         <CardHeader className="pb-4">
           <CardTitle className="text-lg leading-tight font-semibold">
             <span className="line-clamp-2">{task.title}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 text-sm text-gray-300">
-          <p className="line-clamp-2 text-left text-gray-300">
+        <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
+          <p className="line-clamp-2 text-left">
             {task.description ? task.description : "No description provided."}
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -143,7 +150,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
               </Badge>
             ) : null}
           </div>
-          <p className="text-xs text-gray-400">Due {formatTaskDate(task.dueDate)}</p>
+          <p className="text-muted-foreground text-xs">Due {formatTaskDate(task.dueDate)}</p>
         </CardContent>
       </Card>
     );
@@ -170,9 +177,9 @@ const TaskCard = ({ task, isActive }: TaskCardProps) => {
       ref={setNodeRef}
       task={task}
       className={cn(
-        "shadow-md transition-all select-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none",
-        "hover:scale-[1.02] hover:shadow-xl",
-        isActive ? "ring-2 ring-blue-500" : "border border-gray-600",
+        "transition-all select-none focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:outline-none",
+        "hover:scale-[1.02] hover:shadow-lg",
+        isActive ? "ring-2 ring-[#F6C90E]" : "border border-transparent",
       )}
       style={style}
       data-status={task.status}
@@ -186,7 +193,7 @@ const TaskCard = ({ task, isActive }: TaskCardProps) => {
 const TaskCardPreview = ({ task }: { task: Task }) => (
   <TaskCardLayout
     task={task}
-    className="pointer-events-none shadow-2xl ring-2 ring-blue-500 select-none"
+    className="pointer-events-none shadow-2xl ring-2 ring-[#F6C90E] select-none"
   />
 );
 

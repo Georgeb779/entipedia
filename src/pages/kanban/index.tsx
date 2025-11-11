@@ -27,12 +27,12 @@ const KanbanPage = () => {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="px-6 py-10">
+        <div className="text-foreground px-6 py-10">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h1 className="text-3xl font-semibold">Kanban Board</h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-muted-foreground text-sm">
                   Drag and drop tasks between columns to update their status.
                 </p>
               </div>
@@ -43,11 +43,11 @@ const KanbanPage = () => {
               </div>
             </header>
 
-            <section className="rounded-lg bg-gray-800 p-6">
+            <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
               {isLoading ? (
-                <div className="py-12 text-center text-gray-400">Loading tasks...</div>
+                <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
               ) : error ? (
-                <div className="py-12 text-center text-red-400">
+                <div className="text-destructive py-12 text-center">
                   {error instanceof Error ? error.message : "Failed to load tasks."}
                 </div>
               ) : (
@@ -59,7 +59,7 @@ const KanbanPage = () => {
               )}
             </section>
 
-            <footer className="text-center text-sm text-gray-400">
+            <footer className="text-muted-foreground text-center text-sm">
               <p>Use mouse or keyboard (Tab + Arrow keys + Space/Enter) to move tasks.</p>
             </footer>
           </div>

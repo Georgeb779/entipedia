@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
@@ -234,7 +235,7 @@ function TasksPage() {
       return (
         <TableRow>
           <TableCell className="py-10 text-center" colSpan={6}>
-            <p className="text-sm text-gray-400">No tasks match the current filters.</p>
+            <p className="text-muted-foreground text-sm">No tasks match the current filters.</p>
           </TableCell>
         </TableRow>
       );
@@ -245,8 +246,10 @@ function TasksPage() {
 
       return (
         <TableRow key={task.id}>
-          <TableCell className="max-w-xs text-sm font-medium text-white">{task.title}</TableCell>
-          <TableCell className="text-sm text-gray-300">
+          <TableCell className="text-foreground max-w-xs text-sm font-medium">
+            {task.title}
+          </TableCell>
+          <TableCell className="text-muted-foreground text-sm">
             {task.projectId !== null
               ? (projects.find((project) => project.id === task.projectId)?.name ?? "Unknown")
               : "Unassigned"}
@@ -262,10 +265,12 @@ function TasksPage() {
                 {TASK_PRIORITY_LABELS[priority]}
               </Badge>
             ) : (
-              <span className="text-sm text-gray-400">None</span>
+              <span className="text-muted-foreground text-sm">None</span>
             )}
           </TableCell>
-          <TableCell className="text-sm text-gray-300">{formatTaskDate(task.dueDate)}</TableCell>
+          <TableCell className="text-muted-foreground text-sm">
+            {formatTaskDate(task.dueDate)}
+          </TableCell>
           <TableCell className="text-right text-sm">
             <div className="flex justify-end gap-2">
               <Button
@@ -294,12 +299,12 @@ function TasksPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="px-6 py-10 text-white">
+        <div className="text-foreground px-6 py-10">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h1 className="text-3xl font-semibold">Tasks</h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-muted-foreground text-sm">
                   Manage your work with statuses, priorities, and due dates.
                 </p>
               </div>
@@ -308,9 +313,9 @@ function TasksPage() {
               </Button>
             </header>
 
-            <section className="flex flex-wrap gap-4 rounded-lg bg-gray-800 p-4">
+            <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
               <div className="w-full max-w-xs">
-                <label className="mb-2 block text-sm font-medium text-gray-300">Status</label>
+                <Label className="text-muted-foreground mb-2 block text-sm">Status</Label>
                 <Select
                   value={filters.status ?? "all"}
                   onValueChange={(value) =>
@@ -335,7 +340,7 @@ function TasksPage() {
               </div>
 
               <div className="w-full max-w-xs">
-                <label className="mb-2 block text-sm font-medium text-gray-300">Priority</label>
+                <Label className="text-muted-foreground mb-2 block text-sm">Priority</Label>
                 <Select
                   value={filters.priority ?? "all"}
                   onValueChange={(value) =>
@@ -360,7 +365,7 @@ function TasksPage() {
               </div>
 
               <div className="w-full max-w-xs">
-                <label className="mb-2 block text-sm font-medium text-gray-300">Project</label>
+                <Label className="text-muted-foreground mb-2 block text-sm">Project</Label>
                 <Select
                   value={
                     filters.projectId === undefined || filters.projectId === null
@@ -391,13 +396,13 @@ function TasksPage() {
               </div>
             </section>
 
-            {actionError ? <p className="text-sm text-red-400">{actionError}</p> : null}
+            {actionError ? <p className="text-destructive text-sm">{actionError}</p> : null}
 
-            <section className="rounded-lg bg-gray-800 p-6">
+            <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-6 shadow-sm">
               {isLoading ? (
-                <div className="py-12 text-center text-gray-400">Loading tasks...</div>
+                <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
               ) : error ? (
-                <div className="py-12 text-center text-red-400">
+                <div className="text-destructive py-12 text-center">
                   {error instanceof Error ? error.message : "Failed to load tasks."}
                 </div>
               ) : (
