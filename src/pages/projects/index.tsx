@@ -86,7 +86,7 @@ import {
 } from "@/constants";
 import { useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "@/hooks";
 import type { ProjectStatus, ProjectWithTaskCount } from "@/types";
-import { cn, formatTaskDate, resolveStatusValue } from "@/utils";
+import { cn, formatTaskDateTime, resolveStatusValue } from "@/utils";
 
 const projectSchema = z
   .object({
@@ -301,7 +301,10 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
           </Badge>
         </div>
         <p className="text-muted-foreground text-xs">
-          Created {formatTaskDate(project.createdAt)} · {project.completedTaskCount} completed tasks
+          Created {formatTaskDateTime(project.createdAt)} ·
+        </p>
+        <p className="text-muted-foreground text-xs">
+          {project.completedTaskCount} completed tasks
         </p>
       </CardContent>
     </Card>
@@ -736,7 +739,7 @@ const ProjectsPage = () => {
         </TableCell>
         <TableCell className="text-muted-foreground text-sm">{project.taskCount} tasks</TableCell>
         <TableCell className="text-muted-foreground text-sm">
-          {formatTaskDate(project.createdAt)}
+          {formatTaskDateTime(project.createdAt)}
         </TableCell>
         <TableCell className="text-right text-sm">
           <div className="flex justify-end gap-2">

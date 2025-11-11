@@ -28,7 +28,7 @@ import {
   TASK_STATUS_LABELS,
 } from "@/constants";
 import type { Task, TaskPriority } from "@/types";
-import { calculateProjectProgress, cn, formatTaskDate } from "@/utils";
+import { calculateProjectProgress, cn, formatTaskDate, formatTaskDateTime } from "@/utils";
 
 function resolvePriorityToken(priority: Task["priority"]): TaskPriority | null {
   if (!priority) return null;
@@ -214,8 +214,8 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-muted-foreground space-y-2 text-sm">
-                <p>Created {formatTaskDate(project.createdAt)}</p>
-                <p>Updated {formatTaskDate(project.updatedAt)}</p>
+                <p>Created {formatTaskDateTime(project.createdAt)}</p>
+                <p>Updated {formatTaskDateTime(project.updatedAt)}</p>
               </CardContent>
             </Card>
 

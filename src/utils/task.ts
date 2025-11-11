@@ -21,6 +21,14 @@ const displayFormatter = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
 });
 
+const displayDateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /**
  * Formats a task date for display within the UI.
  */
@@ -36,6 +44,23 @@ export const formatTaskDate = (value: Date | string | null): string => {
   }
 
   return displayFormatter.format(date);
+};
+
+/**
+ * Formats a date with time information for activity or audit displays.
+ */
+export const formatTaskDateTime = (value: Date | string | null): string => {
+  if (!value) {
+    return "Unknown date";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  return displayDateTimeFormatter.format(date);
 };
 
 /**
