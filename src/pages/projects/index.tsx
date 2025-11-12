@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -355,6 +356,79 @@ const ProjectCardPreview = ({ project }: { project: ProjectWithTaskCount }) => (
   />
 );
 
+type ProjectMobileCardProps = {
+  project: ProjectWithTaskCount;
+  onView: (project: ProjectWithTaskCount) => void;
+  onEdit: (project: ProjectWithTaskCount) => void;
+  onDelete: (project: ProjectWithTaskCount) => void;
+  isDeleting: boolean;
+};
+
+const ProjectMobileCard = ({
+  project,
+  onView,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: ProjectMobileCardProps) => (
+  <article className="animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+    <header className="space-y-2">
+      <h3 className="text-lg font-semibold text-[#1C2431]">{project.name}</h3>
+      <p className="text-muted-foreground text-sm">
+        {project.description ? project.description : "Sin descripción proporcionada."}
+      </p>
+    </header>
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
+        {PROJECT_STATUS_LABELS[project.status]}
+      </Badge>
+      <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
+        {PROJECT_PRIORITY_LABELS[project.priority]}
+      </Badge>
+      <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">{project.taskCount} tareas</Badge>
+    </div>
+    <dl className="text-muted-foreground grid grid-cols-2 gap-3 text-xs">
+      <div className="space-y-1">
+        <dt className="text-foreground text-xs font-medium tracking-wide uppercase">Creado</dt>
+        <dd>{formatTaskDateTime(project.createdAt)}</dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-foreground text-xs font-medium tracking-wide uppercase">
+          Tareas completadas
+        </dt>
+        <dd>{project.completedTaskCount}</dd>
+      </div>
+    </dl>
+    <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full justify-center"
+        onClick={() => onView(project)}
+      >
+        Ver detalles
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full justify-center"
+        onClick={() => onEdit(project)}
+      >
+        Editar
+      </Button>
+      <Button
+        type="button"
+        variant="destructive"
+        className="w-full justify-center"
+        onClick={() => onDelete(project)}
+        disabled={isDeleting}
+      >
+        {isDeleting ? "Eliminando..." : "Eliminar"}
+      </Button>
+    </div>
+  </article>
+);
+
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { editProjectId?: number } };
@@ -442,6 +516,56 @@ const ProjectsPage = () => {
     () => (activeId ? (projectLookup.get(activeId) ?? null) : null),
     [activeId, projectLookup],
   );
+
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showLeftIndicator, setShowLeftIndicator] = useState(false);
+  const [showRightIndicator, setShowRightIndicator] = useState(false);
+
+  const updateScrollIndicators = useCallback(() => {
+    const container = tableScrollRef.current;
+
+    if (!container) {
+      setShowLeftIndicator(false);
+      setShowRightIndicator(false);
+      return;
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const maxScrollLeft = scrollWidth - clientWidth;
+    setShowLeftIndicator(scrollLeft > 0);
+    setShowRightIndicator(scrollLeft < maxScrollLeft - 1);
+  }, []);
+
+  useEffect(() => {
+    let animationFrame = window.requestAnimationFrame(() => {
+      updateScrollIndicators();
+    });
+
+    const container = tableScrollRef.current;
+
+    const handleScroll = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        updateScrollIndicators();
+      });
+    };
+
+    const handleResize = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        updateScrollIndicators();
+      });
+    };
+
+    container?.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      container?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [projects, updateScrollIndicators]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -765,23 +889,31 @@ const ProjectsPage = () => {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-6 py-10">
+        <div className="text-foreground px-5 py-10 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
-              <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold">Proyectos</h1>
-                  <p className="text-muted-foreground mb-6 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Organiza tu trabajo en proyectos, sigue el avance de las tareas y mantente al
                     día con tus entregas.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <TabsList>
-                    <TabsTrigger value="board">Tablero</TabsTrigger>
-                    <TabsTrigger value="table">Tabla</TabsTrigger>
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:w-auto lg:flex-nowrap">
+                  <TabsList className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:gap-0">
+                    <TabsTrigger value="board" className="h-10 text-sm sm:w-auto">
+                      Tablero
+                    </TabsTrigger>
+                    <TabsTrigger value="table" className="h-10 text-sm sm:w-auto">
+                      Tabla
+                    </TabsTrigger>
                   </TabsList>
-                  <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="w-full sm:w-auto lg:w-auto"
+                  >
                     Crear proyecto
                   </Button>
                 </div>
@@ -852,21 +984,63 @@ const ProjectsPage = () => {
                       : "No se pudieron cargar los proyectos."}
                   </div>
                 ) : (
-                  <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Descripción</TableHead>
-                          <TableHead>Estatus</TableHead>
-                          <TableHead>Prioridad</TableHead>
-                          <TableHead>Tareas</TableHead>
-                          <TableHead>Creado</TableHead>
-                          <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>{renderProjectTableRows()}</TableBody>
-                    </Table>
+                  <section className="space-y-4">
+                    <div className="xl:hidden">
+                      {projects.length === 0 ? (
+                        <div className="text-muted-foreground rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] bg-white p-6 text-center text-sm">
+                          No se encontraron proyectos.
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {projects.map((project) => (
+                            <ProjectMobileCard
+                              key={project.id}
+                              project={project}
+                              onView={handleNavigateToDetails}
+                              onEdit={handleOpenEdit}
+                              onDelete={openDeleteDialog}
+                              isDeleting={
+                                deleteProject.isPending && projectPendingDeletion?.id === project.id
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="relative hidden xl:block">
+                      {showLeftIndicator ? (
+                        <div
+                          className="scroll-indicator scroll-indicator-left"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      {showRightIndicator ? (
+                        <div
+                          className="scroll-indicator scroll-indicator-right"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <div
+                        ref={tableScrollRef}
+                        className="horizontal-scroll-container rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
+                      >
+                        <Table className="w-full table-auto">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>Descripción</TableHead>
+                              <TableHead>Estatus</TableHead>
+                              <TableHead>Prioridad</TableHead>
+                              <TableHead>Tareas</TableHead>
+                              <TableHead>Creado</TableHead>
+                              <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>{renderProjectTableRows()}</TableBody>
+                        </Table>
+                      </div>
+                    </div>
                   </section>
                 )}
               </TabsContent>
@@ -883,7 +1057,7 @@ const ProjectsPage = () => {
             }
           }}
         >
-          <DialogContent className="space-y-5">
+          <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Crear proyecto</DialogTitle>
             </DialogHeader>
@@ -1014,7 +1188,7 @@ const ProjectsPage = () => {
             }
           }}
         >
-          <DialogContent className="space-y-5">
+          <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Editar proyecto</DialogTitle>
             </DialogHeader>
@@ -1145,7 +1319,7 @@ const ProjectsPage = () => {
             }
           }}
         >
-          <DialogContent className="space-y-5">
+          <DialogContent className="space-y-4 sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Eliminar proyecto</DialogTitle>
               <DialogDescription>

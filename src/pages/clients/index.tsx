@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -133,7 +141,7 @@ function ClientsPage() {
   const editInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data, isLoading, error } = useClients(filters);
-  const clients = data?.clients ?? [];
+  const clients = useMemo(() => data?.clients ?? [], [data?.clients]);
   const pagination: PaginationInfo = useMemo(
     () =>
       data?.pagination ?? {
@@ -148,6 +156,10 @@ function ClientsPage() {
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const deleteClient = useDeleteClient();
+
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showLeftIndicator, setShowLeftIndicator] = useState(false);
+  const [showRightIndicator, setShowRightIndicator] = useState(false);
 
   const createForm = useForm<ClientFormSchema>({
     resolver: zodResolver(clientSchema),
@@ -164,6 +176,52 @@ function ClientsPage() {
       editInputRef.current = null;
     }
   }, [editingCell]);
+
+  const updateScrollIndicators = useCallback(() => {
+    const container = tableScrollRef.current;
+
+    if (!container) {
+      setShowLeftIndicator(false);
+      setShowRightIndicator(false);
+      return;
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const maxScrollLeft = scrollWidth - clientWidth;
+    setShowLeftIndicator(scrollLeft > 0);
+    setShowRightIndicator(scrollLeft < maxScrollLeft - 1);
+  }, []);
+
+  useEffect(() => {
+    let animationFrame = window.requestAnimationFrame(() => {
+      updateScrollIndicators();
+    });
+
+    const container = tableScrollRef.current;
+
+    const handleScroll = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        updateScrollIndicators();
+      });
+    };
+
+    const handleResize = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        updateScrollIndicators();
+      });
+    };
+
+    container?.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      container?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [clients, updateScrollIndicators]);
 
   const openCreateModal = () => {
     setActionError(null);
@@ -606,23 +664,78 @@ function ClientsPage() {
   const createRootError = createForm.formState.errors.root?.message;
   const editRootError = editForm.formState.errors.root?.message;
 
+  const handleOpenDelete = (client: Client) => {
+    setClientToDelete(client);
+    setIsDeleteModalOpen(true);
+    setDeleteError(null);
+    setActionError(null);
+  };
+
+  type ClientMobileCardProps = {
+    client: Client;
+    onEdit: (client: Client) => void;
+    onDelete: (client: Client) => void;
+    isDeleting: boolean;
+  };
+
+  const ClientMobileCard = ({ client, onEdit, onDelete, isDeleting }: ClientMobileCardProps) => (
+    <article className="animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+      <header className="space-y-2">
+        <h3 className="text-lg font-semibold text-[#1C2431]">{client.name}</h3>
+        <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
+          {CLIENT_TYPE_LABELS[client.type]}
+        </Badge>
+      </header>
+      <div className="text-muted-foreground grid grid-cols-2 gap-3 text-xs sm:text-sm">
+        <div className="space-y-1">
+          <p className="text-foreground text-xs font-semibold tracking-wide uppercase">Valor</p>
+          <p>{formatCurrencyDOP(client.value)}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-foreground text-xs font-semibold tracking-wide uppercase">Desde</p>
+          <p>{formatClientDate(client.startDate)}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-foreground text-xs font-semibold tracking-wide uppercase">Hasta</p>
+          <p>{formatClientDate(client.endDate)}</p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+        <Button type="button" variant="outline" className="w-full" onClick={() => onEdit(client)}>
+          Editar
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-full"
+          onClick={() => onDelete(client)}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Eliminando..." : "Eliminar"}
+        </Button>
+      </div>
+    </article>
+  );
+
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-6 py-10">
+        <div className="text-foreground px-5 py-10 md:px-6">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-            <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-2">
                 <h1 className="text-3xl font-semibold">Clientes</h1>
                 <p className="text-muted-foreground text-sm">
                   Gestiona tus clientes, registra fechas clave y monitorea el valor asociado.
                 </p>
               </div>
-              <Button onClick={openCreateModal}>Crear Cliente</Button>
+              <Button onClick={openCreateModal} className="w-full sm:w-auto" variant="secondary">
+                Crear Cliente
+              </Button>
             </header>
 
-            <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
-              <div className="w-full max-w-xs">
+            <section className="flex flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm sm:flex-row sm:flex-wrap sm:gap-5 md:p-6">
+              <div className="w-full sm:max-w-xs">
                 <Label
                   className="text-muted-foreground mb-2 block text-sm"
                   htmlFor="client-type-filter"
@@ -650,111 +763,151 @@ function ClientsPage() {
 
             {actionError ? <p className="text-destructive text-sm">{actionError}</p> : null}
 
-            <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white shadow-sm">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Valor (DOP)</TableHead>
-                    <TableHead>Desde</TableHead>
-                    <TableHead>Hasta</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell className="py-8 text-center" colSpan={6}>
-                        <span className="text-muted-foreground text-sm">Cargando clientes...</span>
-                      </TableCell>
-                    </TableRow>
-                  ) : error ? (
-                    <TableRow>
-                      <TableCell className="py-8 text-center" colSpan={6}>
-                        <span className="text-destructive text-sm">Error al cargar clientes.</span>
-                      </TableCell>
-                    </TableRow>
-                  ) : clients.length === 0 ? (
-                    <TableRow>
-                      <TableCell className="py-8 text-center" colSpan={6}>
-                        <span className="text-muted-foreground text-sm">
-                          No se encontraron clientes.
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    clients.map((client) => (
-                      <TableRow key={client.id}>
-                        <TableCell>
-                          {renderEditableCell(
-                            client,
-                            "name",
-                            <span className="font-medium">{client.name}</span>,
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {renderEditableCell(
-                            client,
-                            "type",
-                            <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
-                              {CLIENT_TYPE_LABELS[client.type]}
-                            </Badge>,
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {renderEditableCell(
-                            client,
-                            "value",
-                            <span>{formatCurrencyDOP(client.value)}</span>,
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {renderEditableCell(
-                            client,
-                            "startDate",
-                            <span>{formatClientDate(client.startDate)}</span>,
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {renderEditableCell(
-                            client,
-                            "endDate",
-                            <span>{formatClientDate(client.endDate)}</span>,
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleEditOpen(client)}
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                setClientToDelete(client);
-                                setIsDeleteModalOpen(true);
-                                setDeleteError(null);
-                                setActionError(null);
-                              }}
-                            >
-                              Eliminar
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <section className="space-y-4">
+              <div className="xl:hidden">
+                {isLoading ? (
+                  <div className="text-muted-foreground rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] bg-white p-6 text-center text-sm">
+                    Cargando clientes...
+                  </div>
+                ) : error ? (
+                  <div className="text-destructive rounded-lg border border-dashed border-[rgba(228,2,2,0.2)] bg-red-50 p-6 text-center text-sm">
+                    Error al cargar clientes.
+                  </div>
+                ) : clients.length === 0 ? (
+                  <div className="text-muted-foreground rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] bg-white p-6 text-center text-sm">
+                    No se encontraron clientes.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {clients.map((client) => (
+                      <ClientMobileCard
+                        key={client.id}
+                        client={client}
+                        onEdit={handleEditOpen}
+                        onDelete={handleOpenDelete}
+                        isDeleting={deleteClient.isPending && clientToDelete?.id === client.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              <div className="flex flex-col gap-3 border-t border-[rgba(0,0,0,0.05)] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative hidden xl:block">
+                {showLeftIndicator ? (
+                  <div className="scroll-indicator scroll-indicator-left" aria-hidden="true" />
+                ) : null}
+                {showRightIndicator ? (
+                  <div className="scroll-indicator scroll-indicator-right" aria-hidden="true" />
+                ) : null}
+                <div
+                  ref={tableScrollRef}
+                  className="horizontal-scroll-container rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
+                >
+                  <Table className="w-full table-auto">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Valor (DOP)</TableHead>
+                        <TableHead>Desde</TableHead>
+                        <TableHead>Hasta</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        <TableRow>
+                          <TableCell className="py-8 text-center" colSpan={6}>
+                            <span className="text-muted-foreground text-sm">
+                              Cargando clientes...
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ) : error ? (
+                        <TableRow>
+                          <TableCell className="py-8 text-center" colSpan={6}>
+                            <span className="text-destructive text-sm">
+                              Error al cargar clientes.
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ) : clients.length === 0 ? (
+                        <TableRow>
+                          <TableCell className="py-8 text-center" colSpan={6}>
+                            <span className="text-muted-foreground text-sm">
+                              No se encontraron clientes.
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        clients.map((client) => (
+                          <TableRow key={client.id}>
+                            <TableCell>
+                              {renderEditableCell(
+                                client,
+                                "name",
+                                <span className="font-medium">{client.name}</span>,
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {renderEditableCell(
+                                client,
+                                "type",
+                                <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
+                                  {CLIENT_TYPE_LABELS[client.type]}
+                                </Badge>,
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {renderEditableCell(
+                                client,
+                                "value",
+                                <span>{formatCurrencyDOP(client.value)}</span>,
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {renderEditableCell(
+                                client,
+                                "startDate",
+                                <span>{formatClientDate(client.startDate)}</span>,
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {renderEditableCell(
+                                client,
+                                "endDate",
+                                <span>{formatClientDate(client.endDate)}</span>,
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleEditOpen(client)}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleOpenDelete(client)}
+                                >
+                                  Eliminar
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:px-6">
                 <p className="text-muted-foreground text-sm">
                   Página {pagination.page} de {pagination.totalPages || 1} ({pagination.total}{" "}
                   total)
@@ -785,7 +938,7 @@ function ClientsPage() {
         </div>
 
         <Dialog open={isCreateModalOpen} onOpenChange={handleCreateOpenChange}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Crear Cliente</DialogTitle>
             </DialogHeader>
@@ -894,7 +1047,7 @@ function ClientsPage() {
         </Dialog>
 
         <Dialog open={isEditModalOpen} onOpenChange={handleEditOpenChange}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Editar Cliente</DialogTitle>
             </DialogHeader>
@@ -1001,7 +1154,7 @@ function ClientsPage() {
         </Dialog>
 
         <Dialog open={isDeleteModalOpen} onOpenChange={handleDeleteOpenChange}>
-          <DialogContent className="space-y-5">
+          <DialogContent className="space-y-4 sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Eliminar Cliente</DialogTitle>
             </DialogHeader>

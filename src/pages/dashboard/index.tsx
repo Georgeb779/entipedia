@@ -32,8 +32,8 @@ const TasksOverviewCard = ({
   const safeCompletion = Math.min(Math.max(completionRate, 0), 100);
 
   return (
-    <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
-      <div className="flex items-start justify-between">
+    <article className="rounded-xl border border-black/5 bg-white p-4 shadow-sm sm:p-5 md:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm text-neutral-600">Tareas</p>
           <p className="mt-1 text-3xl font-semibold text-neutral-900">
@@ -59,10 +59,10 @@ const TasksOverviewCard = ({
         <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completado</p>
       </div>
 
-      <div className="mt-2 flex items-center gap-4 text-sm text-neutral-700">
-        <span>Por Hacer {todoTasks.toLocaleString()}</span>
-        <span>En Progreso {inProgressTasks.toLocaleString()}</span>
-        <span>Completado {completedTasks.toLocaleString()}</span>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-700 sm:gap-4 sm:text-sm">
+        <span className="whitespace-nowrap">Por Hacer {todoTasks.toLocaleString()}</span>
+        <span className="whitespace-nowrap">En Progreso {inProgressTasks.toLocaleString()}</span>
+        <span className="whitespace-nowrap">Completado {completedTasks.toLocaleString()}</span>
       </div>
     </article>
   );
@@ -86,8 +86,8 @@ const ProjectsOverviewCard = ({
   const safeCompletion = Math.min(Math.max(completionRate, 0), 100);
 
   return (
-    <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
-      <div className="flex items-start justify-between">
+    <article className="rounded-xl border border-black/5 bg-white p-4 shadow-sm sm:p-5 md:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm text-neutral-600">Proyectos</p>
           <p className="mt-1 text-3xl font-semibold text-neutral-900">
@@ -113,10 +113,10 @@ const ProjectsOverviewCard = ({
         <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completado</p>
       </div>
 
-      <div className="mt-2 flex items-center gap-4 text-sm text-neutral-700">
-        <span>Por Hacer {todoProjects.toLocaleString()}</span>
-        <span>En Progreso {inProgressProjects.toLocaleString()}</span>
-        <span>Completado {completedProjects.toLocaleString()}</span>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-700 sm:gap-4 sm:text-sm">
+        <span className="whitespace-nowrap">Por Hacer {todoProjects.toLocaleString()}</span>
+        <span className="whitespace-nowrap">En Progreso {inProgressProjects.toLocaleString()}</span>
+        <span className="whitespace-nowrap">Completado {completedProjects.toLocaleString()}</span>
       </div>
     </article>
   );
@@ -135,10 +135,10 @@ const EmptyOverviewCard = ({
   actionLabel,
   actionTo,
 }: EmptyOverviewCardProps) => (
-  <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
+  <article className="rounded-xl border border-black/5 bg-white p-4 shadow-sm sm:p-5 md:p-6">
     <h2 className="text-sm text-neutral-600">{title}</h2>
     <p className="mt-2 text-sm text-neutral-600">{description}</p>
-    <Button asChild variant="secondary" className="mt-4">
+    <Button asChild variant="secondary" className="mt-4 w-full sm:w-auto">
       <Link to={actionTo}>{actionLabel}</Link>
     </Button>
   </article>
@@ -355,12 +355,12 @@ const DashboardPage = () => {
       <Layout>
         <div className="bg-[#FFFCF5]">
           <div className="mx-auto max-w-7xl px-6 py-4">
-            <header className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-neutral-900">Panel</h1>
+                <h1 className="text-3xl font-semibold">Panel</h1>
                 <p className="text-sm text-neutral-600">Resumen de tus tareas y proyectos.</p>
               </div>
-              <div className="ml-auto flex gap-4 text-sm">
+              <div className="flex gap-4 text-sm sm:ml-auto">
                 <Link to="/tasks" className="text-yellow-700 transition hover:text-yellow-600">
                   Tareas
                 </Link>
@@ -371,7 +371,7 @@ const DashboardPage = () => {
             </header>
 
             <div className="mt-6">
-              <div className="grid gap-6 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                 {stats.totalTasks > 0 ? (
                   <TasksOverviewCard
                     totalTasks={stats.totalTasks}
@@ -411,11 +411,11 @@ const DashboardPage = () => {
                 <WorkActivityTabs recentTasks={recentTasks} upcomingTasks={upcomingTasks} />
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild variant="secondary">
+              <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+                <Button asChild variant="secondary" className="w-full sm:w-auto">
                   <Link to="/tasks">Crear tarea</Link>
                 </Button>
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
                   <Link to="/projects">Crear proyecto</Link>
                 </Button>
               </div>

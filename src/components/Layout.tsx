@@ -1,4 +1,12 @@
-import { useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type TouchEvent as ReactTouchEvent,
+} from "react";
 import { Link, useLocation } from "react-router";
 import {
   CheckSquare,
@@ -68,6 +76,15 @@ export default function Layout({ children }: LayoutProps) {
   const auth = useAuth();
   const { logout } = useAuthActions();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const animationTimeoutRef = useRef<number | null>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const bodyOverflowRef = useRef<string | undefined>(undefined);
+  const bodyTouchActionRef = useRef<string | undefined>(undefined);
 
   const authenticatedName = auth.status === "authenticated" ? auth.user.name : undefined;
   const userEmail = auth.status === "authenticated" ? auth.user.email : "";
@@ -84,11 +101,194 @@ export default function Layout({ children }: LayoutProps) {
     await logout();
   };
 
-  const closeSidebar = () => {
-    setIsSidebarOpen(false);
-  };
+  const closeSidebar = useCallback(() => {
+    if (!isSidebarOpen || isAnimating) {
+      return;
+    }
+
+    setIsAnimating(true);
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      setIsSidebarOpen(false);
+      setIsAnimating(false);
+      animationTimeoutRef.current = null;
+    }, 250);
+  }, [isAnimating, isSidebarOpen]);
+
+  const openSidebar = useCallback(() => {
+    if (isAnimating) {
+      return;
+    }
+
+    if (animationTimeoutRef.current !== null) {
+      window.clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+
+    setIsAnimating(false);
+    setIsSidebarOpen(true);
+  }, [isAnimating]);
+
+  useEffect(
+    () => () => {
+      if (animationTimeoutRef.current !== null) {
+        window.clearTimeout(animationTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleTouchStart = useCallback((event: ReactTouchEvent<HTMLElement>) => {
+    const touch = event.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (event: ReactTouchEvent<HTMLElement>) => {
+      if (touchStartXRef.current === null || touchStartYRef.current === null || isAnimating) {
+        return;
+      }
+
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - touchStartXRef.current;
+      const deltaY = touch.clientY - touchStartYRef.current;
+
+      if (Math.abs(deltaX) <= Math.abs(deltaY)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (deltaX < -50) {
+        closeSidebar();
+        touchStartXRef.current = null;
+        touchStartYRef.current = null;
+      }
+    },
+    [closeSidebar, isAnimating],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const sidebarElement = sidebarRef.current;
+
+    if (!isSidebarOpen || !sidebarElement) {
+      if (!isSidebarOpen && previouslyFocusedElementRef.current) {
+        previouslyFocusedElementRef.current.focus();
+        previouslyFocusedElementRef.current = null;
+      }
+
+      return;
+    }
+
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusableElements = Array.from(
+      sidebarElement.querySelectorAll<HTMLElement>(focusableSelector),
+    );
+    const focusTarget = focusableElements[0] ?? sidebarElement;
+    focusTarget.focus({ preventScroll: true });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const interactiveElements = Array.from(
+        sidebarElement.querySelectorAll<HTMLElement>(focusableSelector),
+      );
+
+      if (interactiveElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const firstElement = interactiveElements[0];
+      const lastElement = interactiveElements[interactiveElements.length - 1];
+      const target = event.target as HTMLElement;
+
+      if (event.shiftKey) {
+        if (target === firstElement || !sidebarElement.contains(target)) {
+          event.preventDefault();
+          (lastElement ?? firstElement).focus();
+        }
+        return;
+      }
+
+      if (target === lastElement) {
+        event.preventDefault();
+        (firstElement ?? lastElement).focus();
+      }
+    };
+
+    sidebarElement.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      sidebarElement.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
+    if (!isSidebarOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSidebar();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeSidebar, isSidebarOpen]);
+
+  useEffect(() => {
+    if (!isSidebarOpen) {
+      return;
+    }
+
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    bodyOverflowRef.current = document.body.style.overflow;
+    bodyTouchActionRef.current = document.body.style.touchAction;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      if (bodyOverflowRef.current !== undefined) {
+        document.body.style.overflow = bodyOverflowRef.current;
+      } else {
+        document.body.style.removeProperty("overflow");
+      }
+
+      if (bodyTouchActionRef.current !== undefined) {
+        document.body.style.touchAction = bodyTouchActionRef.current;
+      } else {
+        document.body.style.removeProperty("touch-action");
+      }
+    };
+  }, [isSidebarOpen]);
 
   const handleLinkClick = () => {
+    if (!isSidebarOpen) {
+      return;
+    }
+
     closeSidebar();
   };
 
@@ -115,7 +315,7 @@ export default function Layout({ children }: LayoutProps) {
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md border-l-4 border-l-transparent px-4 py-2 text-sm font-medium transition-colors",
+                  "flex min-h-11 items-center gap-3 rounded-md border-l-4 border-l-transparent px-4 py-3 text-sm font-medium transition-colors",
                   active
                     ? "border-l-[#E8B90D] bg-[rgba(246,201,14,0.15)] text-[#1C2431]"
                     : "text-muted-foreground hover:bg-[rgba(28,36,49,0.06)] hover:text-[#1C2431]",
@@ -133,9 +333,30 @@ export default function Layout({ children }: LayoutProps) {
       </aside>
 
       {isSidebarOpen ? (
-        <div className="fixed inset-0 z-40 flex md:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/50" onClick={closeSidebar} />
-          <aside className="border-sidebar-border bg-sidebar relative ml-0 flex h-full w-64 flex-col border-r p-4">
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          <div
+            ref={backdropRef}
+            className={cn(
+              "absolute inset-0 bg-black/50 backdrop-blur-sm",
+              isAnimating ? "animate-backdrop-out pointer-events-none" : "animate-backdrop-in",
+            )}
+            aria-hidden="true"
+            onClick={isAnimating ? undefined : closeSidebar}
+          />
+          <aside
+            ref={sidebarRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navegación móvil"
+            tabIndex={-1}
+            className={cn(
+              "border-sidebar-border bg-sidebar touch-action-pan-y relative z-50 ml-0 flex h-full w-64 flex-col border-r p-4 shadow-xl",
+              isAnimating ? "animate-slide-out-left pointer-events-none" : "animate-slide-in-left",
+            )}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="mb-6 flex items-center justify-between">
               <Link
                 to="/dashboard"
@@ -147,10 +368,9 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Button
                 variant="ghost"
-                size="icon"
+                className="text-muted-foreground hover:text-foreground h-11 w-11 rounded-full p-0"
                 onClick={closeSidebar}
                 aria-label="Cerrar navegación"
-                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </Button>
@@ -167,7 +387,7 @@ export default function Layout({ children }: LayoutProps) {
                     aria-label={item.label}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-md border-l-4 border-l-transparent px-4 py-2 text-sm font-medium transition-colors",
+                      "flex min-h-11 items-center gap-3 rounded-md border-l-4 border-l-transparent px-4 py-3 text-sm font-medium transition-colors",
                       active
                         ? "border-l-[#E8B90D] bg-[rgba(246,201,14,0.18)] text-[#1C2431]"
                         : "text-muted-foreground hover:bg-[rgba(28,36,49,0.08)] hover:text-[#1C2431]",
@@ -188,20 +408,16 @@ export default function Layout({ children }: LayoutProps) {
 
       <div className="flex min-h-screen w-full flex-col md:ml-64">
         <main className="bg-background flex-1 overflow-y-auto p-6 pt-4">
-          <div className="mb-6 flex items-center justify-between md:justify-end">
+          <div className="mb-8 flex min-h-14 items-center justify-between md:justify-end">
             <div className="flex items-center gap-3 md:hidden">
               <Button
                 variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => setIsSidebarOpen(true)}
+                className="text-muted-foreground hover:text-foreground h-11 w-11 rounded-full p-0"
+                onClick={openSidebar}
                 aria-label="Abrir navegación"
               >
                 <Menu className="h-5 w-5" aria-hidden="true" />
               </Button>
-              <Link to="/dashboard" aria-label="Panel de Entipedia">
-                <LogoMark size="sm" />
-              </Link>
             </div>
 
             <DropdownMenu>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -54,7 +54,7 @@ import {
   useUpdateTask,
   useUpdateTaskStatus,
 } from "@/hooks";
-import type { Task, TaskFilters, TaskFormValues, TaskPriority, TaskStatus } from "@/types";
+import type { Project, Task, TaskFilters, TaskFormValues, TaskPriority, TaskStatus } from "@/types";
 import { cn, formatDateForInput, formatTaskDate } from "@/utils";
 
 const taskSchema = z.object({
@@ -304,6 +304,131 @@ function TasksPage() {
 
   const activeTasks = useMemo(() => tasks, [tasks]);
 
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showLeftIndicator, setShowLeftIndicator] = useState(false);
+  const [showRightIndicator, setShowRightIndicator] = useState(false);
+
+  const refreshScrollIndicators = useCallback(() => {
+    const container = tableScrollRef.current;
+
+    if (!container) {
+      setShowLeftIndicator(false);
+      setShowRightIndicator(false);
+      return;
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setShowLeftIndicator(scrollLeft > 0);
+    setShowRightIndicator(scrollLeft + clientWidth < scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    const container = tableScrollRef.current;
+    const frame = window.requestAnimationFrame(() => {
+      refreshScrollIndicators();
+    });
+
+    if (!container) {
+      window.addEventListener("resize", refreshScrollIndicators);
+      return () => {
+        window.cancelAnimationFrame(frame);
+        window.removeEventListener("resize", refreshScrollIndicators);
+      };
+    }
+
+    const handleScroll = () => {
+      refreshScrollIndicators();
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", refreshScrollIndicators);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", refreshScrollIndicators);
+    };
+  }, [activeTasks, refreshScrollIndicators]);
+
+  type TaskMobileCardProps = {
+    task: Task;
+    projects: ReadonlyArray<Project>;
+    onEdit: (task: Task) => void;
+    onDelete: (task: Task) => void;
+    isUpdating: boolean;
+    className?: string;
+  };
+
+  const TaskMobileCard = ({
+    task,
+    projects: projectList,
+    onEdit,
+    onDelete,
+    isUpdating,
+    className,
+  }: TaskMobileCardProps) => {
+    const projectName =
+      task.projectId !== null
+        ? (projectList.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
+        : "Sin asignar";
+    const priority = task.priority && isTaskPriority(task.priority) ? task.priority : null;
+
+    return (
+      <article
+        className={cn(
+          "animate-card-fade-in space-y-3 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm",
+          className,
+        )}
+      >
+        <header className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium text-[#1C2431]">{task.title}</h3>
+            {task.description ? (
+              <p className="text-muted-foreground line-clamp-2 text-xs">{task.description}</p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className={cn("text-xs", TASK_STATUS_COLORS[task.status])}>
+              {TASK_STATUS_LABELS[task.status]}
+            </Badge>
+            {priority ? (
+              <Badge className={cn("text-xs", TASK_PRIORITY_COLORS[priority])}>
+                {TASK_PRIORITY_LABELS[priority]}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground text-xs">Sin prioridad</span>
+            )}
+          </div>
+        </header>
+
+        <dl className="grid gap-3 text-xs sm:grid-cols-2">
+          <div className="space-y-1">
+            <dt className="text-muted-foreground text-xs font-medium">Proyecto:</dt>
+            <dd className="text-foreground text-sm">{projectName}</dd>
+          </div>
+          <div className="space-y-1">
+            <dt className="text-muted-foreground text-xs font-medium">Vencimiento:</dt>
+            <dd className="text-foreground text-sm">{formatTaskDate(task.dueDate)}</dd>
+          </div>
+        </dl>
+
+        <footer className="flex flex-wrap gap-2">
+          <Button variant="secondary" size="sm" onClick={() => onEdit(task)} disabled={isUpdating}>
+            Editar
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => onDelete(task)}
+            disabled={isUpdating}
+          >
+            Eliminar
+          </Button>
+        </footer>
+      </article>
+    );
+  };
+
   const renderTaskRows = () => {
     if (activeTasks.length === 0) {
       return (
@@ -378,26 +503,34 @@ function TasksPage() {
         <div className="text-foreground px-5 py-10 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
-              <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold">Tareas</h1>
-                  <p className="text-muted-foreground mb-6 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Gestiona tu trabajo con estatus, prioridades y fechas límite.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <TabsList>
-                    <TabsTrigger value="board">Tablero</TabsTrigger>
-                    <TabsTrigger value="table">Tabla</TabsTrigger>
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:w-auto lg:flex-nowrap">
+                  <TabsList className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:gap-0">
+                    <TabsTrigger value="board" className="h-10 text-sm sm:w-auto">
+                      Tablero
+                    </TabsTrigger>
+                    <TabsTrigger value="table" className="h-10 text-sm sm:w-auto">
+                      Tabla
+                    </TabsTrigger>
                   </TabsList>
-                  <Button onClick={openCreateModal} variant="secondary">
+                  <Button
+                    onClick={openCreateModal}
+                    variant="secondary"
+                    className="w-full sm:w-auto lg:w-auto"
+                  >
                     Crear tarea
                   </Button>
                 </div>
               </header>
 
-              <section className="flex flex-wrap gap-5 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
-                <div className="w-full max-w-xs">
+              <section className="flex flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm sm:flex-row sm:flex-wrap sm:gap-5 md:p-6">
+                <div className="w-full sm:max-w-xs">
                   <Label className="text-muted-foreground mb-2 block text-sm">Estatus</Label>
                   <Select
                     value={filters.status ?? "all"}
@@ -422,7 +555,7 @@ function TasksPage() {
                   </Select>
                 </div>
 
-                <div className="w-full max-w-xs">
+                <div className="w-full sm:max-w-xs">
                   <Label className="text-muted-foreground mb-2 block text-sm">Prioridad</Label>
                   <Select
                     value={filters.priority ?? "all"}
@@ -447,7 +580,7 @@ function TasksPage() {
                   </Select>
                 </div>
 
-                <div className="w-full max-w-xs">
+                <div className="w-full sm:max-w-xs">
                   <Label className="text-muted-foreground mb-2 block text-sm">Proyecto</Label>
                   <Select
                     value={
@@ -490,19 +623,55 @@ function TasksPage() {
                       {error instanceof Error ? error.message : "No se pudieron cargar las tareas."}
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tarea</TableHead>
-                          <TableHead>Proyecto</TableHead>
-                          <TableHead>Estatus</TableHead>
-                          <TableHead>Prioridad</TableHead>
-                          <TableHead>Fecha de Vencimiento</TableHead>
-                          <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>{renderTaskRows()}</TableBody>
-                    </Table>
+                    <>
+                      <div className="space-y-3 xl:hidden">
+                        {activeTasks.length === 0 ? (
+                          <p className="text-muted-foreground py-8 text-center text-sm">
+                            No hay tareas que coincidan con los filtros actuales.
+                          </p>
+                        ) : (
+                          activeTasks.map((task, index) => {
+                            const isEditing =
+                              updateTask.isPending && taskBeingEdited?.id === task.id;
+                            const isDeleting =
+                              deleteTask.isPending && taskBeingDeleted?.id === task.id;
+                            const isMutating = isEditing || isDeleting;
+
+                            return (
+                              <TaskMobileCard
+                                key={task.id}
+                                task={task}
+                                projects={projects}
+                                onEdit={handleEditOpen}
+                                onDelete={handleDeleteTask}
+                                isUpdating={isMutating}
+                                className={index < 4 ? `stagger-${index + 1}` : undefined}
+                              />
+                            );
+                          })
+                        )}
+                      </div>
+
+                      <div className="relative hidden xl:block">
+                        {showLeftIndicator ? <span className="scroll-indicator-left" /> : null}
+                        {showRightIndicator ? <span className="scroll-indicator-right" /> : null}
+                        <div ref={tableScrollRef} className="horizontal-scroll-container">
+                          <Table className="w-full table-auto">
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Tarea</TableHead>
+                                <TableHead>Proyecto</TableHead>
+                                <TableHead>Estatus</TableHead>
+                                <TableHead>Prioridad</TableHead>
+                                <TableHead>Fecha de Vencimiento</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>{renderTaskRows()}</TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </section>
               </TabsContent>
@@ -540,7 +709,7 @@ function TasksPage() {
           </div>
 
           <Dialog open={isCreateModalOpen} onOpenChange={handleCreateOpenChange}>
-            <DialogContent className="space-y-5">
+            <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
               <DialogHeader>
                 <DialogTitle>Crear tarea</DialogTitle>
               </DialogHeader>
@@ -579,7 +748,7 @@ function TasksPage() {
                     )}
                   />
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <FormField
                       control={createForm.control}
                       name="status"
@@ -685,7 +854,7 @@ function TasksPage() {
                     </p>
                   ) : null}
 
-                  <DialogFooter>
+                  <DialogFooter className="gap-2">
                     <DialogClose asChild>
                       <Button type="button" variant="outline">
                         Cancelar
@@ -701,7 +870,7 @@ function TasksPage() {
           </Dialog>
 
           <Dialog open={isEditModalOpen} onOpenChange={handleEditOpenChange}>
-            <DialogContent className="space-y-5">
+            <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
               <DialogHeader>
                 <DialogTitle>Editar tarea</DialogTitle>
               </DialogHeader>
@@ -740,7 +909,7 @@ function TasksPage() {
                     )}
                   />
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <FormField
                       control={editForm.control}
                       name="status"
@@ -844,7 +1013,7 @@ function TasksPage() {
                     <p className="text-sm text-red-400">{editForm.formState.errors.root.message}</p>
                   ) : null}
 
-                  <DialogFooter>
+                  <DialogFooter className="gap-2">
                     <DialogClose asChild>
                       <Button type="button" variant="outline" onClick={closeEditModal}>
                         Cancelar
