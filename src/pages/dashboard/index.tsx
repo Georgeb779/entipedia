@@ -1,15 +1,14 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { CheckSquare, Clock, FolderKanban } from "lucide-react";
+import { CheckSquare, FolderKanban } from "lucide-react";
 
 import { Layout, ProtectedRoute } from "@/components";
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import {
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
   TASK_STATUS_COLORS,
   TASK_STATUS_LABELS,
-  PROJECT_STATUS_LABELS,
 } from "@/constants";
 import { useProjects, useTasks } from "@/hooks";
 import type { ProjectStatus, Task, TaskPriority, TaskStatus } from "@/types";
@@ -31,62 +30,39 @@ const TasksOverviewCard = ({
   completedTasks,
 }: TasksOverviewCardProps) => {
   const safeCompletion = Math.min(Math.max(completionRate, 0), 100);
-  const breakdown = [
-    { label: "To Do", value: todoTasks },
-    { label: "In Progress", value: inProgressTasks },
-    { label: "Done", value: completedTasks },
-  ];
 
   return (
-    <article className="min-h-40 rounded-xl border border-black/5 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:p-6">
-      <div className="flex items-center gap-3">
+    <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-neutral-600">Tasks</p>
+          <p className="mt-1 text-3xl font-semibold text-neutral-900">
+            {totalTasks.toLocaleString()}
+          </p>
+        </div>
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
           <CheckSquare className="h-[18px] w-[18px]" aria-hidden="true" />
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="line-clamp-1 text-2xl leading-tight font-semibold text-neutral-900">
-            {totalTasks.toLocaleString()}
-          </span>
-          <span className="line-clamp-1 text-sm text-neutral-600">Tasks Overview</span>
-        </div>
       </div>
 
-      <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between text-sm text-neutral-600">
-          <span className="line-clamp-1">{safeCompletion}% completed</span>
-          <span className="line-clamp-1">{completedTasks.toLocaleString()} done</span>
-        </div>
+      <div className="mt-4">
         <div
           className="h-1.5 w-full rounded-full bg-neutral-200"
           role="presentation"
           aria-hidden="true"
         >
           <div
-            className="h-full rounded-full bg-neutral-800 transition-all"
+            className="h-full rounded-full bg-yellow-500 transition-all"
             style={{ width: `${totalTasks > 0 ? safeCompletion : 0}%` }}
           />
         </div>
+        <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completed</p>
       </div>
 
-      <div className="mt-3 space-y-2">
-        {breakdown.map((item) => (
-          <div
-            key={item.label}
-            className="flex items-center justify-between gap-3 text-sm text-neutral-600"
-          >
-            <span className="line-clamp-1">{item.label}</span>
-            <span className="line-clamp-1">{item.value.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-3">
-        <Link
-          to="/tasks"
-          className="text-sm text-yellow-600 transition hover:text-yellow-500 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none"
-        >
-          View tasks →
-        </Link>
+      <div className="mt-2 flex items-center gap-4 text-sm text-neutral-700">
+        <span>To Do {todoTasks.toLocaleString()}</span>
+        <span>In Progress {inProgressTasks.toLocaleString()}</span>
+        <span>Done {completedTasks.toLocaleString()}</span>
       </div>
     </article>
   );
@@ -108,154 +84,65 @@ const ProjectsOverviewCard = ({
   completedProjects,
 }: ProjectsOverviewCardProps) => {
   const safeCompletion = Math.min(Math.max(completionRate, 0), 100);
-  const breakdown = [
-    { label: PROJECT_STATUS_LABELS.todo, value: todoProjects },
-    { label: PROJECT_STATUS_LABELS.in_progress, value: inProgressProjects },
-    { label: PROJECT_STATUS_LABELS.done, value: completedProjects },
-  ];
 
   return (
-    <article className="min-h-40 rounded-xl border border-black/5 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:p-6">
-      <div className="flex items-center gap-3">
+    <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-neutral-600">Projects</p>
+          <p className="mt-1 text-3xl font-semibold text-neutral-900">
+            {totalProjects.toLocaleString()}
+          </p>
+        </div>
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
           <FolderKanban className="h-[18px] w-[18px]" aria-hidden="true" />
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="line-clamp-1 text-2xl leading-tight font-semibold text-neutral-900">
-            {totalProjects.toLocaleString()}
-          </span>
-          <span className="line-clamp-1 text-sm text-neutral-600">Projects Overview</span>
-        </div>
       </div>
 
-      <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between text-sm text-neutral-600">
-          <span className="line-clamp-1">{safeCompletion}% completed</span>
-          <span className="line-clamp-1">{completedProjects.toLocaleString()} done</span>
-        </div>
+      <div className="mt-4">
         <div
           className="h-1.5 w-full rounded-full bg-neutral-200"
           role="presentation"
           aria-hidden="true"
         >
           <div
-            className="h-full rounded-full bg-neutral-800 transition-all"
+            className="h-full rounded-full bg-yellow-500 transition-all"
             style={{ width: `${totalProjects > 0 ? safeCompletion : 0}%` }}
           />
         </div>
+        <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completed</p>
       </div>
 
-      <div className="mt-3 space-y-2">
-        {breakdown.map((item) => (
-          <div
-            key={item.label}
-            className="flex items-center justify-between gap-3 text-sm text-neutral-600"
-          >
-            <span className="line-clamp-1">{item.label}</span>
-            <span className="line-clamp-1">{item.value.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-3">
-        <Link
-          to="/projects"
-          className="text-sm text-yellow-600 transition hover:text-yellow-500 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none"
-        >
-          View projects →
-        </Link>
+      <div className="mt-2 flex items-center gap-4 text-sm text-neutral-700">
+        <span>To Do {todoProjects.toLocaleString()}</span>
+        <span>In Progress {inProgressProjects.toLocaleString()}</span>
+        <span>Done {completedProjects.toLocaleString()}</span>
       </div>
     </article>
   );
 };
 
-type DueSoonCardProps = {
-  upcomingTasks: Task[];
-  tasksWithDueDate: number;
+type EmptyOverviewCardProps = {
+  title: string;
+  description: string;
+  actionLabel: string;
+  actionTo: string;
 };
 
-const DueSoonCard = ({ upcomingTasks, tasksWithDueDate }: DueSoonCardProps) => {
-  const upcomingCount = upcomingTasks.length;
-  const safeCoverage = Math.min(
-    Math.max(tasksWithDueDate > 0 ? Math.round((upcomingCount / tasksWithDueDate) * 100) : 0, 0),
-    100,
-  );
-  const nextDueTask = upcomingTasks[0] ?? null;
-  const upcomingPreview = upcomingTasks.slice(0, 3);
-
-  return (
-    <article className="min-h-40 rounded-xl border border-black/5 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:p-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
-          <Clock className="h-[18px] w-[18px]" aria-hidden="true" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="line-clamp-1 text-2xl leading-tight font-semibold text-neutral-900">
-            {upcomingCount.toLocaleString()}
-          </span>
-          <span className="line-clamp-1 text-sm text-neutral-600">Due Soon</span>
-        </div>
-      </div>
-
-      <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between text-sm text-neutral-600">
-          <span className="line-clamp-1">{safeCoverage}% of due-date tasks</span>
-          <span className="line-clamp-1">{tasksWithDueDate.toLocaleString()} total</span>
-        </div>
-        <div
-          className="h-1.5 w-full rounded-full bg-neutral-200"
-          role="presentation"
-          aria-hidden="true"
-        >
-          <div
-            className="h-full rounded-full bg-neutral-800 transition-all"
-            style={{ width: `${tasksWithDueDate > 0 ? safeCoverage : 0}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3 text-sm text-neutral-600">
-        {nextDueTask ? (
-          <span className="line-clamp-1">Next due: {formatTaskDate(nextDueTask.dueDate)}</span>
-        ) : (
-          <span className="line-clamp-1">No upcoming deadlines.</span>
-        )}
-      </div>
-
-      <div className="mt-3 space-y-2">
-        {upcomingPreview.length === 0 ? (
-          <p className="text-sm text-neutral-600">All caught up for now.</p>
-        ) : (
-          upcomingPreview.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-start justify-between gap-3 border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
-            >
-              <div className="min-w-0">
-                <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
-                <p className="line-clamp-1 text-xs text-neutral-600">
-                  Due {formatTaskDate(task.dueDate)}
-                </p>
-              </div>
-              <Badge className={resolveStatusBadgeClass(task.status)}>
-                {TASK_STATUS_LABELS[task.status]}
-              </Badge>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="mt-3">
-        <Link
-          to="/tasks"
-          className="text-sm text-yellow-600 transition hover:text-yellow-500 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none"
-        >
-          View tasks →
-        </Link>
-      </div>
-    </article>
-  );
-};
+const EmptyOverviewCard = ({
+  title,
+  description,
+  actionLabel,
+  actionTo,
+}: EmptyOverviewCardProps) => (
+  <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
+    <h2 className="text-sm text-neutral-600">{title}</h2>
+    <p className="mt-2 text-sm text-neutral-600">{description}</p>
+    <Button asChild variant="secondary" className="mt-4">
+      <Link to={actionTo}>{actionLabel}</Link>
+    </Button>
+  </article>
+);
 
 const resolveStatusBadgeClass = (status: TaskStatus) =>
   status === "done" ? "bg-neutral-100 text-neutral-700" : TASK_STATUS_COLORS[status];
@@ -291,6 +178,102 @@ const resolvePriority = (priority: Task["priority"]): TaskPriority | null => {
   return null;
 };
 
+type WorkActivityTabsProps = {
+  recentTasks: Task[];
+  upcomingTasks: Task[];
+};
+
+const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps) => {
+  const recentPreview = recentTasks.slice(0, 5);
+  const duePreview = upcomingTasks.slice(0, 5);
+  const dueCount = upcomingTasks.length;
+  const hasDue = dueCount > 0;
+
+  return (
+    <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
+      <Tabs defaultValue="recent">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-neutral-900">Work Activity</h2>
+            <p className="text-sm text-neutral-600">
+              Track recent updates and upcoming deadlines in one place.
+            </p>
+          </div>
+          <TabsList className="self-start bg-neutral-100">
+            <TabsTrigger value="recent">Recent</TabsTrigger>
+            {hasDue ? <TabsTrigger value="due">Due Soon</TabsTrigger> : null}
+          </TabsList>
+        </div>
+
+        <TabsContent value="recent" className="mt-4 space-y-3">
+          {recentPreview.length === 0 ? (
+            <p className="text-sm text-neutral-600">No recent tasks yet. Create your first task.</p>
+          ) : (
+            recentPreview.map((task) => {
+              const priority = resolvePriority(task.priority);
+              const priorityLabel = priority ? TASK_PRIORITY_LABELS[priority] : null;
+              const priorityClass = priority ? resolvePriorityBadgeClass(priority) : null;
+
+              return (
+                <div
+                  key={task.id}
+                  className="border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
+                      <p className="line-clamp-1 text-xs text-neutral-600">
+                        Created {formatTaskDate(task.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className={resolveStatusBadgeClass(task.status)}>
+                        {TASK_STATUS_LABELS[task.status]}
+                      </Badge>
+                      {priority && priorityLabel && priorityClass ? (
+                        <Badge className={priorityClass}>{priorityLabel}</Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </TabsContent>
+
+        {hasDue ? (
+          <TabsContent value="due" className="mt-4 space-y-3">
+            {duePreview.map((task) => {
+              const priority = resolvePriority(task.priority);
+              const priorityLabel = priority ? TASK_PRIORITY_LABELS[priority] : null;
+              const priorityClass = priority ? resolvePriorityBadgeClass(priority) : null;
+
+              return (
+                <div
+                  key={task.id}
+                  className="border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
+                      <p className="line-clamp-1 text-xs text-neutral-600">
+                        Due {formatTaskDate(task.dueDate)}
+                      </p>
+                    </div>
+                    {priority && priorityLabel && priorityClass ? (
+                      <Badge className={priorityClass}>{priorityLabel}</Badge>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </TabsContent>
+        ) : null}
+      </Tabs>
+    </article>
+  );
+};
+
 /**
  * Provides an overview of tasks and projects with quick access to recent activity.
  */
@@ -311,7 +294,6 @@ const DashboardPage = () => {
       },
       { todo: 0, in_progress: 0, done: 0 },
     );
-    const tasksWithDueDate = tasks.filter((task) => task.dueDate !== null).length;
     const todoProjects = projectStatusCounts.todo;
     const inProgressProjects = projectStatusCounts.in_progress;
     const completedProjects = projectStatusCounts.done;
@@ -322,11 +304,9 @@ const DashboardPage = () => {
       inProgressTasks,
       completedTasks,
       totalProjects,
-      projectStatusCounts,
       todoProjects,
       inProgressProjects,
       completedProjects,
-      tasksWithDueDate,
       completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
       projectCompletionRate:
         totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0,
@@ -354,9 +334,6 @@ const DashboardPage = () => {
       .slice(0, 5);
   }, [tasks]);
 
-  const recentTasksPreview = useMemo(() => recentTasks.slice(0, 3), [recentTasks]);
-  const upcomingTasksPreview = useMemo(() => upcomingTasks.slice(0, 3), [upcomingTasks]);
-
   const isLoading = tasksLoading || projectsLoading;
 
   if (isLoading) {
@@ -376,167 +353,76 @@ const DashboardPage = () => {
       <Layout>
         <div className="bg-[#FFFCF5]">
           <div className="mx-auto max-w-7xl px-6 py-4">
-            <header className="space-y-1">
-              <h1 className="text-2xl font-semibold text-neutral-900">Dashboard</h1>
-              <p className="text-sm text-neutral-600">Overview of your tasks and projects.</p>
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h1 className="text-2xl font-semibold text-neutral-900">Dashboard</h1>
+                <p className="text-sm text-neutral-600">Overview of your tasks and projects.</p>
+              </div>
+              <div className="ml-auto flex gap-4 text-sm">
+                <Link to="/tasks" className="text-yellow-700 transition hover:text-yellow-600">
+                  Tasks
+                </Link>
+                <Link to="/projects" className="text-yellow-700 transition hover:text-yellow-600">
+                  Projects
+                </Link>
+                <Link
+                  to="/tasks?view=board"
+                  className="text-yellow-700 transition hover:text-yellow-600"
+                >
+                  Board
+                </Link>
+              </div>
             </header>
 
-            <div className="mt-6 space-y-6">
-              <section className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-                <TasksOverviewCard
-                  totalTasks={stats.totalTasks}
-                  completionRate={stats.completionRate}
-                  todoTasks={stats.todoTasks}
-                  inProgressTasks={stats.inProgressTasks}
-                  completedTasks={stats.completedTasks}
-                />
+            <div className="mt-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                {stats.totalTasks > 0 ? (
+                  <TasksOverviewCard
+                    totalTasks={stats.totalTasks}
+                    completionRate={stats.completionRate}
+                    todoTasks={stats.todoTasks}
+                    inProgressTasks={stats.inProgressTasks}
+                    completedTasks={stats.completedTasks}
+                  />
+                ) : (
+                  <EmptyOverviewCard
+                    title="No tasks yet"
+                    description="Create your first task to start tracking progress."
+                    actionLabel="Create Task"
+                    actionTo="/tasks"
+                  />
+                )}
 
-                <ProjectsOverviewCard
-                  totalProjects={stats.totalProjects}
-                  completionRate={stats.projectCompletionRate}
-                  todoProjects={stats.todoProjects}
-                  inProgressProjects={stats.inProgressProjects}
-                  completedProjects={stats.completedProjects}
-                />
+                {stats.totalProjects > 0 ? (
+                  <ProjectsOverviewCard
+                    totalProjects={stats.totalProjects}
+                    completionRate={stats.projectCompletionRate}
+                    todoProjects={stats.todoProjects}
+                    inProgressProjects={stats.inProgressProjects}
+                    completedProjects={stats.completedProjects}
+                  />
+                ) : (
+                  <EmptyOverviewCard
+                    title="No projects yet"
+                    description="Launch a project to organize related workstreams."
+                    actionLabel="Create Project"
+                    actionTo="/projects"
+                  />
+                )}
+              </div>
 
-                <DueSoonCard
-                  upcomingTasks={upcomingTasks}
-                  tasksWithDueDate={stats.tasksWithDueDate}
-                />
-              </section>
+              <div className="mt-6">
+                <WorkActivityTabs recentTasks={recentTasks} upcomingTasks={upcomingTasks} />
+              </div>
 
-              <section className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <article className="min-h-40 rounded-lg border border-black/5 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:p-6">
-                    <div className="space-y-1">
-                      <h2 className="line-clamp-1 text-2xl font-semibold text-neutral-900">
-                        Recent Tasks
-                      </h2>
-                      <p className="line-clamp-2 text-sm text-neutral-600">
-                        Latest activity across your work.
-                      </p>
-                    </div>
-                    <div className="mt-3 space-y-3">
-                      {recentTasksPreview.length === 0 ? (
-                        <p className="text-sm text-neutral-600">
-                          No items yet. Create your first task.
-                        </p>
-                      ) : (
-                        recentTasksPreview.map((task) => {
-                          const priority = resolvePriority(task.priority);
-                          const priorityLabel = priority ? TASK_PRIORITY_LABELS[priority] : null;
-                          const priorityClass = priority
-                            ? resolvePriorityBadgeClass(priority)
-                            : null;
-
-                          return (
-                            <div
-                              key={task.id}
-                              className="border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="line-clamp-1 text-sm text-neutral-900">
-                                    {task.title}
-                                  </p>
-                                  <p className="line-clamp-1 text-xs text-neutral-600">
-                                    Created {formatTaskDate(task.createdAt)}
-                                  </p>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Badge className={resolveStatusBadgeClass(task.status)}>
-                                    {TASK_STATUS_LABELS[task.status]}
-                                  </Badge>
-                                  {priority && priorityLabel && priorityClass ? (
-                                    <Badge className={priorityClass}>{priorityLabel}</Badge>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                    <div className="mt-3">
-                      <Link
-                        to="/tasks"
-                        className="text-sm text-neutral-700 transition hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none"
-                      >
-                        View all tasks →
-                      </Link>
-                    </div>
-                  </article>
-
-                  <article className="min-h-40 rounded-lg border border-black/5 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:p-6">
-                    <div className="space-y-1">
-                      <h2 className="line-clamp-1 text-2xl font-semibold text-neutral-900">
-                        Upcoming Due Dates
-                      </h2>
-                      <p className="line-clamp-2 text-sm text-neutral-600">
-                        Stay ahead of imminent deadlines.
-                      </p>
-                    </div>
-                    <div className="mt-3 space-y-3">
-                      {upcomingTasksPreview.length === 0 ? (
-                        <p className="text-sm text-neutral-600">No upcoming due dates.</p>
-                      ) : (
-                        upcomingTasksPreview.map((task) => {
-                          const priority = resolvePriority(task.priority);
-                          const priorityLabel = priority ? TASK_PRIORITY_LABELS[priority] : null;
-                          const priorityClass = priority
-                            ? resolvePriorityBadgeClass(priority)
-                            : null;
-
-                          return (
-                            <div
-                              key={task.id}
-                              className="border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="line-clamp-1 text-sm text-neutral-900">
-                                    {task.title}
-                                  </p>
-                                  <div className="line-clamp-1 text-xs text-neutral-600">
-                                    Due {formatTaskDate(task.dueDate)}
-                                  </div>
-                                </div>
-                                {priority && priorityLabel && priorityClass ? (
-                                  <Badge className={priorityClass}>{priorityLabel}</Badge>
-                                ) : null}
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                    <div className="mt-3">
-                      <Link
-                        to="/tasks"
-                        className="text-sm text-neutral-700 transition hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none"
-                      >
-                        View all tasks →
-                      </Link>
-                    </div>
-                  </article>
-                </div>
-              </section>
-
-              <section className="flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild variant="secondary">
                   <Link to="/tasks">Create Task</Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link to="/projects">Create Project</Link>
                 </Button>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="focus-visible:ring-offset-background text-neutral-700 transition hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 focus-visible:outline-none"
-                >
-                  <Link to="/tasks?view=board">View Board</Link>
-                </Button>
-              </section>
+              </div>
             </div>
           </div>
         </div>
