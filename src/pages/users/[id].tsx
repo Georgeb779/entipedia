@@ -30,7 +30,7 @@ export default function UserDetail() {
               </CardHeader>
               <CardFooter>
                 <Button asChild variant="secondary">
-                  <Link to="/users/profile">Ir a mi perfil</Link>
+                  <Link to="/users">Ir a mi perfil</Link>
                 </Button>
               </CardFooter>
             </Card>
