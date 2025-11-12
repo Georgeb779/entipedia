@@ -5,20 +5,20 @@ import { Button, LogoMark } from "@/components";
 
 const pillars = [
   {
-    title: "Unify task flows",
-    body: "Track assignments from quick lists to detailed Kanban workflows, complete with priorities, due dates, and project context.",
+    title: "Unifica flujos de tareas",
+    body: "Sigue asignaciones desde listas rápidas hasta flujos Kanban detallados, con prioridades, fechas de vencimiento y contexto del proyecto.",
   },
   {
-    title: "Surface project insight",
-    body: "Monitor progress with dashboards the moment you sign in, so bottlenecks and wins stay visible.",
+    title: "Destaca la información de tus proyectos",
+    body: "Monitorea el progreso con tableros desde el momento en que inicias sesión, para que cuellos de botella y logros permanezcan visibles.",
   },
   {
-    title: "Empower team collaboration",
-    body: "Keep everyone aligned with shared boards, quick filters, and navigation that feels familiar everywhere.",
+    title: "Impulsa la colaboración del equipo",
+    body: "Mantén a todos alineados con tableros compartidos, filtros rápidos y una navegación familiar en cualquier lugar.",
   },
   {
-    title: "Secure smart storage",
-    body: "Organize critical files alongside every project so context is always within reach.",
+    title: "Asegura un almacenamiento inteligente",
+    body: "Organiza archivos críticos junto a cada proyecto para que el contexto siempre esté al alcance.",
   },
 ];
 
@@ -29,15 +29,17 @@ export default function About(): JSX.Element {
         <header className="animate-fade-in space-y-6">
           <LogoMark size="md" className="mx-auto" />
           <div className="space-y-4">
-            <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">About Entipedia</h1>
+            <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">
+              Acerca de Entipedia
+            </h1>
             <p className="text-muted-foreground mx-auto max-w-2xl text-base">
-              We built Entipedia to unify planning, documentation, and execution so modern teams can
-              collaborate with clarity and momentum.
+              Construimos Entipedia para unificar planificación, documentación y ejecución, de modo
+              que los equipos modernos colaboren con claridad y ritmo.
             </p>
           </div>
           <p className="text-muted-foreground mx-auto max-w-2xl text-sm">
-            From Kanban boards to document hubs, every surface stays in sync—helping you ship faster
-            without sacrificing focus or context.
+            Desde tableros Kanban hasta centros de documentos, cada superficie se mantiene en
+            sincronía para ayudarte a entregar más rápido sin sacrificar enfoque ni contexto.
           </p>
         </header>
 
@@ -56,17 +58,17 @@ export default function About(): JSX.Element {
 
         <section className="flex flex-col items-center gap-4 text-center">
           <p className="text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase">
-            Ready to get started?
+            ¿Listo para comenzar?
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link to="/auth/register" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 className="w-full px-5 py-2.5 text-base sm:w-auto"
-                aria-label="Create an Entipedia account"
+                aria-label="Crear una cuenta en Entipedia"
                 role="button"
               >
-                Create an account
+                Crear una cuenta
               </Button>
             </Link>
             <Link to="/auth/login" className="w-full sm:w-auto">
@@ -74,10 +76,10 @@ export default function About(): JSX.Element {
                 variant="outline"
                 size="lg"
                 className="text-foreground w-full border border-black/10 bg-white px-5 py-2.5 text-base shadow-sm hover:bg-neutral-50 sm:w-auto"
-                aria-label="Sign in to Entipedia"
+                aria-label="Iniciar sesión en Entipedia"
                 role="button"
               >
-                Sign in
+                Iniciar sesión
               </Button>
             </Link>
             <Link to="/" className="w-full sm:w-auto">
@@ -85,10 +87,10 @@ export default function About(): JSX.Element {
                 variant="ghost"
                 size="lg"
                 className="text-foreground w-full px-5 py-2.5 text-base hover:bg-white/70 sm:w-auto"
-                aria-label="Back to Entipedia home"
+                aria-label="Volver a la página principal de Entipedia"
                 role="button"
               >
-                Back to home
+                Volver al inicio
               </Button>
             </Link>
           </div>

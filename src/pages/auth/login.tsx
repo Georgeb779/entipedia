@@ -19,8 +19,8 @@ import type { ApiAuthUser } from "@/types";
 import { mapApiAuthUser } from "@/utils";
 
 const loginSchema = z.object({
-  email: z.string().trim().email("Please enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters long."),
+  email: z.string().trim().email("Ingresa un correo electrónico válido."),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -58,8 +58,8 @@ const Login = () => {
       if (!response.ok) {
         const errorMessage =
           response.status === 401
-            ? "Invalid email or password."
-            : "Unable to login. Please try again.";
+            ? "Correo electrónico o contraseña inválidos."
+            : "No se pudo iniciar sesión. Intenta nuevamente.";
         form.setError("root", { type: "server", message: errorMessage });
         return;
       }
@@ -71,7 +71,7 @@ const Login = () => {
     } catch {
       form.setError("root", {
         type: "server",
-        message: "Unable to login. Please try again.",
+        message: "No se pudo iniciar sesión. Intenta nuevamente.",
       });
     }
   };
@@ -82,8 +82,10 @@ const Login = () => {
         <div className="space-y-4 text-center">
           <LogoMark size="md" className="mx-auto" />
           <div className="space-y-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
-            <p className="text-muted-foreground text-sm">Sign in to continue where you left off.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Bienvenido de nuevo</h1>
+            <p className="text-muted-foreground text-sm">
+              Inicia sesión para continuar donde lo dejaste.
+            </p>
           </div>
         </div>
 
@@ -94,11 +96,11 @@ const Login = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email address</FormLabel>
+                  <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder="tu@ejemplo.com"
                       autoComplete="email"
                       disabled={form.formState.isSubmitting}
                       {...field}
@@ -114,7 +116,7 @@ const Login = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Contraseña</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -139,27 +141,27 @@ const Login = () => {
               type="submit"
               className="w-full"
               disabled={form.formState.isSubmitting}
-              aria-label={form.formState.isSubmitting ? "Signing in" : "Sign in"}
+              aria-label={form.formState.isSubmitting ? "Iniciando sesión" : "Iniciar sesión"}
               role="button"
             >
-              {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
+              {form.formState.isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
           </form>
         </Form>
 
         <div className="text-muted-foreground space-y-1 text-center text-sm">
           <p>
-            Need an account?{" "}
+            ¿Necesitas una cuenta?{" "}
             <Link
               to="/auth/register"
               className="text-primary hover:text-primary/80 hover:underline"
             >
-              Create one
+              Crear una
             </Link>
           </p>
           <p>
             <Link to="/" className="text-primary hover:text-primary/80 hover:underline">
-              Return home
+              Volver al inicio
             </Link>
           </p>
         </div>

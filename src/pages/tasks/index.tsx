@@ -61,16 +61,19 @@ const taskSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(1, "Title is required.")
-    .max(255, "Title must be 255 characters or less."),
-  description: z.string().max(2000, "Description must be 2000 characters or less.").optional(),
+    .min(1, "El título es requerido.")
+    .max(255, "El título debe tener 255 caracteres o menos."),
+  description: z
+    .string()
+    .max(2000, "La descripción debe tener 2000 caracteres o menos.")
+    .optional(),
   status: z.enum(["todo", "in_progress", "done"]),
   priority: z.union([z.enum(["low", "medium", "high"]), z.literal("none")]).optional(),
   dueDate: z
     .string()
     .optional()
     .refine((value) => !value || !Number.isNaN(new Date(value).getTime()), {
-      message: "Invalid due date.",
+      message: "Fecha de Vencimiento no válida.",
     }),
   projectId: z
     .string()
@@ -81,7 +84,7 @@ const taskSchema = z.object({
         value === "none" ||
         (!Number.isNaN(Number.parseInt(value, 10)) && Number.parseInt(value, 10) >= 0),
       {
-        message: "Invalid project selection.",
+        message: "Selección de proyecto no válida.",
       },
     ),
 });
@@ -183,7 +186,7 @@ function TasksPage() {
       setIsCreateModalOpen(false);
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to create task.";
+        mutationError instanceof Error ? mutationError.message : "No se pudo crear la tarea.";
       createForm.setError("root", { message });
     }
   };
@@ -226,7 +229,7 @@ function TasksPage() {
       closeEditModal();
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to update task.";
+        mutationError instanceof Error ? mutationError.message : "No se pudo actualizar la tarea.";
       editForm.setError("root", { message });
     }
   };
@@ -257,7 +260,7 @@ function TasksPage() {
       setTaskBeingDeleted(null);
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to delete task.";
+        mutationError instanceof Error ? mutationError.message : "No se pudo eliminar la tarea.";
       setDeleteError(message);
     }
   };
@@ -306,7 +309,9 @@ function TasksPage() {
       return (
         <TableRow>
           <TableCell className="py-10 text-center" colSpan={6}>
-            <p className="text-muted-foreground text-sm">No tasks match the current filters.</p>
+            <p className="text-muted-foreground text-sm">
+              No hay tareas que coincidan con los filtros actuales.
+            </p>
           </TableCell>
         </TableRow>
       );
@@ -322,8 +327,8 @@ function TasksPage() {
           </TableCell>
           <TableCell className="text-muted-foreground text-sm">
             {task.projectId !== null
-              ? (projects.find((project) => project.id === task.projectId)?.name ?? "Unknown")
-              : "Unassigned"}
+              ? (projects.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
+              : "Sin asignar"}
           </TableCell>
           <TableCell>
             <Badge className={cn("text-xs", TASK_STATUS_COLORS[task.status])}>
@@ -336,7 +341,7 @@ function TasksPage() {
                 {TASK_PRIORITY_LABELS[priority]}
               </Badge>
             ) : (
-              <span className="text-muted-foreground text-sm">None</span>
+              <span className="text-muted-foreground text-sm">Sin prioridad</span>
             )}
           </TableCell>
           <TableCell className="text-muted-foreground text-sm">
@@ -350,7 +355,7 @@ function TasksPage() {
                 onClick={() => handleEditOpen(task)}
                 disabled={updateTask.isPending && taskBeingEdited?.id === task.id}
               >
-                Edit
+                Editar
               </Button>
               <Button
                 variant="destructive"
@@ -358,7 +363,7 @@ function TasksPage() {
                 onClick={() => handleDeleteTask(task)}
                 disabled={deleteTask.isPending && taskBeingDeleted?.id === task.id}
               >
-                Delete
+                Eliminar
               </Button>
             </div>
           </TableCell>
@@ -375,25 +380,25 @@ function TasksPage() {
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="space-y-2">
-                  <h1 className="text-3xl font-semibold">Tasks</h1>
+                  <h1 className="text-3xl font-semibold">Tareas</h1>
                   <p className="text-muted-foreground mb-6 text-sm">
-                    Manage your work with statuses, priorities, and due dates.
+                    Gestiona tu trabajo con estatus, prioridades y fechas límite.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
                   <TabsList>
-                    <TabsTrigger value="board">Board</TabsTrigger>
-                    <TabsTrigger value="table">Table</TabsTrigger>
+                    <TabsTrigger value="board">Tablero</TabsTrigger>
+                    <TabsTrigger value="table">Tabla</TabsTrigger>
                   </TabsList>
                   <Button onClick={openCreateModal} variant="secondary">
-                    Create Task
+                    Crear tarea
                   </Button>
                 </div>
               </header>
 
               <section className="flex flex-wrap gap-5 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                 <div className="w-full max-w-xs">
-                  <Label className="text-muted-foreground mb-2 block text-sm">Status</Label>
+                  <Label className="text-muted-foreground mb-2 block text-sm">Estatus</Label>
                   <Select
                     value={filters.status ?? "all"}
                     onValueChange={(value) =>
@@ -404,10 +409,10 @@ function TasksPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Filter by status" />
+                      <SelectValue placeholder="Filtrar por estatus" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       {TASK_STATUS_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
@@ -418,7 +423,7 @@ function TasksPage() {
                 </div>
 
                 <div className="w-full max-w-xs">
-                  <Label className="text-muted-foreground mb-2 block text-sm">Priority</Label>
+                  <Label className="text-muted-foreground mb-2 block text-sm">Prioridad</Label>
                   <Select
                     value={filters.priority ?? "all"}
                     onValueChange={(value) =>
@@ -429,10 +434,10 @@ function TasksPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Filter by priority" />
+                      <SelectValue placeholder="Filtrar por prioridad" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       {TASK_PRIORITY_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
@@ -443,7 +448,7 @@ function TasksPage() {
                 </div>
 
                 <div className="w-full max-w-xs">
-                  <Label className="text-muted-foreground mb-2 block text-sm">Project</Label>
+                  <Label className="text-muted-foreground mb-2 block text-sm">Proyecto</Label>
                   <Select
                     value={
                       filters.projectId === undefined || filters.projectId === null
@@ -460,10 +465,10 @@ function TasksPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Filter by project" />
+                      <SelectValue placeholder="Filtrar por proyecto" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       {projects.map((project) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.name}
@@ -477,21 +482,23 @@ function TasksPage() {
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
                 <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
-                    <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
+                    <div className="text-muted-foreground py-12 text-center">
+                      Cargando tareas...
+                    </div>
                   ) : error ? (
                     <div className="text-destructive py-12 text-center">
-                      {error instanceof Error ? error.message : "Failed to load tasks."}
+                      {error instanceof Error ? error.message : "No se pudieron cargar las tareas."}
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Task</TableHead>
-                          <TableHead>Project</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Priority</TableHead>
-                          <TableHead>Due Date</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead>Tarea</TableHead>
+                          <TableHead>Proyecto</TableHead>
+                          <TableHead>Estatus</TableHead>
+                          <TableHead>Prioridad</TableHead>
+                          <TableHead>Fecha de Vencimiento</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>{renderTaskRows()}</TableBody>
@@ -503,14 +510,16 @@ function TasksPage() {
               <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
                 <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
-                    <div className="text-muted-foreground py-12 text-center">Loading tasks...</div>
+                    <div className="text-muted-foreground py-12 text-center">
+                      Cargando tareas...
+                    </div>
                   ) : error ? (
                     <div className="text-destructive py-12 text-center">
-                      {error instanceof Error ? error.message : "Failed to load tasks."}
+                      {error instanceof Error ? error.message : "No se pudieron cargar las tareas."}
                     </div>
                   ) : activeTasks.length === 0 ? (
                     <div className="text-muted-foreground py-12 text-center">
-                      No tasks match the current filters.
+                      No hay tareas que coincidan con los filtros actuales.
                     </div>
                   ) : (
                     <KanbanBoard
@@ -523,8 +532,8 @@ function TasksPage() {
                   )}
                 </section>
                 <p className="text-muted-foreground mt-3 text-center text-xs">
-                  Use mouse or keyboard (Tab + Arrow keys + Space/Enter) to move tasks between
-                  columns.
+                  Usa el mouse o el teclado (Tab + flechas + Espacio/Enter) para mover las tareas
+                  entre columnas.
                 </p>
               </TabsContent>
             </Tabs>
@@ -533,7 +542,7 @@ function TasksPage() {
           <Dialog open={isCreateModalOpen} onOpenChange={handleCreateOpenChange}>
             <DialogContent className="space-y-5">
               <DialogHeader>
-                <DialogTitle>Create Task</DialogTitle>
+                <DialogTitle>Crear tarea</DialogTitle>
               </DialogHeader>
 
               <Form {...createForm}>
@@ -543,9 +552,9 @@ function TasksPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title</FormLabel>
+                        <FormLabel>Título</FormLabel>
                         <FormControl>
-                          <Input placeholder="Task title" {...field} />
+                          <Input placeholder="Título de la tarea" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -557,10 +566,10 @@ function TasksPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Descripción</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Optional description"
+                            placeholder="Descripción opcional"
                             value={field.value ?? ""}
                             onChange={(event) => field.onChange(event.target.value)}
                           />
@@ -576,11 +585,11 @@ function TasksPage() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Status</FormLabel>
+                          <FormLabel>Estatus</FormLabel>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
+                                <SelectValue placeholder="Seleccionar estatus" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -601,18 +610,18 @@ function TasksPage() {
                       name="priority"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Priority</FormLabel>
+                          <FormLabel>Prioridad</FormLabel>
                           <Select
                             value={field.value ?? "none"}
                             onValueChange={(value) => field.onChange(value)}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select priority" />
+                                <SelectValue placeholder="Seleccionar prioridad" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
+                              <SelectItem value="none">Sin prioridad</SelectItem>
                               {TASK_PRIORITY_OPTIONS.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
@@ -631,15 +640,15 @@ function TasksPage() {
                     name="projectId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project</FormLabel>
+                        <FormLabel>Proyecto</FormLabel>
                         <Select value={field.value ?? "none"} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select project" />
+                              <SelectValue placeholder="Seleccionar proyecto" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="none">Sin proyecto</SelectItem>
                             {projects.map((project) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
                                 {project.name}
@@ -657,7 +666,7 @@ function TasksPage() {
                     name="dueDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Due Date</FormLabel>
+                        <FormLabel>Fecha de Vencimiento</FormLabel>
                         <FormControl>
                           <Input
                             type="date"
@@ -679,11 +688,11 @@ function TasksPage() {
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="button" variant="outline">
-                        Cancel
+                        Cancelar
                       </Button>
                     </DialogClose>
                     <Button type="submit" variant="secondary" disabled={createTask.isPending}>
-                      {createTask.isPending ? "Creating..." : "Create"}
+                      {createTask.isPending ? "Creando..." : "Crear"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -694,7 +703,7 @@ function TasksPage() {
           <Dialog open={isEditModalOpen} onOpenChange={handleEditOpenChange}>
             <DialogContent className="space-y-5">
               <DialogHeader>
-                <DialogTitle>Edit Task</DialogTitle>
+                <DialogTitle>Editar tarea</DialogTitle>
               </DialogHeader>
 
               <Form {...editForm}>
@@ -704,9 +713,9 @@ function TasksPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title</FormLabel>
+                        <FormLabel>Título</FormLabel>
                         <FormControl>
-                          <Input placeholder="Task title" {...field} />
+                          <Input placeholder="Título de la tarea" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -718,10 +727,10 @@ function TasksPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Descripción</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Optional description"
+                            placeholder="Descripción opcional"
                             value={field.value ?? ""}
                             onChange={(event) => field.onChange(event.target.value)}
                           />
@@ -737,11 +746,11 @@ function TasksPage() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Status</FormLabel>
+                          <FormLabel>Estatus</FormLabel>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
+                                <SelectValue placeholder="Seleccionar estatus" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -762,18 +771,18 @@ function TasksPage() {
                       name="priority"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Priority</FormLabel>
+                          <FormLabel>Prioridad</FormLabel>
                           <Select
                             value={field.value ?? "none"}
                             onValueChange={(value) => field.onChange(value)}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select priority" />
+                                <SelectValue placeholder="Seleccionar prioridad" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
+                              <SelectItem value="none">Sin prioridad</SelectItem>
                               {TASK_PRIORITY_OPTIONS.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
@@ -792,15 +801,15 @@ function TasksPage() {
                     name="projectId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project</FormLabel>
+                        <FormLabel>Proyecto</FormLabel>
                         <Select value={field.value ?? "none"} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select project" />
+                              <SelectValue placeholder="Seleccionar proyecto" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="none">Sin proyecto</SelectItem>
                             {projects.map((project) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
                                 {project.name}
@@ -818,7 +827,7 @@ function TasksPage() {
                     name="dueDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Due Date</FormLabel>
+                        <FormLabel>Fecha de Vencimiento</FormLabel>
                         <FormControl>
                           <Input
                             type="date"
@@ -838,11 +847,11 @@ function TasksPage() {
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="button" variant="outline" onClick={closeEditModal}>
-                        Cancel
+                        Cancelar
                       </Button>
                     </DialogClose>
                     <Button type="submit" variant="secondary" disabled={updateTask.isPending}>
-                      {updateTask.isPending ? "Saving..." : "Save changes"}
+                      {updateTask.isPending ? "Guardando..." : "Guardar cambios"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -853,17 +862,17 @@ function TasksPage() {
           <Dialog open={isDeleteModalOpen} onOpenChange={handleDeleteOpenChange}>
             <DialogContent className="space-y-5">
               <DialogHeader>
-                <DialogTitle>Delete Task</DialogTitle>
+                <DialogTitle>Eliminar tarea</DialogTitle>
               </DialogHeader>
               <p className="text-muted-foreground text-sm">
-                Are you sure you want to delete "{taskBeingDeleted?.title ?? "this task"}"? This
-                action cannot be undone.
+                ¿Seguro que deseas eliminar "{taskBeingDeleted?.title ?? "esta tarea"}"? Esta acción
+                no se puede deshacer.
               </p>
               {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
               <DialogFooter className="gap-2">
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
-                    Cancel
+                    Cancelar
                   </Button>
                 </DialogClose>
                 <Button
@@ -872,7 +881,7 @@ function TasksPage() {
                   onClick={() => void handleConfirmDelete()}
                   disabled={deleteTask.isPending}
                 >
-                  {deleteTask.isPending ? "Deleting..." : "Delete"}
+                  {deleteTask.isPending ? "Eliminando..." : "Eliminar"}
                 </Button>
               </DialogFooter>
             </DialogContent>

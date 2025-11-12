@@ -18,27 +18,27 @@ export const API_BASE_URL = "https://api.your-api.com";
 export const STORE_NAME = "Your Store-Name";
 
 export const TASK_STATUS_OPTIONS: Array<{ value: TaskStatus; label: string }> = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "done", label: "Done" },
+  { value: "todo", label: "Por Hacer" },
+  { value: "in_progress", label: "En Progreso" },
+  { value: "done", label: "Completado" },
 ];
 
 export const TASK_PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string }> = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
+  { value: "low", label: "Baja" },
+  { value: "medium", label: "Media" },
+  { value: "high", label: "Alta" },
 ];
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  done: "Done",
+  todo: "Por Hacer",
+  in_progress: "En Progreso",
+  done: "Completado",
 };
 
 export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
+  low: "Baja",
+  medium: "Media",
+  high: "Alta",
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
@@ -54,27 +54,27 @@ export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
 };
 
 export const PROJECT_STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string }> = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "done", label: "Done" },
+  { value: "todo", label: "Por Hacer" },
+  { value: "in_progress", label: "En Progreso" },
+  { value: "done", label: "Completado" },
 ];
 
 export const PROJECT_PRIORITY_OPTIONS: Array<{ value: ProjectPriority; label: string }> = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
+  { value: "low", label: "Baja" },
+  { value: "medium", label: "Media" },
+  { value: "high", label: "Alta" },
 ];
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  done: "Done",
+  todo: "Por Hacer",
+  in_progress: "En Progreso",
+  done: "Completado",
 };
 
 export const PROJECT_PRIORITY_LABELS: Record<ProjectPriority, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
+  low: "Baja",
+  medium: "Media",
+  high: "Alta",
 };
 
 export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
@@ -156,12 +156,12 @@ export const FILE_TYPE_CATEGORIES: Record<string, FileCategory> = {
 };
 
 export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
-  image: "Image",
-  document: "Document",
+  image: "Imagen",
+  document: "Documento",
   video: "Video",
   audio: "Audio",
-  archive: "Archive",
-  other: "Other",
+  archive: "Archivo",
+  other: "Otro",
 };
 
 export const FILE_CATEGORY_ICONS: Record<FileCategory, string> = {
@@ -174,13 +174,13 @@ export const FILE_CATEGORY_ICONS: Record<FileCategory, string> = {
 };
 
 export const CLIENT_TYPE_OPTIONS: Array<{ value: ClientType; label: string }> = [
-  { value: "person", label: "Person" },
-  { value: "company", label: "Company" },
+  { value: "person", label: "Persona" },
+  { value: "company", label: "Compañía" },
 ];
 
 export const CLIENT_TYPE_LABELS: Record<ClientType, string> = {
-  person: "Person",
-  company: "Company",
+  person: "Persona",
+  company: "Compañía",
 };
 
 export const CLIENT_TYPE_COLORS: Record<ClientType, string> = {

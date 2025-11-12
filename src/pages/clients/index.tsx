@@ -48,17 +48,17 @@ const clientSchema = z
     name: z
       .string()
       .trim()
-      .min(1, "Name is required.")
-      .max(255, "Name must be 255 characters or fewer."),
+      .min(1, "El nombre es requerido.")
+      .max(255, "El nombre debe tener 255 caracteres o menos."),
     type: z.enum(["person", "company"]),
     value: z.coerce
-      .number({ invalid_type_error: "Value must be a number." })
-      .positive("Value must be positive."),
+      .number({ invalid_type_error: "El valor debe ser un número." })
+      .positive("El valor debe ser positivo."),
     startDate: z
       .string()
-      .min(1, "Start date is required.")
+      .min(1, "La fecha de inicio es requerida.")
       .refine((value) => !Number.isNaN(Date.parse(value)), {
-        message: "Start date must be a valid date.",
+        message: "La fecha de inicio debe ser una fecha válida.",
       }),
     endDate: z
       .union([z.string().min(1), z.literal(""), z.null()])
@@ -72,7 +72,7 @@ const clientSchema = z
           return !Number.isNaN(Date.parse(value));
         },
         {
-          message: "End date must be a valid date.",
+          message: "La fecha de fin debe ser una fecha válida.",
         },
       ),
   })
@@ -81,7 +81,7 @@ const clientSchema = z
       ctx.addIssue({
         path: ["endDate"],
         code: z.ZodIssueCode.custom,
-        message: "End date must be after the start date.",
+        message: "La fecha de fin debe ser posterior a la fecha de inicio.",
       });
     }
   });
@@ -198,7 +198,7 @@ function ClientsPage() {
       setIsCreateModalOpen(false);
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to create client.";
+        mutationError instanceof Error ? mutationError.message : "No se pudo crear el cliente.";
       createForm.setError("root", { message });
     }
   };
@@ -261,7 +261,9 @@ function ClientsPage() {
       closeEditModal();
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to update client.";
+        mutationError instanceof Error
+          ? mutationError.message
+          : "No se pudo actualizar el cliente.";
       editForm.setError("root", { message });
     }
   };
@@ -291,7 +293,7 @@ function ClientsPage() {
       setIsDeleteModalOpen(false);
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to delete client.";
+        mutationError instanceof Error ? mutationError.message : "No se pudo eliminar el cliente.";
       setDeleteError(message);
     }
   };
@@ -361,7 +363,7 @@ function ClientsPage() {
     if (editingCell.field === "name") {
       const trimmed = nextValue.trim();
       if (!trimmed) {
-        setActionError("Name cannot be empty.");
+        setActionError("El nombre no puede estar vacío.");
         return;
       }
       if (trimmed === currentClient.name) {
@@ -382,7 +384,7 @@ function ClientsPage() {
     if (editingCell.field === "value") {
       const cents = parseCurrencyDOP(nextValue);
       if (cents <= 0) {
-        setActionError("Value must be positive.");
+        setActionError("El valor debe ser positivo.");
         return;
       }
       if (cents === currentClient.value) {
@@ -394,7 +396,7 @@ function ClientsPage() {
 
     if (editingCell.field === "startDate") {
       if (!nextValue) {
-        setActionError("Start date is required.");
+        setActionError("La fecha de inicio es requerida.");
         return;
       }
       if (nextValue === formatClientDateForInput(currentClient.startDate)) {
@@ -403,7 +405,7 @@ function ClientsPage() {
       }
       const parsedStart = new Date(nextValue);
       if (Number.isNaN(parsedStart.getTime())) {
-        setActionError("Start date must be a valid date.");
+        setActionError("La fecha de inicio debe ser una fecha válida.");
         return;
       }
       if (currentClient.endDate) {
@@ -412,11 +414,11 @@ function ClientsPage() {
             ? currentClient.endDate
             : new Date(currentClient.endDate);
         if (Number.isNaN(existingEnd.getTime())) {
-          setActionError("End date must be a valid date.");
+          setActionError("La fecha de fin debe ser una fecha válida.");
           return;
         }
         if (existingEnd.getTime() <= parsedStart.getTime()) {
-          setActionError("End date must be after the start date.");
+          setActionError("La fecha de fin debe ser posterior a la fecha de inicio.");
           return;
         }
       }
@@ -435,7 +437,7 @@ function ClientsPage() {
       if (normalized) {
         const parsedEnd = new Date(normalized);
         if (Number.isNaN(parsedEnd.getTime())) {
-          setActionError("End date must be a valid date.");
+          setActionError("La fecha de fin debe ser una fecha válida.");
           return;
         }
         const startDateValue =
@@ -443,11 +445,11 @@ function ClientsPage() {
             ? currentClient.startDate
             : new Date(currentClient.startDate);
         if (Number.isNaN(startDateValue.getTime())) {
-          setActionError("Start date must be a valid date.");
+          setActionError("La fecha de inicio debe ser una fecha válida.");
           return;
         }
         if (parsedEnd.getTime() <= startDateValue.getTime()) {
-          setActionError("End date must be after the start date.");
+          setActionError("La fecha de fin debe ser posterior a la fecha de inicio.");
           return;
         }
       }
@@ -463,7 +465,9 @@ function ClientsPage() {
       handleEditCancel();
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to update client.";
+        mutationError instanceof Error
+          ? mutationError.message
+          : "No se pudo actualizar el cliente.";
       setActionError(message);
     }
   };
@@ -506,7 +510,7 @@ function ClientsPage() {
           }}
         >
           <SelectTrigger className="h-9">
-            <SelectValue placeholder="Select type" />
+            <SelectValue placeholder="Seleccionar tipo" />
           </SelectTrigger>
           <SelectContent>
             {CLIENT_TYPE_OPTIONS.map((option) => (
@@ -609,12 +613,12 @@ function ClientsPage() {
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h1 className="text-3xl font-semibold">Clients</h1>
+                <h1 className="text-3xl font-semibold">Clientes</h1>
                 <p className="text-muted-foreground text-sm">
-                  Track client relationships, engagement dates, and associated value.
+                  Gestiona tus clientes, registra fechas clave y monitorea el valor asociado.
                 </p>
               </div>
-              <Button onClick={openCreateModal}>Create Client</Button>
+              <Button onClick={openCreateModal}>Crear Cliente</Button>
             </header>
 
             <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
@@ -623,17 +627,17 @@ function ClientsPage() {
                   className="text-muted-foreground mb-2 block text-sm"
                   htmlFor="client-type-filter"
                 >
-                  Type
+                  Tipo
                 </Label>
                 <Select
                   value={(filters.type ?? "all") as string}
                   onValueChange={handleTypeFilterChange}
                 >
                   <SelectTrigger id="client-type-filter">
-                    <SelectValue placeholder="Filter by type" />
+                    <SelectValue placeholder="Filtrar por tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {CLIENT_TYPE_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -655,28 +659,28 @@ function ClientsPage() {
                     <TableHead>Valor (DOP)</TableHead>
                     <TableHead>Desde</TableHead>
                     <TableHead>Hasta</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
                       <TableCell className="py-8 text-center" colSpan={6}>
-                        <span className="text-muted-foreground text-sm">Loading clients...</span>
+                        <span className="text-muted-foreground text-sm">Cargando clientes...</span>
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
                       <TableCell className="py-8 text-center" colSpan={6}>
-                        <span className="text-destructive text-sm">
-                          {error instanceof Error ? error.message : "Failed to load clients."}
-                        </span>
+                        <span className="text-destructive text-sm">Error al cargar clientes.</span>
                       </TableCell>
                     </TableRow>
                   ) : clients.length === 0 ? (
                     <TableRow>
                       <TableCell className="py-8 text-center" colSpan={6}>
-                        <span className="text-muted-foreground text-sm">No clients found.</span>
+                        <span className="text-muted-foreground text-sm">
+                          No se encontraron clientes.
+                        </span>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -727,7 +731,7 @@ function ClientsPage() {
                               size="sm"
                               onClick={() => handleEditOpen(client)}
                             >
-                              Edit
+                              Editar
                             </Button>
                             <Button
                               type="button"
@@ -740,7 +744,7 @@ function ClientsPage() {
                                 setActionError(null);
                               }}
                             >
-                              Delete
+                              Eliminar
                             </Button>
                           </div>
                         </TableCell>
@@ -752,7 +756,8 @@ function ClientsPage() {
 
               <div className="flex flex-col gap-3 border-t border-[rgba(0,0,0,0.05)] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-muted-foreground text-sm">
-                  Page {pagination.page} of {pagination.totalPages || 1} ({pagination.total} total)
+                  Página {pagination.page} de {pagination.totalPages || 1} ({pagination.total}{" "}
+                  total)
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -762,7 +767,7 @@ function ClientsPage() {
                     disabled={!canGoPrevious}
                     onClick={() => handlePageChange(pagination.page - 1)}
                   >
-                    Previous
+                    Anterior
                   </Button>
                   <Button
                     type="button"
@@ -771,7 +776,7 @@ function ClientsPage() {
                     disabled={!canGoNext}
                     onClick={() => handlePageChange(pagination.page + 1)}
                   >
-                    Next
+                    Siguiente
                   </Button>
                 </div>
               </div>
@@ -782,7 +787,7 @@ function ClientsPage() {
         <Dialog open={isCreateModalOpen} onOpenChange={handleCreateOpenChange}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Client</DialogTitle>
+              <DialogTitle>Crear Cliente</DialogTitle>
             </DialogHeader>
             <Form {...createForm}>
               <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
@@ -791,9 +796,9 @@ function ClientsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <Input placeholder="Client name" {...field} />
+                        <Input placeholder="Nombre del cliente" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -805,11 +810,11 @@ function ClientsPage() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type</FormLabel>
+                      <FormLabel>Tipo</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder="Seleccionar tipo" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -830,7 +835,7 @@ function ClientsPage() {
                   name="value"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Value (DOP)</FormLabel>
+                      <FormLabel>Valor (DOP)</FormLabel>
                       <FormControl>
                         <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
                       </FormControl>
@@ -845,7 +850,7 @@ function ClientsPage() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel>Fecha de Inicio</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -859,7 +864,7 @@ function ClientsPage() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel>Fecha de Fin</FormLabel>
                         <FormControl>
                           <Input type="date" value={field.value ?? ""} onChange={field.onChange} />
                         </FormControl>
@@ -876,11 +881,11 @@ function ClientsPage() {
                 <DialogFooter className="gap-2">
                   <DialogClose asChild>
                     <Button type="button" variant="outline">
-                      Cancel
+                      Cancelar
                     </Button>
                   </DialogClose>
                   <Button type="submit" disabled={createClient.isPending}>
-                    {createClient.isPending ? "Creating..." : "Create Client"}
+                    {createClient.isPending ? "Creando..." : "Crear Cliente"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -891,7 +896,7 @@ function ClientsPage() {
         <Dialog open={isEditModalOpen} onOpenChange={handleEditOpenChange}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Client</DialogTitle>
+              <DialogTitle>Editar Cliente</DialogTitle>
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
@@ -900,9 +905,9 @@ function ClientsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <Input placeholder="Client name" {...field} />
+                        <Input placeholder="Nombre del cliente" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -914,11 +919,11 @@ function ClientsPage() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type</FormLabel>
+                      <FormLabel>Tipo</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder="Seleccionar tipo" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -939,7 +944,7 @@ function ClientsPage() {
                   name="value"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Value (DOP)</FormLabel>
+                      <FormLabel>Valor (DOP)</FormLabel>
                       <FormControl>
                         <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
                       </FormControl>
@@ -954,7 +959,7 @@ function ClientsPage() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel>Fecha de Inicio</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -968,7 +973,7 @@ function ClientsPage() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel>Fecha de Fin</FormLabel>
                         <FormControl>
                           <Input type="date" value={field.value ?? ""} onChange={field.onChange} />
                         </FormControl>
@@ -983,11 +988,11 @@ function ClientsPage() {
                 <DialogFooter className="gap-2">
                   <DialogClose asChild>
                     <Button type="button" variant="outline" onClick={closeEditModal}>
-                      Cancel
+                      Cancelar
                     </Button>
                   </DialogClose>
                   <Button type="submit" disabled={updateClient.isPending}>
-                    {updateClient.isPending ? "Saving..." : "Save Changes"}
+                    {updateClient.isPending ? "Guardando..." : "Guardar Cambios"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -998,17 +1003,17 @@ function ClientsPage() {
         <Dialog open={isDeleteModalOpen} onOpenChange={handleDeleteOpenChange}>
           <DialogContent className="space-y-5">
             <DialogHeader>
-              <DialogTitle>Delete Client</DialogTitle>
+              <DialogTitle>Eliminar Cliente</DialogTitle>
             </DialogHeader>
             <p className="text-muted-foreground text-sm">
-              Are you sure you want to delete "{clientToDelete?.name ?? "this client"}"? This action
-              cannot be undone.
+              ¿Estás seguro de que quieres eliminar "{clientToDelete?.name ?? "este cliente"}"? Esta
+              acción no se puede deshacer.
             </p>
             {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline">
-                  Cancel
+                  Cancelar
                 </Button>
               </DialogClose>
               <Button
@@ -1017,7 +1022,7 @@ function ClientsPage() {
                 onClick={() => void handleConfirmDelete()}
                 disabled={deleteClient.isPending}
               >
-                {deleteClient.isPending ? "Deleting..." : "Delete"}
+                {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -23,19 +23,19 @@ const registerSchema = z
     name: z
       .string()
       .trim()
-      .min(2, "Name must be at least 2 characters long.")
-      .max(100, "Name must be at most 100 characters."),
-    email: z.string().trim().email("Please enter a valid email address."),
+      .min(2, "El nombre debe tener al menos 2 caracteres.")
+      .max(100, "El nombre debe tener 100 caracteres o menos."),
+    email: z.string().trim().email("Ingresa un correo electrónico válido."),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters long.")
-      .regex(/[A-Za-z]/, "Password must include letters.")
-      .regex(/[0-9]/, "Password must include numbers."),
-    confirmPassword: z.string().min(8, "Confirm password is required."),
+      .min(8, "La contraseña debe tener al menos 8 caracteres.")
+      .regex(/[A-Za-z]/, "La contraseña debe incluir letras.")
+      .regex(/[0-9]/, "La contraseña debe incluir números."),
+    confirmPassword: z.string().min(8, "La confirmación debe tener al menos 8 caracteres."),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ["confirmPassword"],
-    message: "Passwords must match.",
+    message: "Las contraseñas deben coincidir.",
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -79,8 +79,8 @@ const Register = () => {
       if (!response.ok) {
         const errorMessage =
           response.status === 409
-            ? "An account with this email already exists."
-            : "Unable to create account. Please try again.";
+            ? "Ya existe una cuenta con este correo electrónico."
+            : "No se pudo crear la cuenta. Intenta nuevamente.";
 
         form.setError("root", {
           type: "server",
@@ -96,7 +96,7 @@ const Register = () => {
     } catch {
       form.setError("root", {
         type: "server",
-        message: "Unable to create account. Please try again.",
+        message: "No se pudo crear la cuenta. Intenta nuevamente.",
       });
     }
   };
@@ -107,9 +107,9 @@ const Register = () => {
         <div className="space-y-4 text-center">
           <LogoMark size="md" className="mx-auto" />
           <div className="space-y-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Create account</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Crear cuenta</h1>
             <p className="text-muted-foreground text-sm">
-              Join Entipedia to manage your projects and tasks.
+              Únete a Entipedia para gestionar tus proyectos y tareas.
             </p>
           </div>
         </div>
@@ -121,7 +121,7 @@ const Register = () => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full name</FormLabel>
+                  <FormLabel>Nombre completo</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Ada Lovelace"
@@ -140,11 +140,11 @@ const Register = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email address</FormLabel>
+                  <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder="tu@ejemplo.com"
                       autoComplete="email"
                       disabled={form.formState.isSubmitting}
                       {...field}
@@ -160,7 +160,7 @@ const Register = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Contraseña</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -180,7 +180,7 @@ const Register = () => {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm password</FormLabel>
+                  <FormLabel>Confirmar contraseña</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -205,24 +205,24 @@ const Register = () => {
               type="submit"
               className="w-full"
               disabled={form.formState.isSubmitting}
-              aria-label={form.formState.isSubmitting ? "Creating account" : "Create account"}
+              aria-label={form.formState.isSubmitting ? "Creando cuenta" : "Crear cuenta"}
               role="button"
             >
-              {form.formState.isSubmitting ? "Creating account..." : "Create account"}
+              {form.formState.isSubmitting ? "Creando cuenta..." : "Crear cuenta"}
             </Button>
           </form>
         </Form>
 
         <div className="text-muted-foreground space-y-1 text-center text-sm">
           <p>
-            Already have an account?{" "}
+            ¿Ya tienes una cuenta?{" "}
             <Link to="/auth/login" className="text-primary hover:text-primary/80 hover:underline">
-              Sign in
+              Inicia sesión
             </Link>
           </p>
           <p>
             <Link to="/" className="text-primary hover:text-primary/80 hover:underline">
-              Return home
+              Volver al inicio
             </Link>
           </p>
         </div>

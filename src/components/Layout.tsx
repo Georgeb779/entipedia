@@ -38,11 +38,11 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/tasks", label: "Tasks", icon: CheckSquare },
-  { path: "/projects", label: "Projects", icon: FolderKanban },
-  { path: "/clients", label: "Clients", icon: Users },
-  { path: "/files", label: "Files", icon: FileText },
+  { path: "/dashboard", label: "Panel", icon: LayoutDashboard },
+  { path: "/tasks", label: "Tareas", icon: CheckSquare },
+  { path: "/projects", label: "Proyectos", icon: FolderKanban },
+  { path: "/clients", label: "Clientes", icon: Users },
+  { path: "/files", label: "Archivos", icon: FileText },
 ];
 
 const getInitials = (name: string | undefined) => {
@@ -73,7 +73,7 @@ export default function Layout({ children }: LayoutProps) {
   const userEmail = auth.status === "authenticated" ? auth.user.email : "";
 
   const initials = useMemo(() => getInitials(authenticatedName), [authenticatedName]);
-  const userName = authenticatedName ?? "Guest";
+  const userName = authenticatedName ?? "Invitado";
 
   const isActiveRoute = (path: string) => {
     const currentPath = location.pathname;
@@ -98,7 +98,7 @@ export default function Layout({ children }: LayoutProps) {
         <Link
           to="/dashboard"
           className="border-sidebar-border flex items-center gap-3 border-b px-6 py-5 text-lg font-semibold"
-          aria-label="Entipedia dashboard"
+          aria-label="Panel de Entipedia"
         >
           <LogoMark size="sm" />
           <span>Entipedia</span>
@@ -137,7 +137,11 @@ export default function Layout({ children }: LayoutProps) {
           <div className="absolute inset-0 bg-black/50" onClick={closeSidebar} />
           <aside className="border-sidebar-border bg-sidebar relative ml-0 flex h-full w-64 flex-col border-r p-4">
             <div className="mb-6 flex items-center justify-between">
-              <Link to="/dashboard" className="flex items-center gap-3 text-lg font-semibold">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-3 text-lg font-semibold"
+                aria-label="Panel de Entipedia"
+              >
                 <LogoMark size="sm" />
                 <span>Entipedia</span>
               </Link>
@@ -145,7 +149,7 @@ export default function Layout({ children }: LayoutProps) {
                 variant="ghost"
                 size="icon"
                 onClick={closeSidebar}
-                aria-label="Close navigation"
+                aria-label="Cerrar navegación"
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -191,11 +195,11 @@ export default function Layout({ children }: LayoutProps) {
                 size="icon"
                 className="text-muted-foreground hover:text-foreground"
                 onClick={() => setIsSidebarOpen(true)}
-                aria-label="Open navigation"
+                aria-label="Abrir navegación"
               >
                 <Menu className="h-5 w-5" aria-hidden="true" />
               </Button>
-              <Link to="/dashboard" aria-label="Entipedia dashboard">
+              <Link to="/dashboard" aria-label="Panel de Entipedia">
                 <LogoMark size="sm" />
               </Link>
             </div>
@@ -206,7 +210,7 @@ export default function Layout({ children }: LayoutProps) {
                   variant="ghost"
                   size="icon"
                   className="border-border text-foreground h-10 w-10 rounded-full border"
-                  aria-label="Open profile menu"
+                  aria-label="Abrir menú de perfil"
                 >
                   <Avatar className="h-10 w-10">
                     <AvatarFallback>{initials}</AvatarFallback>
@@ -226,7 +230,7 @@ export default function Layout({ children }: LayoutProps) {
                 <DropdownMenuItem asChild>
                   <Link to="/users/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" aria-hidden="true" />
-                    <span>Profile</span>
+                    <span>Perfil</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -238,7 +242,7 @@ export default function Layout({ children }: LayoutProps) {
                   className="text-destructive"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
-                  <span>Logout</span>
+                  <span>Cerrar sesión</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

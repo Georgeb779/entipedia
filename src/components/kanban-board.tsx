@@ -53,9 +53,9 @@ import { cn, formatTaskDate, resolveStatusValue } from "@/utils";
 
 const STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
 const STATUS_TITLES: Record<TaskStatus, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  done: "Done",
+  todo: "Por Hacer",
+  in_progress: "En Progreso",
+  done: "Completado",
 };
 
 const resolveTaskStatus = (value: unknown): TaskStatus | null =>
@@ -132,13 +132,13 @@ const KanbanColumn = ({
             isOver ? "ring-2 ring-[#F6C90E]" : "ring-1 ring-transparent",
             isUpdating ? "opacity-80" : "",
           )}
-          aria-label={`${title} column`}
+          aria-label={`Columna ${title}`}
           aria-busy={Boolean(isUpdating)}
           role="list"
         >
           {tasks.length === 0 ? (
             <p className="text-muted-foreground rounded border border-dashed border-[rgba(28,36,49,0.15)] p-4 text-center text-sm">
-              No tasks in this column
+              No hay tareas en esta columna
             </p>
           ) : (
             tasks.map((task) => (
@@ -183,7 +183,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-[#1C2431]"
-                  aria-label={`Actions for task ${task.title}`}
+                  aria-label={`Acciones para la tarea ${task.title}`}
                   onPointerDown={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}
                 >
@@ -192,14 +192,14 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-36">
                 {onViewTask ? (
-                  <DropdownMenuItem onSelect={() => onViewTask()}>View details</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => onViewTask()}>Ver detalles</DropdownMenuItem>
                 ) : null}
                 {onEditTask ? (
-                  <DropdownMenuItem onSelect={() => onEditTask()}>Edit task</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => onEditTask()}>Editar tarea</DropdownMenuItem>
                 ) : null}
                 {onDeleteTask ? (
                   <DropdownMenuItem className="text-destructive" onSelect={() => onDeleteTask()}>
-                    Delete task
+                    Eliminar tarea
                   </DropdownMenuItem>
                 ) : null}
               </DropdownMenuContent>
@@ -208,7 +208,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
         </CardHeader>
         <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
           <p className="line-clamp-2 text-left">
-            {task.description ? task.description : "No description provided."}
+            {task.description ? task.description : "Sin descripción proporcionada."}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={cn("uppercase", TASK_STATUS_COLORS[task.status])}>
@@ -220,7 +220,9 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
               </Badge>
             ) : null}
           </div>
-          <p className="text-muted-foreground text-xs">Due {formatTaskDate(task.dueDate)}</p>
+          <p className="text-muted-foreground text-xs">
+            Fecha de Vencimiento: {formatTaskDate(task.dueDate)}
+          </p>
         </CardContent>
       </Card>
     );
@@ -258,7 +260,7 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
       onDeleteTask={onDeleteTask ? () => onDeleteTask(task) : undefined}
       {...attributes}
       {...listeners}
-      aria-label={`Task: ${task.title}`}
+      aria-label={`Tarea: ${task.title}`}
     />
   );
 };
@@ -398,7 +400,7 @@ const KanbanBoard = ({
     return {
       screenReaderInstructions: {
         draggable:
-          "To pick up a task, press space or enter. Use the arrow keys to move between columns, then press space or enter again to drop the task.",
+          "Para tomar una tarea, presiona espacio o enter. Usa las flechas para moverte entre columnas y vuelve a presionar espacio o enter para soltar la tarea.",
       },
       announcements: {
         onDragStart: ({ active }: DragStartEvent) => {
@@ -410,8 +412,8 @@ const KanbanBoard = ({
 
           const columnTitle = describeColumn(task.status);
           return columnTitle
-            ? `Picked up ${task.title}. Current column ${columnTitle}.`
-            : `Picked up ${task.title}.`;
+            ? `Tomado ${task.title}. Columna actual ${columnTitle}.`
+            : `Tomado ${task.title}.`;
         },
         onDragOver: ({ active, over }: DragOverEvent) => {
           if (!over) {
@@ -427,7 +429,7 @@ const KanbanBoard = ({
           const status = resolveFromOver(over);
           const columnTitle = describeColumn(status);
 
-          return columnTitle ? `${task.title} is over column ${columnTitle}.` : undefined;
+          return columnTitle ? `${task.title} está sobre la columna ${columnTitle}.` : undefined;
         },
         onDragEnd: ({ active, over }: DragEndEvent) => {
           const task = getTask(active.id);
@@ -437,19 +439,19 @@ const KanbanBoard = ({
           }
 
           if (!over) {
-            return `${task.title} was dropped outside of any column.`;
+            return `${task.title} fue soltado fuera de cualquier columna.`;
           }
 
           const status = resolveFromOver(over);
           const columnTitle = describeColumn(status);
 
           return columnTitle
-            ? `${task.title} was dropped in column ${columnTitle}.`
-            : `${task.title} was dropped, but the destination column is unknown.`;
+            ? `${task.title} fue soltado en la columna ${columnTitle}.`
+            : `${task.title} fue soltado, pero la columna de destino es desconocida.`;
         },
         onDragCancel: ({ active }: DragCancelEvent) => {
           const task = getTask(active.id);
-          return task ? `Cancelled dragging ${task.title}.` : undefined;
+          return task ? `Arrastre cancelado ${task.title}.` : undefined;
         },
       },
     };

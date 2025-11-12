@@ -93,12 +93,12 @@ const projectSchema = z
     name: z
       .string()
       .trim()
-      .min(1, "Project name is required.")
-      .max(255, "Project name must be 255 characters or fewer."),
+      .min(1, "El nombre del proyecto es requerido.")
+      .max(255, "El nombre del proyecto debe tener 255 caracteres o menos."),
     description: z
       .string()
       .trim()
-      .max(2000, "Description must be 2000 characters or fewer.")
+      .max(2000, "La descripción debe tener 2000 caracteres o menos.")
       .optional()
       .nullable(),
     status: z.enum(["todo", "in_progress", "done"]).default("todo"),
@@ -123,9 +123,9 @@ const defaultFormValues: ProjectSchema = {
 const STATUSES: readonly ProjectStatus[] = ["todo", "in_progress", "done"];
 
 const STATUS_TITLES: Record<ProjectStatus, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  done: "Done",
+  todo: "Por Hacer",
+  in_progress: "En Progreso",
+  done: "Completado",
 };
 
 const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema => ({
@@ -202,13 +202,13 @@ const KanbanColumn = ({
             isOver ? "ring-2 ring-[#F6C90E]" : "ring-1 ring-transparent",
             isUpdating ? "opacity-80" : "",
           )}
-          aria-label={`${title} column`}
+          aria-label={`Columna ${title}`}
           aria-busy={Boolean(isUpdating)}
           role="list"
         >
           {projects.length === 0 ? (
             <p className="text-muted-foreground rounded border border-dashed border-[rgba(28,36,49,0.15)] p-4 text-center text-sm">
-              No projects in this column
+              No hay proyectos en esta columna
             </p>
           ) : (
             projects.map((project) => (
@@ -249,7 +249,7 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-[#1C2431]"
-                aria-label={`Actions for project ${project.name}`}
+                aria-label={`Acciones para el proyecto ${project.name}`}
                 onPointerDown={(event) => event.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
@@ -262,7 +262,7 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
                   onView?.();
                 }}
               >
-                View details
+                Ver detalles
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={(event) => {
@@ -270,7 +270,7 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
                   onEdit?.();
                 }}
               >
-                Edit project
+                Editar proyecto
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
@@ -279,7 +279,7 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
                   onDelete?.();
                 }}
               >
-                Delete project
+                Eliminar proyecto
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -287,7 +287,7 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
       </CardHeader>
       <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
         <p className="line-clamp-3 text-left">
-          {project.description ? project.description : "No description provided."}
+          {project.description ? project.description : "Sin descripción proporcionada."}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
@@ -297,14 +297,14 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
             {PROJECT_PRIORITY_LABELS[project.priority]}
           </Badge>
           <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">
-            {project.taskCount} tasks
+            {project.taskCount} tareas
           </Badge>
         </div>
         <p className="text-muted-foreground text-xs">
-          Created {formatTaskDateTime(project.createdAt)} ·
+          Creado {formatTaskDateTime(project.createdAt)} ·
         </p>
         <p className="text-muted-foreground text-xs">
-          {project.completedTaskCount} completed tasks
+          {project.completedTaskCount} tareas completadas
         </p>
       </CardContent>
     </Card>
@@ -342,7 +342,7 @@ const ProjectCard = ({ project, isActive, onView, onEdit, onDelete }: ProjectCar
       data-status={project.status}
       {...attributes}
       {...listeners}
-      aria-label={`Project: ${project.name}`}
+      aria-label={`Proyecto: ${project.name}`}
     />
   );
 };
@@ -478,7 +478,7 @@ const ProjectsPage = () => {
       createForm.setError("root", {
         type: "server",
         message:
-          mutationError instanceof Error ? mutationError.message : "Failed to create project.",
+          mutationError instanceof Error ? mutationError.message : "No se pudo crear el proyecto.",
       });
     }
   };
@@ -497,7 +497,9 @@ const ProjectsPage = () => {
       editForm.setError("root", {
         type: "server",
         message:
-          mutationError instanceof Error ? mutationError.message : "Failed to update project.",
+          mutationError instanceof Error
+            ? mutationError.message
+            : "No se pudo actualizar el proyecto.",
       });
     }
   };
@@ -524,7 +526,7 @@ const ProjectsPage = () => {
       closeDeleteDialog();
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Failed to delete project.";
+        mutationError instanceof Error ? mutationError.message : "No se pudo eliminar el proyecto.";
       setDeleteError(message);
     }
   };
@@ -611,7 +613,9 @@ const ProjectsPage = () => {
         await updateProject.mutateAsync({ projectId, data: { status: nextStatus } });
       } catch (mutationError) {
         const message =
-          mutationError instanceof Error ? mutationError.message : "Failed to update project.";
+          mutationError instanceof Error
+            ? mutationError.message
+            : "No se pudo actualizar el proyecto.";
         setBoardError(message);
       }
     },
@@ -651,7 +655,7 @@ const ProjectsPage = () => {
     return {
       screenReaderInstructions: {
         draggable:
-          "To pick up a project, press space or enter. Use the arrow keys to move between columns, then press space or enter again to drop the project.",
+          "Para tomar un proyecto, presiona espacio o enter. Usa las flechas para moverte entre columnas y vuelve a presionar espacio o enter para soltarlo.",
       },
       announcements: {
         onDragStart: ({ active }: DragStartEvent) => {
@@ -663,8 +667,8 @@ const ProjectsPage = () => {
 
           const columnTitle = describeColumn(project.status);
           return columnTitle
-            ? `Picked up ${project.name}. Current column ${columnTitle}.`
-            : `Picked up ${project.name}.`;
+            ? `Has tomado ${project.name}. Columna actual ${columnTitle}.`
+            : `Has tomado ${project.name}.`;
         },
         onDragOver: ({ active, over }: DragOverEvent) => {
           if (!over) {
@@ -680,7 +684,7 @@ const ProjectsPage = () => {
           const status = resolveFromOver(over);
           const columnTitle = describeColumn(status);
 
-          return columnTitle ? `${project.name} is over column ${columnTitle}.` : undefined;
+          return columnTitle ? `${project.name} está sobre la columna ${columnTitle}.` : undefined;
         },
         onDragEnd: ({ active, over }: DragEndEvent) => {
           const project = getProject(active.id);
@@ -690,19 +694,19 @@ const ProjectsPage = () => {
           }
 
           if (!over) {
-            return `${project.name} was dropped outside of any column.`;
+            return `${project.name} se soltó fuera de cualquier columna.`;
           }
 
           const status = resolveFromOver(over);
           const columnTitle = describeColumn(status);
 
           return columnTitle
-            ? `${project.name} was dropped in column ${columnTitle}.`
-            : `${project.name} was dropped, but the destination column is unknown.`;
+            ? `${project.name} se colocó en la columna ${columnTitle}.`
+            : `${project.name} se soltó, pero la columna de destino es desconocida.`;
         },
         onDragCancel: ({ active }: DragCancelEvent) => {
           const project = getProject(active.id);
-          return project ? `Cancelled dragging ${project.name}.` : undefined;
+          return project ? `Se canceló el movimiento de ${project.name}.` : undefined;
         },
       },
     };
@@ -713,7 +717,7 @@ const ProjectsPage = () => {
       return (
         <TableRow>
           <TableCell colSpan={7} className="py-10 text-center">
-            <p className="text-muted-foreground text-sm">No projects found.</p>
+            <p className="text-muted-foreground text-sm">No se encontraron proyectos.</p>
           </TableCell>
         </TableRow>
       );
@@ -725,7 +729,7 @@ const ProjectsPage = () => {
           {project.name}
         </TableCell>
         <TableCell className="text-muted-foreground text-sm">
-          {project.description ? project.description : "No description"}
+          {project.description ? project.description : "Sin descripción"}
         </TableCell>
         <TableCell>
           <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
@@ -737,20 +741,20 @@ const ProjectsPage = () => {
             {PROJECT_PRIORITY_LABELS[project.priority]}
           </Badge>
         </TableCell>
-        <TableCell className="text-muted-foreground text-sm">{project.taskCount} tasks</TableCell>
+        <TableCell className="text-muted-foreground text-sm">{project.taskCount} tareas</TableCell>
         <TableCell className="text-muted-foreground text-sm">
           {formatTaskDateTime(project.createdAt)}
         </TableCell>
         <TableCell className="text-right text-sm">
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => handleNavigateToDetails(project)}>
-              View
+              Ver
             </Button>
             <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(project)}>
-              Edit
+              Editar
             </Button>
             <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(project)}>
-              Delete
+              Eliminar
             </Button>
           </div>
         </TableCell>
@@ -766,29 +770,33 @@ const ProjectsPage = () => {
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="space-y-2">
-                  <h1 className="text-3xl font-semibold">Projects</h1>
+                  <h1 className="text-3xl font-semibold">Proyectos</h1>
                   <p className="text-muted-foreground mb-6 text-sm">
-                    Organize your work into projects, track task progress, and stay on top of
-                    deadlines.
+                    Organiza tu trabajo en proyectos, sigue el avance de las tareas y mantente al
+                    día con tus entregas.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
                   <TabsList>
-                    <TabsTrigger value="board">Board</TabsTrigger>
-                    <TabsTrigger value="table">Table</TabsTrigger>
+                    <TabsTrigger value="board">Tablero</TabsTrigger>
+                    <TabsTrigger value="table">Tabla</TabsTrigger>
                   </TabsList>
                   <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
-                    Create Project
+                    Crear proyecto
                   </Button>
                 </div>
               </header>
 
               <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
                 {isLoading ? (
-                  <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
+                  <div className="text-muted-foreground py-12 text-center">
+                    Cargando proyectos...
+                  </div>
                 ) : error ? (
                   <div className="text-destructive py-12 text-center">
-                    {error instanceof Error ? error.message : "Failed to load projects."}
+                    {error instanceof Error
+                      ? error.message
+                      : "No se pudieron cargar los proyectos."}
                   </div>
                 ) : (
                   <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
@@ -827,30 +835,34 @@ const ProjectsPage = () => {
                   </section>
                 )}
                 <p className="text-muted-foreground mt-3 text-center text-xs">
-                  Use mouse or keyboard (Tab + Arrow keys + Space/Enter) to move projects between
-                  columns.
+                  Usa el mouse o el teclado (Tab + flechas + Espacio/Enter) para mover los proyectos
+                  entre columnas.
                 </p>
               </TabsContent>
 
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
                 {isLoading ? (
-                  <div className="text-muted-foreground py-12 text-center">Loading projects...</div>
+                  <div className="text-muted-foreground py-12 text-center">
+                    Cargando proyectos...
+                  </div>
                 ) : error ? (
                   <div className="text-destructive py-12 text-center">
-                    {error instanceof Error ? error.message : "Failed to load projects."}
+                    {error instanceof Error
+                      ? error.message
+                      : "No se pudieron cargar los proyectos."}
                   </div>
                 ) : (
                   <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Priority</TableHead>
-                          <TableHead>Tasks</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Descripción</TableHead>
+                          <TableHead>Estatus</TableHead>
+                          <TableHead>Prioridad</TableHead>
+                          <TableHead>Tareas</TableHead>
+                          <TableHead>Creado</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>{renderProjectTableRows()}</TableBody>
@@ -873,7 +885,7 @@ const ProjectsPage = () => {
         >
           <DialogContent className="space-y-5">
             <DialogHeader>
-              <DialogTitle>Create Project</DialogTitle>
+              <DialogTitle>Crear proyecto</DialogTitle>
             </DialogHeader>
 
             <Form {...createForm}>
@@ -883,10 +895,10 @@ const ProjectsPage = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Project name"
+                          placeholder="Nombre del proyecto"
                           disabled={createProject.isPending}
                           {...field}
                         />
@@ -901,10 +913,10 @@ const ProjectsPage = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Descripción</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Optional project description"
+                          placeholder="Descripción opcional del proyecto"
                           disabled={createProject.isPending}
                           value={field.value ?? ""}
                           onChange={(event) => field.onChange(event.target.value)}
@@ -920,7 +932,7 @@ const ProjectsPage = () => {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>Estatus</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={(value) => field.onChange(value as ProjectStatus)}
@@ -928,7 +940,7 @@ const ProjectsPage = () => {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder="Seleccionar estatus" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -949,7 +961,7 @@ const ProjectsPage = () => {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel>Prioridad</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={(value) => field.onChange(value)}
@@ -957,7 +969,7 @@ const ProjectsPage = () => {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
+                            <SelectValue placeholder="Seleccionar prioridad" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -982,11 +994,11 @@ const ProjectsPage = () => {
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="outline" disabled={createProject.isPending}>
-                      Cancel
+                      Cancelar
                     </Button>
                   </DialogClose>
                   <Button type="submit" variant="secondary" disabled={createProject.isPending}>
-                    {createProject.isPending ? "Creating..." : "Create"}
+                    {createProject.isPending ? "Creando..." : "Crear"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -1004,7 +1016,7 @@ const ProjectsPage = () => {
         >
           <DialogContent className="space-y-5">
             <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
+              <DialogTitle>Editar proyecto</DialogTitle>
             </DialogHeader>
 
             <Form {...editForm}>
@@ -1014,10 +1026,10 @@ const ProjectsPage = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Project name"
+                          placeholder="Nombre del proyecto"
                           disabled={updateProject.isPending}
                           {...field}
                         />
@@ -1032,10 +1044,10 @@ const ProjectsPage = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Descripción</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Optional project description"
+                          placeholder="Descripción opcional del proyecto"
                           disabled={updateProject.isPending}
                           value={field.value ?? ""}
                           onChange={(event) => field.onChange(event.target.value)}
@@ -1051,7 +1063,7 @@ const ProjectsPage = () => {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>Estatus</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={(value) => field.onChange(value as ProjectStatus)}
@@ -1059,7 +1071,7 @@ const ProjectsPage = () => {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder="Seleccionar estatus" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1080,7 +1092,7 @@ const ProjectsPage = () => {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel>Prioridad</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={(value) => field.onChange(value)}
@@ -1088,7 +1100,7 @@ const ProjectsPage = () => {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
+                            <SelectValue placeholder="Seleccionar prioridad" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1113,11 +1125,11 @@ const ProjectsPage = () => {
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="outline" disabled={updateProject.isPending}>
-                      Cancel
+                      Cancelar
                     </Button>
                   </DialogClose>
                   <Button type="submit" variant="secondary" disabled={updateProject.isPending}>
-                    {updateProject.isPending ? "Saving..." : "Save changes"}
+                    {updateProject.isPending ? "Guardando..." : "Guardar cambios"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -1135,21 +1147,22 @@ const ProjectsPage = () => {
         >
           <DialogContent className="space-y-5">
             <DialogHeader>
-              <DialogTitle>Delete Project</DialogTitle>
+              <DialogTitle>Eliminar proyecto</DialogTitle>
               <DialogDescription>
-                This action cannot be undone. The project and its tasks will be permanently removed.
+                Esta acción no se puede deshacer. El proyecto y sus tareas se eliminarán de forma
+                permanente.
               </DialogDescription>
             </DialogHeader>
 
             <p className="text-sm font-medium text-[#1C2431]">
-              {projectPendingDeletion ? projectPendingDeletion.name : "Selected project"}
+              {projectPendingDeletion ? projectPendingDeletion.name : "Proyecto seleccionado"}
             </p>
             {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
 
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline" disabled={deleteProject.isPending}>
-                  Cancel
+                  Cancelar
                 </Button>
               </DialogClose>
               <Button
@@ -1158,7 +1171,7 @@ const ProjectsPage = () => {
                 onClick={() => void handleConfirmDelete()}
                 disabled={deleteProject.isPending}
               >
-                {deleteProject.isPending ? "Deleting..." : "Delete"}
+                {deleteProject.isPending ? "Eliminando..." : "Eliminar"}
               </Button>
             </DialogFooter>
           </DialogContent>

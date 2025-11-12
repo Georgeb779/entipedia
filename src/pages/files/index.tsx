@@ -60,10 +60,10 @@ const uploadSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(2000, "Description must be 2000 characters or fewer.")
+    .max(2000, "La descripción debe tener 2000 caracteres o menos.")
     .default(""),
   projectId: z
-    .union([z.literal("all"), z.string().regex(/^\d+$/, "Invalid project selection.")])
+    .union([z.literal("all"), z.string().regex(/^\d+$/, "Selección de proyecto inválida.")])
     .default("all"),
 });
 
@@ -209,14 +209,17 @@ export default function FilesPage() {
     }
 
     if (!validateFileType(file)) {
-      uploadForm.setError("root", { type: "manual", message: "This file type is not supported." });
+      uploadForm.setError("root", {
+        type: "manual",
+        message: "Este tipo de archivo no es soportado.",
+      });
       return;
     }
 
     if (!validateFileSize(file)) {
       uploadForm.setError("root", {
         type: "manual",
-        message: `File exceeds the ${formatMaxUploadSize()} limit.`,
+        message: `El archivo excede el ${formatMaxUploadSize()} límite.`,
       });
       return;
     }
@@ -260,7 +263,10 @@ export default function FilesPage() {
 
   const handleUploadSubmit = uploadForm.handleSubmit(async (values) => {
     if (!selectedFile) {
-      uploadForm.setError("root", { type: "manual", message: "Please choose a file to upload." });
+      uploadForm.setError("root", {
+        type: "manual",
+        message: "Por favor elige un archivo para subir.",
+      });
       return;
     }
 
@@ -276,9 +282,8 @@ export default function FilesPage() {
       });
       setUploadOpen(false);
       resetUploadState();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to upload file.";
-      uploadForm.setError("root", { type: "manual", message });
+    } catch {
+      uploadForm.setError("root", { type: "manual", message: "Error al subir el archivo." });
     }
   });
 
@@ -295,9 +300,8 @@ export default function FilesPage() {
     try {
       await deleteFile.mutateAsync(deleteState.target.id);
       setDeleteState({ isOpen: false, target: null });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete file.";
-      setActionError(message);
+    } catch {
+      setActionError("Error al eliminar el archivo.");
     }
   };
 
@@ -305,9 +309,8 @@ export default function FilesPage() {
     setActionError(null);
     try {
       await downloadFile.mutateAsync({ fileId: file.id, filename: file.filename });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to download file.";
-      setActionError(message);
+    } catch {
+      setActionError("Error al descargar el archivo.");
     }
   };
 
@@ -326,7 +329,7 @@ export default function FilesPage() {
   };
 
   const filesLoading = filesQuery.isLoading;
-  const filesError = filesQuery.error instanceof Error ? filesQuery.error.message : null;
+  const filesError = filesQuery.error ? "Error al cargar archivos." : null;
   const deleteDialogError = actionError && deleteState.isOpen ? actionError : null;
 
   return (
@@ -336,12 +339,12 @@ export default function FilesPage() {
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h1 className="text-3xl font-semibold">Files</h1>
+                <h1 className="text-3xl font-semibold">Archivos</h1>
                 <p className="text-muted-foreground text-sm">
-                  Securely store documents, media, and project assets in one place.
+                  Almacena documentos, medios y recursos de proyectos en un solo lugar.
                 </p>
               </div>
-              <Button onClick={() => setUploadOpen(true)}>Upload File</Button>
+              <Button onClick={() => setUploadOpen(true)}>Subir Archivo</Button>
             </header>
 
             <section className="flex flex-wrap gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
@@ -350,17 +353,17 @@ export default function FilesPage() {
                   className="text-muted-foreground mb-2 block text-sm"
                   htmlFor="project-filter"
                 >
-                  Project
+                  Proyecto
                 </Label>
                 <Select
                   value={(filters.projectId ?? "all").toString()}
                   onValueChange={handleProjectFilterChange}
                 >
                   <SelectTrigger id="project-filter">
-                    <SelectValue placeholder="Filter by project" />
+                    <SelectValue placeholder="Filtrar por proyecto" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All projects</SelectItem>
+                    <SelectItem value="all">Todos los proyectos</SelectItem>
                     {projectOptions.map((project) => (
                       <SelectItem key={project.id} value={project.id.toString()}>
                         {project.name}
@@ -372,17 +375,17 @@ export default function FilesPage() {
 
               <div className="w-full max-w-xs">
                 <Label className="text-muted-foreground mb-2 block text-sm" htmlFor="type-filter">
-                  File type
+                  Tipo de archivo
                 </Label>
                 <Select
                   value={filters.mimeType ?? "all"}
                   onValueChange={handleMimeTypeFilterChange}
                 >
                   <SelectTrigger id="type-filter">
-                    <SelectValue placeholder="Filter by type" />
+                    <SelectValue placeholder="Filtrar por tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="all">Todos los tipos</SelectItem>
                     {mimeTypeOptions.map((type) => (
                       <SelectItem key={type} value={type}>
                         {type}
@@ -402,10 +405,10 @@ export default function FilesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nombre</TableHead>
-                    <TableHead>Descripcion</TableHead>
+                    <TableHead>Descripción</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Proyecto</TableHead>
-                    <TableHead>Tamano</TableHead>
+                    <TableHead>Tamaño</TableHead>
                     <TableHead>Subido</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
@@ -414,7 +417,7 @@ export default function FilesPage() {
                   {filesLoading ? (
                     <TableRow>
                       <TableCell className="py-8 text-center" colSpan={7}>
-                        <span className="text-muted-foreground text-sm">Loading files...</span>
+                        <span className="text-muted-foreground text-sm">Cargando archivos...</span>
                       </TableCell>
                     </TableRow>
                   ) : filesError ? (
@@ -426,7 +429,9 @@ export default function FilesPage() {
                   ) : filteredFiles.length === 0 ? (
                     <TableRow>
                       <TableCell className="py-8 text-center" colSpan={7}>
-                        <span className="text-muted-foreground text-sm">No files found.</span>
+                        <span className="text-muted-foreground text-sm">
+                          No se encontraron archivos.
+                        </span>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -436,8 +441,8 @@ export default function FilesPage() {
                       const categoryLabel = FILE_CATEGORY_LABELS[category];
                       const badgeClass = categoryBadgeClasses[category];
                       const projectName = file.projectId
-                        ? (projectMap.get(file.projectId)?.name ?? "Unknown project")
-                        : "Unassigned";
+                        ? (projectMap.get(file.projectId)?.name ?? "Proyecto desconocido")
+                        : "Sin asignar";
 
                       return (
                         <TableRow key={file.id}>
@@ -462,7 +467,7 @@ export default function FilesPage() {
                             <span className="text-sm text-neutral-700">
                               {file.description && file.description.length > 0
                                 ? file.description
-                                : "Sin descripcion"}
+                                : "Sin descripción"}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -489,7 +494,7 @@ export default function FilesPage() {
                                 onClick={() => openDeleteDialog(file)}
                                 disabled={deleteFile.isPending}
                               >
-                                Delete
+                                Eliminar
                               </Button>
                             </div>
                           </TableCell>
@@ -506,9 +511,9 @@ export default function FilesPage() {
         <Dialog open={uploadOpen} onOpenChange={handleUploadOpenChange}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Upload File</DialogTitle>
+              <DialogTitle>Subir Archivo</DialogTitle>
               <DialogDescription>
-                Attach documents or media. Supported size up to {formatMaxUploadSize()}.
+                Adjunta documentos o medios. Tamaño soportado hasta {formatMaxUploadSize()}.
               </DialogDescription>
             </DialogHeader>
             <Form {...uploadForm}>
@@ -527,13 +532,13 @@ export default function FilesPage() {
                       <UploadCloud className="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Drag & drop your file here</p>
+                      <p className="text-sm font-medium">Arrastra y suelta tu archivo aquí</p>
                       <p className="text-muted-foreground text-xs">
-                        Images, documents, audio, video, and archives are supported.
+                        Se soportan imágenes, documentos, audio, video y archivos.
                       </p>
                     </div>
                     <Button type="button" variant="outline" size="sm" onClick={handleBrowseClick}>
-                      Choose file
+                      Elegir archivo
                     </Button>
                     <input
                       ref={fileInputRef}
@@ -557,7 +562,7 @@ export default function FilesPage() {
                         size="sm"
                         onClick={handleRemoveSelectedFile}
                       >
-                        Remove
+                        Quitar
                       </Button>
                     </div>
                   ) : null}
@@ -568,15 +573,15 @@ export default function FilesPage() {
                   name="projectId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project</FormLabel>
+                      <FormLabel>Proyecto</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select project" />
+                            <SelectValue placeholder="Seleccionar proyecto" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="all">No project</SelectItem>
+                          <SelectItem value="all">Sin proyecto</SelectItem>
                           {projectOptions.map((project) => (
                             <SelectItem key={project.id} value={project.id.toString()}>
                               {project.name}
@@ -594,9 +599,9 @@ export default function FilesPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Descripción</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Optional context for this file" {...field} />
+                        <Textarea placeholder="Contexto opcional para este archivo" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -610,11 +615,11 @@ export default function FilesPage() {
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="outline">
-                      Cancel
+                      Cancelar
                     </Button>
                   </DialogClose>
                   <Button type="submit" disabled={uploadFile.isPending}>
-                    {uploadFile.isPending ? "Uploading..." : "Upload"}
+                    {uploadFile.isPending ? "Subiendo..." : "Subir"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -625,13 +630,14 @@ export default function FilesPage() {
         <Dialog open={deleteState.isOpen} onOpenChange={handleDeleteOpenChange}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete File</DialogTitle>
+              <DialogTitle>Eliminar Archivo</DialogTitle>
               <DialogDescription>
-                This action cannot be undone. The file will be permanently removed from storage.
+                Esta acción no se puede deshacer. El archivo será eliminado permanentemente del
+                almacenamiento.
               </DialogDescription>
             </DialogHeader>
             <p className="text-foreground text-sm font-medium">
-              {deleteState.target ? deleteState.target.filename : "Selected file"}
+              {deleteState.target ? deleteState.target.filename : "Archivo seleccionado"}
             </p>
             {deleteDialogError ? (
               <p className="text-destructive text-sm">{deleteDialogError}</p>
@@ -639,7 +645,7 @@ export default function FilesPage() {
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">
-                  Cancel
+                  Cancelar
                 </Button>
               </DialogClose>
               <Button
@@ -648,7 +654,7 @@ export default function FilesPage() {
                 onClick={() => void handleDeleteConfirm()}
                 disabled={deleteFile.isPending}
               >
-                {deleteFile.isPending ? "Deleting..." : "Delete"}
+                {deleteFile.isPending ? "Eliminando..." : "Eliminar"}
               </Button>
             </DialogFooter>
           </DialogContent>

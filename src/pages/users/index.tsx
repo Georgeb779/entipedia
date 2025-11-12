@@ -10,8 +10,8 @@ export default function Users() {
   return (
     <div className="min-h-screen p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-4 text-4xl font-bold">Users List</h1>
-        <p className="mb-6 text-gray-600">Route: /users</p>
+        <h1 className="mb-4 text-4xl font-bold">Lista de usuarios</h1>
+        <p className="mb-6 text-gray-600">Ruta: /users</p>
 
         <div className="mb-8 space-y-4">
           {users.map((user) => (
@@ -25,10 +25,10 @@ export default function Users() {
 
         <div className="space-x-4">
           <Link to="/users/profile" className="text-blue-600 hover:underline">
-            View Profile
+            Ver perfil
           </Link>
           <Link to="/" className="text-blue-600 hover:underline">
-            ← Back to Home
+            ← Volver al inicio
           </Link>
         </div>
       </div>

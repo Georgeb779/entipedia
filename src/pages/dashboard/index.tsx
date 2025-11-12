@@ -35,7 +35,7 @@ const TasksOverviewCard = ({
     <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-neutral-600">Tasks</p>
+          <p className="text-sm text-neutral-600">Tareas</p>
           <p className="mt-1 text-3xl font-semibold text-neutral-900">
             {totalTasks.toLocaleString()}
           </p>
@@ -56,13 +56,13 @@ const TasksOverviewCard = ({
             style={{ width: `${totalTasks > 0 ? safeCompletion : 0}%` }}
           />
         </div>
-        <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completed</p>
+        <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completado</p>
       </div>
 
       <div className="mt-2 flex items-center gap-4 text-sm text-neutral-700">
-        <span>To Do {todoTasks.toLocaleString()}</span>
-        <span>In Progress {inProgressTasks.toLocaleString()}</span>
-        <span>Done {completedTasks.toLocaleString()}</span>
+        <span>Por Hacer {todoTasks.toLocaleString()}</span>
+        <span>En Progreso {inProgressTasks.toLocaleString()}</span>
+        <span>Completado {completedTasks.toLocaleString()}</span>
       </div>
     </article>
   );
@@ -89,7 +89,7 @@ const ProjectsOverviewCard = ({
     <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-neutral-600">Projects</p>
+          <p className="text-sm text-neutral-600">Proyectos</p>
           <p className="mt-1 text-3xl font-semibold text-neutral-900">
             {totalProjects.toLocaleString()}
           </p>
@@ -110,13 +110,13 @@ const ProjectsOverviewCard = ({
             style={{ width: `${totalProjects > 0 ? safeCompletion : 0}%` }}
           />
         </div>
-        <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completed</p>
+        <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completado</p>
       </div>
 
       <div className="mt-2 flex items-center gap-4 text-sm text-neutral-700">
-        <span>To Do {todoProjects.toLocaleString()}</span>
-        <span>In Progress {inProgressProjects.toLocaleString()}</span>
-        <span>Done {completedProjects.toLocaleString()}</span>
+        <span>Por Hacer {todoProjects.toLocaleString()}</span>
+        <span>En Progreso {inProgressProjects.toLocaleString()}</span>
+        <span>Completado {completedProjects.toLocaleString()}</span>
       </div>
     </article>
   );
@@ -194,20 +194,22 @@ const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps)
       <Tabs defaultValue="recent">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-neutral-900">Work Activity</h2>
+            <h2 className="text-2xl font-semibold text-neutral-900">Actividad de trabajo</h2>
             <p className="text-sm text-neutral-600">
-              Track recent updates and upcoming deadlines in one place.
+              Sigue las actualizaciones recientes y las próximas fechas límite en un solo lugar.
             </p>
           </div>
           <TabsList className="self-start bg-neutral-100">
-            <TabsTrigger value="recent">Recent</TabsTrigger>
-            {hasDue ? <TabsTrigger value="due">Due Soon</TabsTrigger> : null}
+            <TabsTrigger value="recent">Recientes</TabsTrigger>
+            {hasDue ? <TabsTrigger value="due">Próximas</TabsTrigger> : null}
           </TabsList>
         </div>
 
         <TabsContent value="recent" className="mt-4 space-y-3">
           {recentPreview.length === 0 ? (
-            <p className="text-sm text-neutral-600">No recent tasks yet. Create your first task.</p>
+            <p className="text-sm text-neutral-600">
+              Aún no hay tareas recientes. Crea tu primera tarea.
+            </p>
           ) : (
             recentPreview.map((task) => {
               const priority = resolvePriority(task.priority);
@@ -223,7 +225,7 @@ const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps)
                     <div className="min-w-0">
                       <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
                       <p className="line-clamp-1 text-xs text-neutral-600">
-                        Created {formatTaskDate(task.createdAt)}
+                        Creada {formatTaskDate(task.createdAt)}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -257,7 +259,7 @@ const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps)
                     <div className="min-w-0">
                       <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
                       <p className="line-clamp-1 text-xs text-neutral-600">
-                        Due {formatTaskDate(task.dueDate)}
+                        Fecha de Vencimiento: {formatTaskDate(task.dueDate)}
                       </p>
                     </div>
                     {priority && priorityLabel && priorityClass ? (
@@ -341,7 +343,7 @@ const DashboardPage = () => {
       <ProtectedRoute>
         <Layout>
           <div className="text-muted-foreground flex min-h-screen items-center justify-center">
-            <p>Loading dashboard...</p>
+            <p>Cargando panel...</p>
           </div>
         </Layout>
       </ProtectedRoute>
@@ -355,15 +357,15 @@ const DashboardPage = () => {
           <div className="mx-auto max-w-7xl px-6 py-4">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div>
-                <h1 className="text-2xl font-semibold text-neutral-900">Dashboard</h1>
-                <p className="text-sm text-neutral-600">Overview of your tasks and projects.</p>
+                <h1 className="text-2xl font-semibold text-neutral-900">Panel</h1>
+                <p className="text-sm text-neutral-600">Resumen de tus tareas y proyectos.</p>
               </div>
               <div className="ml-auto flex gap-4 text-sm">
                 <Link to="/tasks" className="text-yellow-700 transition hover:text-yellow-600">
-                  Tasks
+                  Tareas
                 </Link>
                 <Link to="/projects" className="text-yellow-700 transition hover:text-yellow-600">
-                  Projects
+                  Proyectos
                 </Link>
               </div>
             </header>
@@ -380,9 +382,9 @@ const DashboardPage = () => {
                   />
                 ) : (
                   <EmptyOverviewCard
-                    title="No tasks yet"
-                    description="Create your first task to start tracking progress."
-                    actionLabel="Create Task"
+                    title="Todavía no hay tareas"
+                    description="Crea tu primera tarea para empezar a seguir el progreso."
+                    actionLabel="Crear tarea"
                     actionTo="/tasks"
                   />
                 )}
@@ -397,9 +399,9 @@ const DashboardPage = () => {
                   />
                 ) : (
                   <EmptyOverviewCard
-                    title="No projects yet"
-                    description="Launch a project to organize related workstreams."
-                    actionLabel="Create Project"
+                    title="Todavía no hay proyectos"
+                    description="Inicia un proyecto para organizar los flujos de trabajo relacionados."
+                    actionLabel="Crear proyecto"
                     actionTo="/projects"
                   />
                 )}
@@ -411,10 +413,10 @@ const DashboardPage = () => {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild variant="secondary">
-                  <Link to="/tasks">Create Task</Link>
+                  <Link to="/tasks">Crear tarea</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/projects">Create Project</Link>
+                  <Link to="/projects">Crear proyecto</Link>
                 </Button>
               </div>
             </div>
