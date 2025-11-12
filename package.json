@@ -8,7 +8,7 @@
     "dev:client": "cross-env VITE_USE_PROXY=true vite",
     "dev:server": "cross-env NITRO_PORT=5999 NITRO_HOST=0.0.0.0 nitro dev",
     "dev:integrated": "cross-env VITE_USE_PROXY=false vite",
-    "build": "tsc -b && cross-env VITE_USE_PROXY=true vite build && npm run build:server",
+    "build": "tsc -b && cross-env VITE_USE_PROXY=true vite build && npm run build:server && mkdir -p .output/public && cp -R dist/* .output/public/ || true",
     "build:server": "nitro build",
     "start": "node .output/server/index.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
