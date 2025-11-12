@@ -1,32 +1,42 @@
 import { Link, useParams } from "react-router";
+import { ArrowLeft } from "lucide-react";
+
+import { Layout, ProtectedRoute } from "@/components";
+import { Button, Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui";
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-4 text-4xl font-bold">User Details</h1>
-        <p className="mb-6 text-gray-600">Route: /users/:id (dynamic route)</p>
+    <ProtectedRoute>
+      <Layout>
+        <div className="text-foreground px-5 py-10 md:px-6">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+            <Button asChild variant="ghost" size="sm" className="w-fit gap-2">
+              <Link to="/users">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                <span>Volver al perfil activo</span>
+              </Link>
+            </Button>
 
-        <div className="mb-8 rounded border p-6">
-          <p className="mb-2 text-lg">
-            <span className="font-semibold">User ID:</span> {id}
-          </p>
-          <p className="text-gray-600">
-            This is a dynamic route that matches /users/1, /users/2, etc.
-          </p>
+            <Card className="border-dashed bg-white/80">
+              <CardHeader>
+                <CardTitle>Información no disponible</CardTitle>
+                <CardDescription>
+                  {id
+                    ? `El identificador ${id} no corresponde a un miembro disponible. En esta versión solo mostramos los datos del usuario autenticado.`
+                    : "Solo se muestra la información del usuario autenticado en Entipedia."}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button asChild variant="secondary">
+                  <Link to="/users/profile">Ir a mi perfil</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
-
-        <div className="space-x-4">
-          <Link to="/users" className="text-blue-600 hover:underline">
-            ← Back to Users
-          </Link>
-          <Link to="/" className="text-blue-600 hover:underline">
-            Home
-          </Link>
-        </div>
-      </div>
-    </div>
+      </Layout>
+    </ProtectedRoute>
   );
 }

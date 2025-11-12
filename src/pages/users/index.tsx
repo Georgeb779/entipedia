@@ -1,37 +1,151 @@
+import { useMemo } from "react";
 import { Link } from "react-router";
+import { Mail } from "lucide-react";
 
-const users = [
-  { id: 1, name: "Alice Johnson" },
-  { id: 2, name: "Bob Smith" },
-  { id: 3, name: "Charlie Brown" },
-];
+import { Layout, ProtectedRoute } from "@/components";
+import {
+  Avatar,
+  AvatarFallback,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
+import { MEMBER_STATUS_LABELS, MEMBER_STATUS_STYLES, resolveActiveMember } from "@/data/users";
+import { useAuth } from "@/hooks";
+import { cn } from "@/utils";
 
-export default function Users() {
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+
+  if (parts.length === 0) {
+    return "U";
+  }
+
+  if (parts.length === 1) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
+
+  const [first, second] = parts;
+  return `${first.charAt(0)}${second.charAt(0)}`.toUpperCase();
+};
+
+const Users = () => {
+  const auth = useAuth();
+  const member = useMemo(() => resolveActiveMember(auth), [auth]);
+  const initials = useMemo(() => getInitials(member.name), [member.name]);
+
+  const stats = [
+    { label: "Proyectos activos", value: member.projects },
+    { label: "Tareas en curso", value: member.tasksInProgress },
+    { label: "Última actividad", value: member.lastActive },
+  ];
+
   return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-4 text-4xl font-bold">Lista de usuarios</h1>
-        <p className="mb-6 text-gray-600">Ruta: /users</p>
+    <ProtectedRoute>
+      <Layout>
+        <div className="text-foreground px-5 py-10 md:px-6">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+            <header className="space-y-2">
+              <h1 className="text-3xl font-semibold">Miembro activo</h1>
+              <p className="text-muted-foreground text-sm">
+                Esta sección refleja únicamente la información del usuario autenticado en Entipedia.
+              </p>
+            </header>
 
-        <div className="mb-8 space-y-4">
-          {users.map((user) => (
-            <div key={user.id} className="rounded border p-4 hover:bg-gray-50">
-              <Link to={`/users/${user.id}`} className="font-medium text-blue-600 hover:underline">
-                {user.name}
-              </Link>
-            </div>
-          ))}
-        </div>
+            <Card>
+              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl font-semibold">{member.name}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {member.role} · {member.team}
+                    </CardDescription>
+                    <div className="flex items-center gap-2 text-sm text-neutral-600">
+                      <Mail className="h-4 w-4" aria-hidden="true" />
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="text-neutral-900 underline decoration-transparent transition-colors hover:decoration-neutral-400"
+                      >
+                        {member.email}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <Badge className={cn("uppercase", MEMBER_STATUS_STYLES[member.status])}>
+                  {MEMBER_STATUS_LABELS[member.status]}
+                </Badge>
+              </CardHeader>
 
-        <div className="space-x-4">
-          <Link to="/users/profile" className="text-blue-600 hover:underline">
-            Ver perfil
-          </Link>
-          <Link to="/" className="text-blue-600 hover:underline">
-            ← Volver al inicio
-          </Link>
+              <CardContent className="space-y-6">
+                <section className="space-y-3">
+                  <h2 className="text-sm font-semibold text-neutral-900">Resumen</h2>
+                  <p className="text-sm leading-relaxed text-neutral-700">{member.bio}</p>
+                </section>
+
+                <section className="grid gap-4 sm:grid-cols-3">
+                  {stats.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="rounded-lg border border-[rgba(0,0,0,0.05)] bg-white/80 px-4 py-3 shadow-sm"
+                    >
+                      <p className="text-xs tracking-[0.16em] text-neutral-500 uppercase">
+                        {stat.label}
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-neutral-900">{stat.value}</p>
+                    </div>
+                  ))}
+                </section>
+
+                <section className="grid gap-3 text-sm text-neutral-600 sm:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-lg border border-dashed border-[rgba(0,0,0,0.08)] bg-white/70 px-4 py-3">
+                    <span>Miembro desde</span>
+                    <span className="font-medium text-neutral-900">{member.joinedAt}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-dashed border-[rgba(0,0,0,0.08)] bg-white/70 px-4 py-3">
+                    <span>Ubicación</span>
+                    <span className="font-medium text-neutral-900">{member.location}</span>
+                  </div>
+                </section>
+
+                <section className="space-y-2">
+                  <p className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    Enfoque actual
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {member.focusAreas.map((focus) => (
+                      <span
+                        key={focus}
+                        className="rounded-full bg-[rgba(28,36,49,0.06)] px-3 py-1 text-xs font-medium text-neutral-700"
+                      >
+                        {focus}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              </CardContent>
+
+              <CardFooter className="flex flex-wrap gap-3">
+                <Button asChild variant="secondary">
+                  <Link to="/users/profile">Ver detalles</Link>
+                </Button>
+                <Button asChild variant="ghost">
+                  <a href={`mailto:${member.email}`}>Contactar</a>
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
-      </div>
-    </div>
+      </Layout>
+    </ProtectedRoute>
   );
-}
+};
+
+export default Users;
