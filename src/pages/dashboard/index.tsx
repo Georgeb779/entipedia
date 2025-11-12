@@ -365,12 +365,6 @@ const DashboardPage = () => {
                 <Link to="/projects" className="text-yellow-700 transition hover:text-yellow-600">
                   Projects
                 </Link>
-                <Link
-                  to="/tasks?view=board"
-                  className="text-yellow-700 transition hover:text-yellow-600"
-                >
-                  Board
-                </Link>
               </div>
             </header>
 
