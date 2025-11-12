@@ -35,6 +35,7 @@ dev-dist/*
 
 pnpm-lock.yaml
 bun.lockb
+bun.lock
 yarn.lock
 package-lock.json
 
