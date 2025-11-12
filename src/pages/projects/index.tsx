@@ -303,42 +303,36 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
         {...rest}
       >
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             {showActions ? (
               <div
                 aria-label="Arrastrar proyecto"
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100"
+                className="flex h-6 w-6 items-center justify-center rounded-xl"
               >
                 <span className="sr-only">Arrastrar proyecto</span>
-                <GripVertical className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                <GripVertical className="h-5 w-5 text-neutral-400" aria-hidden="true" />
               </div>
             ) : null}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full",
-                    statusDisplay.iconWrapperClass,
-                  )}
-                >
-                  <StatusIcon
-                    className={cn("h-4 w-4", statusDisplay.iconClass)}
-                    aria-hidden="true"
-                  />
-                </span>
-                {onView ? (
-                  <button
-                    type="button"
-                    onClick={onView}
-                    className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
-                  >
-                    <span className="line-clamp-1">{project.name}</span>
-                  </button>
-                ) : (
-                  <span className="line-clamp-1 text-lg font-semibold">{project.name}</span>
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  statusDisplay.iconWrapperClass,
                 )}
-              </div>
-              <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
+              >
+                <StatusIcon className={cn("h-4 w-4", statusDisplay.iconClass)} aria-hidden="true" />
+              </span>
+              {onView ? (
+                <button
+                  type="button"
+                  onClick={onView}
+                  className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
+                >
+                  <span className="line-clamp-1">{project.name}</span>
+                </button>
+              ) : (
+                <span className="line-clamp-1 text-lg font-semibold">{project.name}</span>
+              )}
             </div>
           </div>
           {showActions ? (
@@ -412,6 +406,8 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
             {project.taskCount} tareas
           </span>
         </div>
+
+        <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
 
         <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
           <div className="flex items-center gap-2">

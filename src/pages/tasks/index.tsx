@@ -304,6 +304,17 @@ function TasksPage() {
 
   const activeTasks = useMemo(() => tasks, [tasks]);
 
+  const projectNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+
+    projects.forEach((project) => {
+      const trimmedName = project.name.trim();
+      map.set(project.id, trimmedName.length > 0 ? trimmedName : "Proyecto sin título");
+    });
+
+    return map;
+  }, [projects]);
+
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const [showLeftIndicator, setShowLeftIndicator] = useState(false);
   const [showRightIndicator, setShowRightIndicator] = useState(false);
@@ -697,6 +708,7 @@ function TasksPage() {
                       isUpdating={updateTaskStatus.isPending}
                       onEditTask={handleEditOpen}
                       onDeleteTask={handleDeleteTask}
+                      projectNames={projectNameMap}
                     />
                   )}
                 </section>

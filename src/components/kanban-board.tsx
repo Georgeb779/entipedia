@@ -17,7 +17,6 @@ import {
   PointerSensor,
   TouchSensor,
   closestCorners,
-  type DraggableSyntheticListeners,
   useDroppable,
   useSensor,
   useSensors,
@@ -49,7 +48,7 @@ import {
 } from "@/components/ui";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/constants";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
-import { cn, formatTaskDate, resolveStatusValue } from "@/utils";
+import { cn, formatTaskDate, formatTaskDateTime, resolveStatusValue } from "@/utils";
 
 const STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
 const STATUS_TITLES: Record<TaskStatus, string> = {
@@ -73,6 +72,7 @@ interface KanbanBoardProps {
   onViewTask?: (task: Task) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
+  projectNames?: ReadonlyMap<number, string>;
 }
 
 type KanbanColumnProps = {
@@ -84,6 +84,7 @@ type KanbanColumnProps = {
   onViewTask?: (task: Task) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
+  projectNames?: ReadonlyMap<number, string>;
 };
 
 type TaskCardProps = {
@@ -92,6 +93,7 @@ type TaskCardProps = {
   onViewTask?: (task: Task) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
+  projectName?: string | null;
 };
 
 type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
@@ -102,8 +104,7 @@ type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   showActions?: boolean;
   isActive?: boolean;
   isDragging?: boolean;
-  dragHandleListeners?: DraggableSyntheticListeners;
-  dragHandleRef?: (element: HTMLElement | null) => void;
+  projectName?: string | null;
 };
 
 const STATUS_DISPLAY: Record<
@@ -137,6 +138,9 @@ const PRIORITY_BADGE_STYLES: Record<TaskPriority, string> = {
 };
 
 const PRIORITY_FALLBACK_CLASS = "bg-neutral-100 text-neutral-600";
+const TASK_PROJECT_BADGE_CLASS = "bg-blue-100 text-blue-700";
+const TASK_PROJECT_BADGE_FALLBACK_CLASS = "bg-neutral-200 text-neutral-700";
+const TASK_PROJECT_NAME_FALLBACK = "Proyecto sin título";
 
 const isTaskPriority = (value: unknown): value is TaskPriority =>
   value === "low" || value === "medium" || value === "high";
@@ -182,6 +186,7 @@ const KanbanColumn = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
+  projectNames,
 }: KanbanColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({ id: status, data: { status } });
 
@@ -222,6 +227,9 @@ const KanbanColumn = ({
                 onViewTask={onViewTask}
                 onEditTask={onEditTask}
                 onDeleteTask={onDeleteTask}
+                projectName={
+                  task.projectId !== null ? (projectNames?.get(task.projectId) ?? null) : null
+                }
               />
             ))
           )}
@@ -242,8 +250,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
       showActions = true,
       isActive = false,
       isDragging = false,
-      dragHandleListeners,
-      dragHandleRef,
+      projectName,
       ...rest
     },
     ref,
@@ -252,7 +259,19 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
     const statusDisplay = STATUS_DISPLAY[task.status];
     const StatusIcon = statusDisplay.Icon;
     const priority = task.priority && isTaskPriority(task.priority) ? task.priority : null;
+    const description = task.description?.trim().length
+      ? task.description
+      : "Sin descripción disponible.";
     const dueDateInfo = getDueDateInfo(task.dueDate);
+    const hasProject = task.projectId !== null;
+
+    const resolvedProjectName = hasProject
+      ? (projectName ?? TASK_PROJECT_NAME_FALLBACK)
+      : "Sin proyecto";
+
+    const projectBadgeClass = hasProject
+      ? TASK_PROJECT_BADGE_CLASS
+      : TASK_PROJECT_BADGE_FALLBACK_CLASS;
 
     return (
       <article
@@ -266,46 +285,36 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
         {...rest}
       >
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             {showActions ? (
               <div
                 aria-label="Arrastrar tarea"
-                className="touch-action-none flex h-11 w-11 items-center justify-center rounded-lg bg-neutral-100"
-                ref={dragHandleRef ?? undefined}
-                {...(dragHandleListeners ?? {})}
+                className="flex h-6 w-6 items-center justify-center rounded-xl"
               >
                 <span className="sr-only">Arrastrar tarea</span>
                 <GripVertical className="h-5 w-5 text-neutral-400" aria-hidden="true" />
               </div>
             ) : null}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full",
-                    statusDisplay.iconWrapperClass,
-                  )}
-                >
-                  <StatusIcon
-                    className={cn("h-4 w-4", statusDisplay.iconClass)}
-                    aria-hidden="true"
-                  />
-                </span>
-                {onViewTask ? (
-                  <button
-                    type="button"
-                    onClick={onViewTask}
-                    className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
-                  >
-                    <span className="line-clamp-1">{task.title}</span>
-                  </button>
-                ) : (
-                  <span className="line-clamp-1 text-lg font-semibold">{task.title}</span>
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  statusDisplay.iconWrapperClass,
                 )}
-              </div>
-              <p className="line-clamp-2 text-sm text-neutral-600">
-                {task.description?.trim().length ? task.description : "Sin descripción disponible."}
-              </p>
+              >
+                <StatusIcon className={cn("h-4 w-4", statusDisplay.iconClass)} aria-hidden="true" />
+              </span>
+              {onViewTask ? (
+                <button
+                  type="button"
+                  onClick={onViewTask}
+                  className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
+                >
+                  <span className="line-clamp-1">{task.title}</span>
+                </button>
+              ) : (
+                <span className="line-clamp-1 text-lg font-semibold">{task.title}</span>
+              )}
             </div>
           </div>
           {hasActions ? (
@@ -361,13 +370,24 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
               Sin prioridad
             </span>
           )}
+          <span className={cn("rounded-md px-2 py-0.5 text-xs font-medium", projectBadgeClass)}>
+            {resolvedProjectName}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2 border-t border-black/5 pt-3">
-          <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
-          <span className={cn("text-xs font-medium", dueDateInfo.toneClass)}>
-            Fecha de Vencimiento: {dueDateInfo.label}
-          </span>
+        <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
+
+        <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+            <span className="font-medium text-neutral-700">Vence:</span>
+            <span className={cn("font-medium", dueDateInfo.toneClass)}>{dueDateInfo.label}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+            <span className="font-medium text-neutral-700">Actualizada:</span>
+            <span>{formatTaskDateTime(task.updatedAt)}</span>
+          </div>
         </div>
       </article>
     );
@@ -376,16 +396,15 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
 
 TaskCardLayout.displayName = "TaskCardLayout";
 
-const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: TaskCardProps) => {
-  const {
-    attributes,
-    isDragging,
-    listeners,
-    setActivatorNodeRef,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({
+const TaskCard = ({
+  task,
+  isActive,
+  onViewTask,
+  onEditTask,
+  onDeleteTask,
+  projectName,
+}: TaskCardProps) => {
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
     data: { status: task.status },
   });
@@ -395,6 +414,7 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
     transition,
     opacity: isDragging ? 0.85 : 1,
     cursor: isDragging ? "grabbing" : "grab",
+    touchAction: "none",
     userSelect: "none",
     willChange: "transform",
   };
@@ -405,26 +425,27 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
       task={task}
       isActive={isActive}
       isDragging={isDragging}
-      dragHandleRef={setActivatorNodeRef}
-      dragHandleListeners={listeners}
       className="active:scale-95"
       style={style}
       data-status={task.status}
       onViewTask={onViewTask ? () => onViewTask(task) : undefined}
       onEditTask={onEditTask ? () => onEditTask(task) : undefined}
       onDeleteTask={onDeleteTask ? () => onDeleteTask(task) : undefined}
+      projectName={projectName ?? null}
       {...attributes}
+      {...listeners}
       aria-label={`Tarea: ${task.title}`}
     />
   );
 };
 
-const TaskCardPreview = ({ task }: { task: Task }) => (
+const TaskCardPreview = ({ task, projectName }: { task: Task; projectName?: string | null }) => (
   <TaskCardLayout
     task={task}
     className="pointer-events-none scale-105 shadow-[0_20px_60px_rgba(0,0,0,0.3)] select-none"
     showActions={false}
     isActive
+    projectName={projectName ?? null}
   />
 );
 
@@ -438,6 +459,7 @@ const KanbanBoard = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
+  projectNames,
 }: KanbanBoardProps) => {
   const [activeId, setActiveId] = useState<number | null>(null);
 
@@ -634,6 +656,7 @@ const KanbanBoard = ({
           onViewTask={onViewTask}
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
+          projectNames={projectNames}
         />
         <KanbanColumn
           title={STATUS_TITLES.in_progress}
@@ -644,6 +667,7 @@ const KanbanBoard = ({
           onViewTask={onViewTask}
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
+          projectNames={projectNames}
         />
         <KanbanColumn
           title={STATUS_TITLES.done}
@@ -654,9 +678,21 @@ const KanbanBoard = ({
           onViewTask={onViewTask}
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
+          projectNames={projectNames}
         />
       </div>
-      <DragOverlay>{activeTask ? <TaskCardPreview task={activeTask} /> : null}</DragOverlay>
+      <DragOverlay>
+        {activeTask ? (
+          <TaskCardPreview
+            task={activeTask}
+            projectName={
+              activeTask.projectId !== null
+                ? (projectNames?.get(activeTask.projectId) ?? null)
+                : null
+            }
+          />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };
