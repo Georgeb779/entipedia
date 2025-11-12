@@ -298,7 +298,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  "flex h-4 w-4 items-center justify-center rounded-full",
                   statusDisplay.iconWrapperClass,
                 )}
               >
@@ -378,12 +378,12 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
         <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
 
         <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">Vence:</span>
             <span className={cn("font-medium", dueDateInfo.toneClass)}>{dueDateInfo.label}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Clock className="h-4 w-4 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">Actualizada:</span>
             <span>{formatTaskDateTime(task.updatedAt)}</span>

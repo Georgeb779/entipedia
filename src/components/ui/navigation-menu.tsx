@@ -45,7 +45,7 @@ const NavigationMenuTrigger = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <NavigationMenuPrimitive.Trigger
     ref={ref}
-    className={cn(baseTriggerClasses, "group flex items-center gap-2", className)}
+    className={cn(baseTriggerClasses, "group flex flex-wrap items-center gap-2", className)}
     {...props}
   >
     {children}

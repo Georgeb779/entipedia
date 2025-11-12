@@ -133,7 +133,7 @@ export default function UserProfileContent({ mode = "detail" }: UserProfileConte
                 <CardDescription className="text-sm">
                   {member.role} · {member.team}
                 </CardDescription>
-                <div className="flex items-center gap-2 text-sm text-neutral-600">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
                   <Mail className="h-4 w-4" aria-hidden="true" />
                   <a
                     href={`mailto:${displayEmail}`}

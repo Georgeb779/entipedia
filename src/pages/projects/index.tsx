@@ -317,7 +317,7 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  "flex h-4 w-4 items-center justify-center rounded-full",
                   statusDisplay.iconWrapperClass,
                 )}
               >
@@ -411,12 +411,12 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
         <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
 
         <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">Creado:</span>
             <span>{formatTaskDateTime(project.createdAt)}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <ClipboardList className="h-4 w-4 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">
               {project.completedTaskCount} tareas completadas
@@ -1013,7 +1013,7 @@ const ProjectsPage = () => {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-5 py-10 md:px-6">
+        <div className="text-foreground px-0 py-10 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

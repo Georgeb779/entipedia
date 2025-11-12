@@ -48,7 +48,7 @@ export default function Home(): JSX.Element {
       <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col gap-24 pt-24">
         <section className="grid items-center gap-16 text-left md:grid-cols-[1.05fr,0.95fr]">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1 text-xs font-medium tracking-[0.2em] text-neutral-600 uppercase shadow-sm">
+            <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/70 px-4 py-1 text-xs font-medium tracking-[0.2em] text-neutral-600 uppercase shadow-sm">
               <span>Avance constante, claridad compartida</span>
             </div>
             <div className="space-y-4">
