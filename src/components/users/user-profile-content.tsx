@@ -104,7 +104,7 @@ export default function UserProfileContent({ mode = "detail" }: UserProfileConte
   const containerWidth = mode === "detail" ? "max-w-4xl" : "max-w-3xl";
 
   return (
-    <div className="text-foreground px-5 py-10 md:px-6">
+    <div className="text-foreground px-5 sm:px-6 sm:py-10 md:py-0">
       <div className={cn("mx-auto flex w-full flex-col gap-6", containerWidth)}>
         {mode === "detail" ? (
           <div className="flex flex-wrap items-center gap-3">

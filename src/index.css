@@ -177,6 +177,50 @@
       transform: translateY(0);
     }
   }
+  @keyframes drag-lift {
+    from {
+      transform: scale(1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    to {
+      transform: scale(1.05);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+  }
+  @keyframes drag-drop {
+    from {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+    to {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+  }
+  @keyframes pulse-ring {
+    from {
+      box-shadow: 0 0 0 0 rgba(246, 201, 14, 0.7);
+    }
+    to {
+      box-shadow: 0 0 0 10px rgba(246, 201, 14, 0);
+    }
+  }
+  @keyframes button-press {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(0.95);
+    }
+  }
+  @keyframes button-release {
+    from {
+      transform: scale(0.95);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
 }
 
 .animate-fade-in {
@@ -203,8 +247,32 @@
   touch-action: pan-y;
 }
 
+.touch-action-none {
+  touch-action: none;
+}
+
+.touch-action-manipulation {
+  touch-action: manipulation;
+}
+
+.touch-action-auto {
+  touch-action: auto;
+}
+
 .animate-card-fade-in {
   animation: card-fade-in 0.3s ease-out forwards;
+}
+
+.animate-drag-lift {
+  animation: drag-lift 0.2s ease-out forwards;
+}
+
+.animate-drag-drop {
+  animation: drag-drop 0.15s ease-in forwards;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 0.6s ease-out infinite;
 }
 
 .stagger-1 {
@@ -253,4 +321,38 @@
 .scroll-indicator-right {
   right: 0;
   background: linear-gradient(to left, var(--card), transparent);
+}
+
+.select-none {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.select-text {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+.will-change-auto {
+  will-change: auto;
+}
+
+.drop-zone-active {
+  background-color: rgba(246, 201, 14, 0.05);
+  transform: scale(1.02);
+  box-shadow: 0 0 0 2px #f6c90e inset, 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.drop-zone-idle {
+  transform: scale(1);
+  box-shadow: 0 0 0 1px transparent inset;
+  animation: none;
 }

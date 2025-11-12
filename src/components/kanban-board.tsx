@@ -15,6 +15,7 @@ import {
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   closestCorners,
   useDroppable,
   useSensor,
@@ -28,27 +29,25 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { MoreHorizontal } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Circle,
+  GripVertical,
+  MoreHorizontal,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import {
-  Badge,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui";
-import {
-  TASK_PRIORITY_COLORS,
-  TASK_PRIORITY_LABELS,
-  TASK_STATUS_COLORS,
-  TASK_STATUS_LABELS,
-} from "@/constants";
-import type { Task, TaskStatus } from "@/types";
+import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/constants";
+import type { Task, TaskPriority, TaskStatus } from "@/types";
 import { cn, formatTaskDate, resolveStatusValue } from "@/utils";
 
 const STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
@@ -100,6 +99,75 @@ type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   onEditTask?: () => void;
   onDeleteTask?: () => void;
   showActions?: boolean;
+  isActive?: boolean;
+  isDragging?: boolean;
+};
+
+const STATUS_DISPLAY: Record<
+  TaskStatus,
+  { Icon: LucideIcon; iconClass: string; badgeClass: string; iconWrapperClass: string }
+> = {
+  todo: {
+    Icon: Circle,
+    iconClass: "text-neutral-400",
+    badgeClass: "bg-neutral-100 text-neutral-700",
+    iconWrapperClass: "bg-neutral-100",
+  },
+  in_progress: {
+    Icon: Clock,
+    iconClass: "text-yellow-600",
+    badgeClass: "bg-yellow-100 text-yellow-700",
+    iconWrapperClass: "bg-yellow-50",
+  },
+  done: {
+    Icon: CheckCircle2,
+    iconClass: "text-green-600",
+    badgeClass: "bg-green-100 text-green-700",
+    iconWrapperClass: "bg-green-50",
+  },
+};
+
+const PRIORITY_BADGE_STYLES: Record<TaskPriority, string> = {
+  high: "bg-red-100 text-red-700",
+  medium: "bg-amber-100 text-amber-700",
+  low: "bg-neutral-200 text-neutral-700",
+};
+
+const PRIORITY_FALLBACK_CLASS = "bg-neutral-100 text-neutral-600";
+
+const isTaskPriority = (value: unknown): value is TaskPriority =>
+  value === "low" || value === "medium" || value === "high";
+
+const getDueDateInfo = (value: Task["dueDate"]) => {
+  if (!value) {
+    return { label: "Sin fecha", toneClass: "text-neutral-500" };
+  }
+
+  const dueDate = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return { label: "Sin fecha", toneClass: "text-neutral-500" };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const normalizedDueDate = new Date(dueDate);
+  normalizedDueDate.setHours(0, 0, 0, 0);
+
+  const diff = normalizedDueDate.getTime() - today.getTime();
+  const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+  const formatted = formatTaskDate(dueDate);
+
+  if (diff < 0) {
+    return { label: formatted, toneClass: "text-red-600" };
+  }
+
+  if (diff <= threeDaysInMs) {
+    return { label: formatted, toneClass: "text-yellow-600" };
+  }
+
+  return { label: formatted, toneClass: "text-neutral-700" };
 };
 
 const KanbanColumn = ({
@@ -116,9 +184,11 @@ const KanbanColumn = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">{tasks.length}</Badge>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">{title}</h2>
+        <span className="inline-flex h-8 min-w-10 items-center justify-center rounded-full bg-neutral-100 px-3 text-xs font-semibold text-neutral-700">
+          {tasks.length}
+        </span>
       </div>
       <SortableContext
         id={status}
@@ -128,8 +198,8 @@ const KanbanColumn = ({
         <div
           ref={setNodeRef}
           className={cn(
-            "flex min-h-[400px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-4 shadow-sm transition-colors",
-            isOver ? "ring-2 ring-[#F6C90E]" : "ring-1 ring-transparent",
+            "flex min-h-[500px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-5 shadow-sm transition-all duration-200 md:min-h-[400px] md:p-4",
+            isOver ? "drop-zone-active animate-pulse-ring" : "drop-zone-idle",
             isUpdating ? "opacity-80" : "",
           )}
           aria-label={`Columna ${title}`}
@@ -159,30 +229,85 @@ const KanbanColumn = ({
 };
 
 const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
-  ({ task, className, onViewTask, onEditTask, onDeleteTask, showActions = true, ...rest }, ref) => {
-    const priority = task.priority;
+  (
+    {
+      task,
+      className,
+      onViewTask,
+      onEditTask,
+      onDeleteTask,
+      showActions = true,
+      isActive = false,
+      isDragging = false,
+      ...rest
+    },
+    ref,
+  ) => {
     const hasActions = showActions && (onViewTask || onEditTask || onDeleteTask);
+    const statusDisplay = STATUS_DISPLAY[task.status];
+    const StatusIcon = statusDisplay.Icon;
+    const priority = task.priority && isTaskPriority(task.priority) ? task.priority : null;
+    const dueDateInfo = getDueDateInfo(task.dueDate);
 
     return (
-      <Card
+      <article
         ref={ref}
         className={cn(
-          "text-foreground border border-[rgba(0,0,0,0.05)] bg-white shadow-sm",
+          "group touch-action-none relative flex max-w-[360px] flex-col gap-3 rounded-xl border border-black/5 bg-white p-5 text-neutral-900 shadow-sm transition-transform duration-200 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-6",
+          isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
+          isDragging ? "scale-[0.99]" : "",
           className,
         )}
         {...rest}
       >
-        <CardHeader className="flex flex-row items-start justify-between gap-3 pb-4">
-          <CardTitle className="text-lg leading-tight font-semibold">
-            <span className="line-clamp-2">{task.title}</span>
-          </CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-3">
+            {showActions ? (
+              <div
+                aria-label="Arrastrar tarea"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100"
+              >
+                <span className="sr-only">Arrastrar tarea</span>
+                <GripVertical className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+              </div>
+            ) : null}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full",
+                    statusDisplay.iconWrapperClass,
+                  )}
+                >
+                  <StatusIcon
+                    className={cn("h-4 w-4", statusDisplay.iconClass)}
+                    aria-hidden="true"
+                  />
+                </span>
+                {onViewTask ? (
+                  <button
+                    type="button"
+                    onClick={onViewTask}
+                    className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
+                  >
+                    <span className="line-clamp-1">{task.title}</span>
+                  </button>
+                ) : (
+                  <span className="line-clamp-1 text-lg font-semibold">{task.title}</span>
+                )}
+              </div>
+              <p className="line-clamp-2 text-sm text-neutral-600">
+                {task.description?.trim().length ? task.description : "Sin descripción disponible."}
+              </p>
+            </div>
+          </div>
           {hasActions ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-[#1C2431]"
+                  className="text-neutral-400 hover:text-[#1C2431]"
                   aria-label={`Acciones para la tarea ${task.title}`}
                   onPointerDown={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}
@@ -205,26 +330,39 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
               </DropdownMenuContent>
             </DropdownMenu>
           ) : null}
-        </CardHeader>
-        <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
-          <p className="line-clamp-2 text-left">
-            {task.description ? task.description : "Sin descripción proporcionada."}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className={cn("uppercase", TASK_STATUS_COLORS[task.status])}>
-              {TASK_STATUS_LABELS[task.status]}
-            </Badge>
-            {priority === "low" || priority === "medium" || priority === "high" ? (
-              <Badge className={cn("uppercase", TASK_PRIORITY_COLORS[priority])}>
-                {TASK_PRIORITY_LABELS[priority]}
-              </Badge>
-            ) : null}
-          </div>
-          <p className="text-muted-foreground text-xs">
-            Fecha de Vencimiento: {formatTaskDate(task.dueDate)}
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn("rounded-md px-2 py-0.5 text-xs font-medium", statusDisplay.badgeClass)}
+          >
+            {TASK_STATUS_LABELS[task.status]}
+          </span>
+          {priority ? (
+            <span
+              className={cn(
+                "rounded-md px-2 py-0.5 text-xs font-medium",
+                PRIORITY_BADGE_STYLES[priority],
+              )}
+            >
+              {TASK_PRIORITY_LABELS[priority]}
+            </span>
+          ) : (
+            <span
+              className={cn("rounded-md px-2 py-0.5 text-xs font-medium", PRIORITY_FALLBACK_CLASS)}
+            >
+              Sin prioridad
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 border-t border-black/5 pt-3">
+          <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+          <span className={cn("text-xs font-medium", dueDateInfo.toneClass)}>
+            Fecha de Vencimiento: {dueDateInfo.label}
+          </span>
+        </div>
+      </article>
     );
   },
 );
@@ -240,19 +378,19 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     cursor: isDragging ? "grabbing" : "grab",
+    touchAction: "none",
+    userSelect: "none",
+    willChange: "transform",
   };
 
   return (
     <TaskCardLayout
       ref={setNodeRef}
       task={task}
-      className={cn(
-        "transition-all select-none focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:outline-none",
-        "hover:scale-[1.02] hover:shadow-lg",
-        isActive ? "ring-2 ring-[#F6C90E]" : "border border-transparent",
-      )}
+      isActive={isActive}
+      isDragging={isDragging}
       style={style}
       data-status={task.status}
       onViewTask={onViewTask ? () => onViewTask(task) : undefined}
@@ -268,8 +406,9 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
 const TaskCardPreview = ({ task }: { task: Task }) => (
   <TaskCardLayout
     task={task}
-    className="pointer-events-none shadow-2xl ring-2 ring-[#F6C90E] select-none"
+    className="pointer-events-none scale-105 shadow-[0_20px_60px_rgba(0,0,0,0.3)] select-none"
     showActions={false}
+    isActive
   />
 );
 
@@ -287,8 +426,11 @@ const KanbanBoard = ({
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const sensors = useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: { distance: 15, delay: 250 },
+    }),
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 12 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,

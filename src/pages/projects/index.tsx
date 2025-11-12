@@ -12,7 +12,16 @@ import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { MoreHorizontal } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Circle,
+  GripVertical,
+  MoreHorizontal,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -38,10 +47,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button, Layout, ProtectedRoute } from "@/components";
 import {
   Badge,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Dialog,
   DialogClose,
   DialogContent,
@@ -86,7 +91,7 @@ import {
   PROJECT_STATUS_OPTIONS,
 } from "@/constants";
 import { useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "@/hooks";
-import type { ProjectStatus, ProjectWithTaskCount } from "@/types";
+import type { ProjectPriority, ProjectStatus, ProjectWithTaskCount } from "@/types";
 import { cn, formatTaskDateTime, resolveStatusValue } from "@/utils";
 
 const projectSchema = z
@@ -168,10 +173,44 @@ type ProjectCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   onEdit?: () => void;
   onDelete?: () => void;
   showActions?: boolean;
+  isActive?: boolean;
+  isDragging?: boolean;
 };
 
 const resolveProjectStatus = (value: unknown): ProjectStatus | null =>
   resolveStatusValue<ProjectStatus>(value, STATUSES);
+
+const PROJECT_STATUS_DISPLAY: Record<
+  ProjectStatus,
+  { Icon: LucideIcon; iconClass: string; badgeClass: string; iconWrapperClass: string }
+> = {
+  todo: {
+    Icon: Circle,
+    iconClass: "text-neutral-400",
+    badgeClass: "bg-neutral-100 text-neutral-700",
+    iconWrapperClass: "bg-neutral-100",
+  },
+  in_progress: {
+    Icon: Clock,
+    iconClass: "text-yellow-600",
+    badgeClass: "bg-yellow-100 text-yellow-700",
+    iconWrapperClass: "bg-yellow-50",
+  },
+  done: {
+    Icon: CheckCircle2,
+    iconClass: "text-green-600",
+    badgeClass: "bg-green-100 text-green-700",
+    iconWrapperClass: "bg-green-50",
+  },
+};
+
+const PROJECT_PRIORITY_BADGE_STYLES: Record<ProjectPriority, string> = {
+  high: "bg-red-100 text-red-700",
+  medium: "bg-amber-100 text-amber-700",
+  low: "bg-neutral-200 text-neutral-700",
+};
+
+const PROJECT_TASK_BADGE_CLASS = "bg-blue-100 text-blue-700";
 
 const KanbanColumn = ({
   title,
@@ -187,9 +226,11 @@ const KanbanColumn = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">{projects.length}</Badge>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">{title}</h2>
+        <span className="inline-flex h-8 min-w-10 items-center justify-center rounded-full bg-neutral-100 px-3 text-xs font-semibold text-neutral-700">
+          {projects.length}
+        </span>
       </div>
       <SortableContext
         id={status}
@@ -199,8 +240,8 @@ const KanbanColumn = ({
         <div
           ref={setNodeRef}
           className={cn(
-            "flex min-h-[400px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-4 shadow-sm transition-colors",
-            isOver ? "ring-2 ring-[#F6C90E]" : "ring-1 ring-transparent",
+            "flex min-h-[500px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-5 shadow-sm transition-all duration-200 md:min-h-[400px] md:p-4",
+            isOver ? "drop-zone-active animate-pulse-ring" : "drop-zone-idle",
             isUpdating ? "opacity-80" : "",
           )}
           aria-label={`Columna ${title}`}
@@ -230,86 +271,164 @@ const KanbanColumn = ({
 };
 
 const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
-  ({ project, className, onView, onEdit, onDelete, showActions = true, ...rest }, ref) => (
-    <Card
-      ref={ref}
-      className={cn(
-        "text-foreground border border-[rgba(0,0,0,0.05)] bg-white shadow-sm",
-        className,
-      )}
-      {...rest}
-    >
-      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-4">
-        <CardTitle className="text-lg leading-tight font-semibold">
-          <span className="line-clamp-2">{project.name}</span>
-        </CardTitle>
-        {showActions ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-[#1C2431]"
-                aria-label={`Acciones para el proyecto ${project.name}`}
-                onPointerDown={(event) => event.stopPropagation()}
+  (
+    {
+      project,
+      className,
+      onView,
+      onEdit,
+      onDelete,
+      showActions = true,
+      isActive = false,
+      isDragging = false,
+      ...rest
+    },
+    ref,
+  ) => {
+    const statusDisplay = PROJECT_STATUS_DISPLAY[project.status];
+    const StatusIcon = statusDisplay.Icon;
+    const description = project.description?.trim().length
+      ? project.description
+      : "Sin descripción disponible.";
+
+    return (
+      <article
+        ref={ref}
+        className={cn(
+          "group touch-action-none relative flex max-w-[360px] flex-col gap-3 rounded-xl border border-black/5 bg-white p-5 text-neutral-900 shadow-sm transition-transform duration-200 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-6",
+          isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
+          isDragging ? "scale-[0.99]" : "",
+          className,
+        )}
+        {...rest}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-3">
+            {showActions ? (
+              <div
+                aria-label="Arrastrar proyecto"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100"
               >
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-36">
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  onView?.();
-                }}
-              >
-                Ver detalles
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  onEdit?.();
-                }}
-              >
-                Editar proyecto
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onSelect={(event) => {
-                  event.preventDefault();
-                  onDelete?.();
-                }}
-              >
-                Eliminar proyecto
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
-      </CardHeader>
-      <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
-        <p className="line-clamp-3 text-left">
-          {project.description ? project.description : "Sin descripción proporcionada."}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
-            {PROJECT_STATUS_LABELS[project.status]}
-          </Badge>
-          <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
-            {PROJECT_PRIORITY_LABELS[project.priority]}
-          </Badge>
-          <Badge className="bg-[rgba(28,36,49,0.08)] text-[#1C2431]">
-            {project.taskCount} tareas
-          </Badge>
+                <span className="sr-only">Arrastrar proyecto</span>
+                <GripVertical className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+              </div>
+            ) : null}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full",
+                    statusDisplay.iconWrapperClass,
+                  )}
+                >
+                  <StatusIcon
+                    className={cn("h-4 w-4", statusDisplay.iconClass)}
+                    aria-hidden="true"
+                  />
+                </span>
+                {onView ? (
+                  <button
+                    type="button"
+                    onClick={onView}
+                    className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
+                  >
+                    <span className="line-clamp-1">{project.name}</span>
+                  </button>
+                ) : (
+                  <span className="line-clamp-1 text-lg font-semibold">{project.name}</span>
+                )}
+              </div>
+              <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
+            </div>
+          </div>
+          {showActions ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-neutral-400 hover:text-[#1C2431]"
+                  aria-label={`Acciones para el proyecto ${project.name}`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-36">
+                {onView ? (
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      onView();
+                    }}
+                  >
+                    Ver detalles
+                  </DropdownMenuItem>
+                ) : null}
+                {onEdit ? (
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      onEdit();
+                    }}
+                  >
+                    Editar proyecto
+                  </DropdownMenuItem>
+                ) : null}
+                {onDelete ? (
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      onDelete();
+                    }}
+                  >
+                    Eliminar proyecto
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
-        <p className="text-muted-foreground text-xs">
-          Creado {formatTaskDateTime(project.createdAt)} ·
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {project.completedTaskCount} tareas completadas
-        </p>
-      </CardContent>
-    </Card>
-  ),
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn("rounded-md px-2 py-0.5 text-xs font-medium", statusDisplay.badgeClass)}
+          >
+            {PROJECT_STATUS_LABELS[project.status]}
+          </span>
+          <span
+            className={cn(
+              "rounded-md px-2 py-0.5 text-xs font-medium",
+              PROJECT_PRIORITY_BADGE_STYLES[project.priority],
+            )}
+          >
+            {PROJECT_PRIORITY_LABELS[project.priority]}
+          </span>
+          <span
+            className={cn("rounded-md px-2 py-0.5 text-xs font-medium", PROJECT_TASK_BADGE_CLASS)}
+          >
+            {project.taskCount} tareas
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+            <span className="font-medium text-neutral-700">Creado:</span>
+            <span>{formatTaskDateTime(project.createdAt)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+            <span className="font-medium text-neutral-700">
+              {project.completedTaskCount} tareas completadas
+            </span>
+          </div>
+        </div>
+      </article>
+    );
+  },
 );
 
 ProjectCardLayout.displayName = "ProjectCardLayout";
@@ -323,8 +442,11 @@ const ProjectCard = ({ project, isActive, onView, onEdit, onDelete }: ProjectCar
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     cursor: isDragging ? "grabbing" : "grab",
+    touchAction: "none",
+    userSelect: "none",
+    willChange: "transform",
   };
 
   return (
@@ -334,11 +456,8 @@ const ProjectCard = ({ project, isActive, onView, onEdit, onDelete }: ProjectCar
       onView={onView}
       onEdit={onEdit}
       onDelete={onDelete}
-      className={cn(
-        "transition-all select-none focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:outline-none",
-        "hover:scale-[1.02] hover:shadow-lg",
-        isActive ? "ring-2 ring-[#F6C90E]" : "border border-transparent",
-      )}
+      isActive={isActive}
+      isDragging={isDragging}
       style={style}
       data-status={project.status}
       {...attributes}
@@ -352,7 +471,8 @@ const ProjectCardPreview = ({ project }: { project: ProjectWithTaskCount }) => (
   <ProjectCardLayout
     project={project}
     showActions={false}
-    className="pointer-events-none shadow-2xl ring-2 ring-[#F6C90E] select-none"
+    className="pointer-events-none scale-105 shadow-[0_20px_60px_rgba(0,0,0,0.3)] select-none"
+    isActive
   />
 );
 
