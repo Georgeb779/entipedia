@@ -52,7 +52,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vite-plugin-pages": "^0.33.1",
     "vite-plugin-svgr": "^4.5.0",
-    "zod": "^3.23.8"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
