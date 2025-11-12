@@ -17,6 +17,7 @@ import {
   PointerSensor,
   TouchSensor,
   closestCorners,
+  type DraggableSyntheticListeners,
   useDroppable,
   useSensor,
   useSensors,
@@ -101,6 +102,8 @@ type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   showActions?: boolean;
   isActive?: boolean;
   isDragging?: boolean;
+  dragHandleListeners?: DraggableSyntheticListeners;
+  dragHandleRef?: (element: HTMLElement | null) => void;
 };
 
 const STATUS_DISPLAY: Record<
@@ -239,6 +242,8 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
       showActions = true,
       isActive = false,
       isDragging = false,
+      dragHandleListeners,
+      dragHandleRef,
       ...rest
     },
     ref,
@@ -253,7 +258,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
       <article
         ref={ref}
         className={cn(
-          "group touch-action-none relative flex max-w-[360px] flex-col gap-3 rounded-xl border border-black/5 bg-white p-5 text-neutral-900 shadow-sm transition-transform duration-200 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-6",
+          "group relative flex max-w-[360px] flex-col gap-3 rounded-xl border border-black/5 bg-white p-5 text-neutral-900 shadow-sm transition-transform duration-150 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-6",
           isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
           isDragging ? "scale-[0.99]" : "",
           className,
@@ -265,10 +270,12 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
             {showActions ? (
               <div
                 aria-label="Arrastrar tarea"
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100"
+                className="touch-action-none flex h-11 w-11 items-center justify-center rounded-lg bg-neutral-100"
+                ref={dragHandleRef ?? undefined}
+                {...(dragHandleListeners ?? {})}
               >
                 <span className="sr-only">Arrastrar tarea</span>
-                <GripVertical className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                <GripVertical className="h-5 w-5 text-neutral-400" aria-hidden="true" />
               </div>
             ) : null}
             <div className="flex flex-col gap-2">
@@ -370,7 +377,15 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
 TaskCardLayout.displayName = "TaskCardLayout";
 
 const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: TaskCardProps) => {
-  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
     id: task.id,
     data: { status: task.status },
   });
@@ -380,7 +395,6 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
     transition,
     opacity: isDragging ? 0.85 : 1,
     cursor: isDragging ? "grabbing" : "grab",
-    touchAction: "none",
     userSelect: "none",
     willChange: "transform",
   };
@@ -391,13 +405,15 @@ const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: Task
       task={task}
       isActive={isActive}
       isDragging={isDragging}
+      dragHandleRef={setActivatorNodeRef}
+      dragHandleListeners={listeners}
+      className="active:scale-95"
       style={style}
       data-status={task.status}
       onViewTask={onViewTask ? () => onViewTask(task) : undefined}
       onEditTask={onEditTask ? () => onEditTask(task) : undefined}
       onDeleteTask={onDeleteTask ? () => onDeleteTask(task) : undefined}
       {...attributes}
-      {...listeners}
       aria-label={`Tarea: ${task.title}`}
     />
   );
