@@ -178,7 +178,7 @@ export default function Home(): JSX.Element {
             Acerca de
           </Link>
           <a
-            href="https://github.com/entipedia"
+            href="https://github.com/Georgeb779/entipedia"
             target="_blank"
             rel="noreferrer"
             className="transition-colors hover:text-neutral-900"
