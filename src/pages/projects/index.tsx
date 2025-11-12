@@ -826,6 +826,10 @@ const ProjectsPage = () => {
                     </DndContext>
                   </section>
                 )}
+                <p className="text-muted-foreground mt-3 text-center text-xs">
+                  Use mouse or keyboard (Tab + Arrow keys + Space/Enter) to move projects between
+                  columns.
+                </p>
               </TabsContent>
 
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">

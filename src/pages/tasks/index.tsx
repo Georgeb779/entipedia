@@ -374,13 +374,13 @@ function TasksPage() {
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
+                <div className="space-y-2">
                   <h1 className="text-3xl font-semibold">Tasks</h1>
                   <p className="text-muted-foreground mb-6 text-sm">
                     Manage your work with statuses, priorities, and due dates.
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex flex-wrap items-center gap-4">
                   <TabsList>
                     <TabsTrigger value="board">Board</TabsTrigger>
                     <TabsTrigger value="table">Table</TabsTrigger>
@@ -517,6 +517,8 @@ function TasksPage() {
                       tasks={activeTasks}
                       onTaskStatusChange={handleTaskStatusChange}
                       isUpdating={updateTaskStatus.isPending}
+                      onEditTask={handleEditOpen}
+                      onDeleteTask={handleDeleteTask}
                     />
                   )}
                 </section>

@@ -28,7 +28,20 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { MoreHorizontal } from "lucide-react";
+
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui";
 import {
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
@@ -57,6 +70,9 @@ interface KanbanBoardProps {
   tasks: Task[];
   onTaskStatusChange: (taskId: number, newStatus: TaskStatus) => void;
   isUpdating?: boolean;
+  onViewTask?: (task: Task) => void;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
 }
 
 type KanbanColumnProps = {
@@ -65,18 +81,37 @@ type KanbanColumnProps = {
   tasks: Task[];
   activeId: number | null;
   isUpdating?: boolean;
+  onViewTask?: (task: Task) => void;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
 };
 
 type TaskCardProps = {
   task: Task;
   isActive: boolean;
+  onViewTask?: (task: Task) => void;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
 };
 
 type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   task: Task;
+  onViewTask?: () => void;
+  onEditTask?: () => void;
+  onDeleteTask?: () => void;
+  showActions?: boolean;
 };
 
-const KanbanColumn = ({ title, status, tasks, activeId, isUpdating }: KanbanColumnProps) => {
+const KanbanColumn = ({
+  title,
+  status,
+  tasks,
+  activeId,
+  isUpdating,
+  onViewTask,
+  onEditTask,
+  onDeleteTask,
+}: KanbanColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({ id: status, data: { status } });
 
   return (
@@ -107,7 +142,14 @@ const KanbanColumn = ({ title, status, tasks, activeId, isUpdating }: KanbanColu
             </p>
           ) : (
             tasks.map((task) => (
-              <TaskCard key={task.id} task={task} isActive={activeId === task.id} />
+              <TaskCard
+                key={task.id}
+                task={task}
+                isActive={activeId === task.id}
+                onViewTask={onViewTask}
+                onEditTask={onEditTask}
+                onDeleteTask={onDeleteTask}
+              />
             ))
           )}
         </div>
@@ -117,8 +159,9 @@ const KanbanColumn = ({ title, status, tasks, activeId, isUpdating }: KanbanColu
 };
 
 const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
-  ({ task, className, ...rest }, ref) => {
+  ({ task, className, onViewTask, onEditTask, onDeleteTask, showActions = true, ...rest }, ref) => {
     const priority = task.priority;
+    const hasActions = showActions && (onViewTask || onEditTask || onDeleteTask);
 
     return (
       <Card
@@ -129,10 +172,39 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
         )}
         {...rest}
       >
-        <CardHeader className="pb-4">
+        <CardHeader className="flex flex-row items-start justify-between gap-3 pb-4">
           <CardTitle className="text-lg leading-tight font-semibold">
             <span className="line-clamp-2">{task.title}</span>
           </CardTitle>
+          {hasActions ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-[#1C2431]"
+                  aria-label={`Actions for task ${task.title}`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-36">
+                {onViewTask ? (
+                  <DropdownMenuItem onSelect={() => onViewTask()}>View details</DropdownMenuItem>
+                ) : null}
+                {onEditTask ? (
+                  <DropdownMenuItem onSelect={() => onEditTask()}>Edit task</DropdownMenuItem>
+                ) : null}
+                {onDeleteTask ? (
+                  <DropdownMenuItem className="text-destructive" onSelect={() => onDeleteTask()}>
+                    Delete task
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </CardHeader>
         <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
           <p className="line-clamp-2 text-left">
@@ -157,7 +229,7 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
 
 TaskCardLayout.displayName = "TaskCardLayout";
 
-const TaskCard = ({ task, isActive }: TaskCardProps) => {
+const TaskCard = ({ task, isActive, onViewTask, onEditTask, onDeleteTask }: TaskCardProps) => {
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
     data: { status: task.status },
@@ -181,6 +253,9 @@ const TaskCard = ({ task, isActive }: TaskCardProps) => {
       )}
       style={style}
       data-status={task.status}
+      onViewTask={onViewTask ? () => onViewTask(task) : undefined}
+      onEditTask={onEditTask ? () => onEditTask(task) : undefined}
+      onDeleteTask={onDeleteTask ? () => onDeleteTask(task) : undefined}
       {...attributes}
       {...listeners}
       aria-label={`Task: ${task.title}`}
@@ -192,13 +267,21 @@ const TaskCardPreview = ({ task }: { task: Task }) => (
   <TaskCardLayout
     task={task}
     className="pointer-events-none shadow-2xl ring-2 ring-[#F6C90E] select-none"
+    showActions={false}
   />
 );
 
 /**
  * Displays tasks in a three-column Kanban layout with drag-and-drop and keyboard interactions.
  */
-const KanbanBoard = ({ tasks, onTaskStatusChange, isUpdating = false }: KanbanBoardProps) => {
+const KanbanBoard = ({
+  tasks,
+  onTaskStatusChange,
+  isUpdating = false,
+  onViewTask,
+  onEditTask,
+  onDeleteTask,
+}: KanbanBoardProps) => {
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const sensors = useSensors(
@@ -388,6 +471,9 @@ const KanbanBoard = ({ tasks, onTaskStatusChange, isUpdating = false }: KanbanBo
           tasks={buckets.todo}
           activeId={activeId}
           isUpdating={isUpdating}
+          onViewTask={onViewTask}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
         />
         <KanbanColumn
           title={STATUS_TITLES.in_progress}
@@ -395,6 +481,9 @@ const KanbanBoard = ({ tasks, onTaskStatusChange, isUpdating = false }: KanbanBo
           tasks={buckets.in_progress}
           activeId={activeId}
           isUpdating={isUpdating}
+          onViewTask={onViewTask}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
         />
         <KanbanColumn
           title={STATUS_TITLES.done}
@@ -402,6 +491,9 @@ const KanbanBoard = ({ tasks, onTaskStatusChange, isUpdating = false }: KanbanBo
           tasks={buckets.done}
           activeId={activeId}
           isUpdating={isUpdating}
+          onViewTask={onViewTask}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
         />
       </div>
       <DragOverlay>{activeTask ? <TaskCardPreview task={activeTask} /> : null}</DragOverlay>
