@@ -1,7 +1,7 @@
-import { useEffect, type ReactNode } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { type ReactNode, useEffect, useRef } from "react";
+import { Navigate, Outlet, useLocation } from "react-router";
 
-import { useAuth } from "@/hooks";
+import { useAuth, useAuthActions } from "@/hooks";
 
 interface ProtectedRouteProps {
   children?: ReactNode;
@@ -13,13 +13,32 @@ interface ProtectedRouteProps {
  */
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const auth = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const { refreshSession } = useAuthActions();
+
+  const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+  const lastVerifiedLocationRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (auth.status === "unauthenticated") {
-      navigate("/auth/login", { replace: true });
+    if (auth.status !== "authenticated") {
+      lastVerifiedLocationRef.current = null;
+      return;
     }
-  }, [auth.status, navigate]);
+
+    const locationKey = redirectTarget;
+
+    if (lastVerifiedLocationRef.current === locationKey) {
+      return;
+    }
+
+    if (lastVerifiedLocationRef.current === null) {
+      lastVerifiedLocationRef.current = locationKey;
+      return;
+    }
+
+    lastVerifiedLocationRef.current = locationKey;
+    void refreshSession();
+  }, [auth.status, redirectTarget, refreshSession]);
 
   if (auth.status === "loading") {
     return (
@@ -30,7 +49,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (auth.status === "unauthenticated") {
-    return null;
+    return (
+      <Navigate
+        to="/auth/login"
+        replace
+        state={{ from: redirectTarget, message: "Tu sesión expiró. Vuelve a iniciar sesión." }}
+      />
+    );
   }
 
   return <>{children ?? <Outlet />}</>;

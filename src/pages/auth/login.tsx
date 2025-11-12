@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useEffect, useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -27,8 +27,21 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const auth = useAuth();
   const { login } = useAuthActions();
+
+  const { redirectPath, infoMessage } = useMemo(() => {
+    const state = (location.state as { from?: string; message?: string } | null) ?? null;
+    return {
+      redirectPath:
+        state?.from && typeof state.from === "string" && state.from.length > 0 ? state.from : "/",
+      infoMessage:
+        state?.message && typeof state.message === "string" && state.message.length > 0
+          ? state.message
+          : null,
+    };
+  }, [location.state]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -40,9 +53,9 @@ const Login = () => {
 
   useEffect(() => {
     if (auth.status === "authenticated") {
-      navigate("/", { replace: true });
+      navigate(redirectPath, { replace: true });
     }
-  }, [auth.status, navigate]);
+  }, [auth.status, navigate, redirectPath]);
 
   const onSubmit = async (values: LoginFormValues) => {
     form.clearErrors("root");
@@ -67,7 +80,7 @@ const Login = () => {
       const data: { user: ApiAuthUser } = await response.json();
 
       login(mapApiAuthUser(data.user));
-      navigate("/", { replace: true });
+      navigate(redirectPath, { replace: true });
     } catch {
       form.setError("root", {
         type: "server",
@@ -149,21 +162,29 @@ const Login = () => {
           </form>
         </Form>
 
-        <div className="text-muted-foreground space-y-1 text-center text-sm">
-          <p>
-            ¿Necesitas una cuenta?{" "}
-            <Link
-              to="/auth/register"
-              className="text-primary hover:text-primary/80 hover:underline"
-            >
-              Crear una
-            </Link>
-          </p>
-          <p>
-            <Link to="/" className="text-primary hover:text-primary/80 hover:underline">
-              Volver al inicio
-            </Link>
-          </p>
+        <div className="space-y-3">
+          {infoMessage ? (
+            <div className="bg-secondary/30 text-secondary-foreground rounded-xl px-4 py-3 text-sm font-medium">
+              {infoMessage}
+            </div>
+          ) : null}
+
+          <div className="text-muted-foreground space-y-1 text-center text-sm">
+            <p>
+              ¿Necesitas una cuenta?{" "}
+              <Link
+                to="/auth/register"
+                className="text-primary hover:text-primary/80 hover:underline"
+              >
+                Crear una
+              </Link>
+            </p>
+            <p>
+              <Link to="/" className="text-primary hover:text-primary/80 hover:underline">
+                Volver al inicio
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
