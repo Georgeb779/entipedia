@@ -3,8 +3,10 @@ import { join } from "node:path";
 
 import { defineHandler } from "nitro/h3";
 
-const distDir = join(process.cwd(), "dist");
-const indexFilePath = join(distDir, "index.html");
+const candidateIndexPaths = [
+  join(process.cwd(), ".output/public/index.html"),
+  join(process.cwd(), "dist/index.html"),
+];
 
 const jsonResponse = (payload: unknown, status: number) =>
   new Response(JSON.stringify(payload), {
@@ -34,11 +36,20 @@ export default defineHandler(async (event) => {
     return createNotFoundResponse();
   }
 
-  let html: string;
+  let html: string | null = null;
 
-  try {
-    html = await fs.readFile(indexFilePath, "utf8");
-  } catch {
+  for (const path of candidateIndexPaths) {
+    try {
+      html = await fs.readFile(path, "utf8");
+      if (html) {
+        break;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  if (!html) {
     return jsonResponse({ error: "Application shell not found" }, 404);
   }
 
