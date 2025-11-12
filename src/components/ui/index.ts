@@ -19,3 +19,5 @@ export * from "./progress";
 export * from "./toast";
 export * from "./toaster";
 export * from "./use-toast";
+export * from "./skeleton";
+export * from "./spinner";

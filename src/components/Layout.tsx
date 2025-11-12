@@ -293,7 +293,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="bg-background text-foreground flex min-h-screen">
+    <div className="bg-background text-foreground flex h-screen overflow-hidden">
       <aside className="border-sidebar-border bg-sidebar text-sidebar-foreground fixed top-0 left-0 z-40 hidden h-screen w-64 border-r md:flex md:flex-col">
         <Link
           to="/dashboard"
@@ -406,8 +406,8 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       ) : null}
 
-      <div className="flex min-h-screen w-full flex-col md:ml-64">
-        <main className="bg-background flex-1 overflow-y-auto p-6 pt-4">
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col md:ml-64">
+        <main className="bg-background min-h-0 flex-1 overflow-y-auto p-6 pt-4">
           <div className="mb-8 flex min-h-14 items-center justify-between md:justify-end">
             <div className="flex items-center gap-3 md:hidden">
               <Button

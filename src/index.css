@@ -221,6 +221,61 @@
       transform: scale(1);
     }
   }
+  @keyframes page-enter {
+    from {
+      opacity: 0.85;
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+  @keyframes page-exit {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes glow-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(246, 201, 14, 0);
+    }
+    50% {
+      box-shadow: 0 0 20px 4px rgba(246, 201, 14, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(246, 201, 14, 0);
+    }
+  }
+  @keyframes glow-ring {
+    from {
+      box-shadow: 0 0 0 0 rgba(246, 201, 14, 0.6);
+    }
+    to {
+      box-shadow: 0 0 0 8px rgba(246, 201, 14, 0);
+    }
+  }
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
 .animate-fade-in {
@@ -273,6 +328,30 @@
 
 .animate-pulse-ring {
   animation: pulse-ring 0.6s ease-out infinite;
+}
+
+.animate-page-enter {
+  animation: page-enter 0.4s ease-out forwards;
+}
+
+.animate-page-exit {
+  animation: page-exit 0.3s ease-in forwards;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-glow-ring {
+  animation: glow-ring 0.6s ease-out forwards;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 .stagger-1 {
@@ -345,6 +424,81 @@
   will-change: auto;
 }
 
+.page-transition-container {
+  height: 100%;
+  min-height: 0;
+}
+
+.page-transition-active {
+  animation: page-enter 0.35s ease-out both;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.06) 25%, rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.06) 75%);
+  background-size: 200% 100%;
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.hover-glow {
+  transition: box-shadow 0.3s ease-out;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px 2px rgba(246, 201, 14, 0.3);
+}
+
+.hover-scale {
+  transition: transform 0.2s ease-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.focus-glow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(246, 201, 14, 0.2), 0 0 20px 2px rgba(246, 201, 14, 0.3);
+  animation: glow-ring 0.6s ease-out;
+}
+
+.focus-glow:focus-visible {
+  --tw-ring-color: #f6c90e;
+  --tw-ring-offset-width: 2px;
+}
+
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+.stagger-6 {
+  animation-delay: 0.3s;
+}
+
+.gpu-accelerate {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
 .drop-zone-active {
   background-color: rgba(246, 201, 14, 0.05);
   transform: scale(1.02);
@@ -355,4 +509,28 @@
   transform: scale(1);
   box-shadow: 0 0 0 1px transparent inset;
   animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-page-enter,
+  .animate-page-exit,
+  .animate-shimmer,
+  .animate-glow-pulse,
+  .animate-glow-ring,
+  .animate-spin,
+  .hover-lift,
+  .hover-glow,
+  .hover-scale,
+  .focus-glow {
+    animation: none !important;
+    transition: none !important;
+  }
 }

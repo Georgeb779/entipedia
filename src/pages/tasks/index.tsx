@@ -37,6 +37,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Spinner,
 } from "@/components/ui";
 import {
   TASK_PRIORITY_COLORS,
@@ -626,8 +627,8 @@ function TasksPage() {
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
                 <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
-                    <div className="text-muted-foreground py-12 text-center">
-                      Cargando tareas...
+                    <div className="flex items-center justify-center py-12">
+                      <Spinner size="lg" label="Cargando tareas..." />
                     </div>
                   ) : error ? (
                     <div className="text-destructive py-12 text-center">
@@ -690,8 +691,8 @@ function TasksPage() {
               <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
                 <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
-                    <div className="text-muted-foreground py-12 text-center">
-                      Cargando tareas...
+                    <div className="flex items-center justify-center py-12">
+                      <Spinner size="lg" label="Cargando tareas..." />
                     </div>
                   ) : error ? (
                     <div className="text-destructive py-12 text-center">

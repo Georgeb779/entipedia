@@ -81,6 +81,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Spinner,
 } from "@/components/ui";
 import {
   PROJECT_PRIORITY_COLORS,
@@ -478,6 +479,7 @@ type ProjectMobileCardProps = {
   onEdit: (project: ProjectWithTaskCount) => void;
   onDelete: (project: ProjectWithTaskCount) => void;
   isDeleting: boolean;
+  className?: string;
 };
 
 const ProjectMobileCard = ({
@@ -486,8 +488,14 @@ const ProjectMobileCard = ({
   onEdit,
   onDelete,
   isDeleting,
+  className,
 }: ProjectMobileCardProps) => (
-  <article className="animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+  <article
+    className={cn(
+      "animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm",
+      className,
+    )}
+  >
     <header className="space-y-2">
       <h3 className="text-lg font-semibold text-[#1C2431]">{project.name}</h3>
       <p className="text-muted-foreground text-sm">
@@ -1037,8 +1045,8 @@ const ProjectsPage = () => {
 
               <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
                 {isLoading ? (
-                  <div className="text-muted-foreground py-12 text-center">
-                    Cargando proyectos...
+                  <div className="flex items-center justify-center py-12">
+                    <Spinner size="lg" label="Cargando proyectos..." />
                   </div>
                 ) : error ? (
                   <div className="text-destructive py-12 text-center">
@@ -1090,8 +1098,8 @@ const ProjectsPage = () => {
 
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
                 {isLoading ? (
-                  <div className="text-muted-foreground py-12 text-center">
-                    Cargando proyectos...
+                  <div className="flex items-center justify-center py-12">
+                    <Spinner size="lg" label="Cargando proyectos..." />
                   </div>
                 ) : error ? (
                   <div className="text-destructive py-12 text-center">
@@ -1108,7 +1116,7 @@ const ProjectsPage = () => {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {projects.map((project) => (
+                          {projects.map((project, index) => (
                             <ProjectMobileCard
                               key={project.id}
                               project={project}
@@ -1118,6 +1126,7 @@ const ProjectsPage = () => {
                               isDeleting={
                                 deleteProject.isPending && projectPendingDeletion?.id === project.id
                               }
+                              className={index < 4 ? `stagger-${index + 1}` : undefined}
                             />
                           ))}
                         </div>
