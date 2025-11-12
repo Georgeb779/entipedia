@@ -1,6 +1,3 @@
-docker build -t react-ts-starter .
-docker run -p 5000:5000 react-ts-starter
-
 # Entipedia MVP – Guía Técnica
 
 Documentación oficial del proyecto full-stack construido con React, TypeScript y Nitro. Esta guía explica la arquitectura, los requisitos y el flujo de trabajo recomendado para desarrollar, probar y desplegar Entipedia.
