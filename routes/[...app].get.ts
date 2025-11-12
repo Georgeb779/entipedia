@@ -1,10 +1,9 @@
 import { promises as fs } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 import { defineHandler } from "nitro/h3";
 
-const distDir = fileURLToPath(new URL("../dist", import.meta.url));
+const distDir = join(process.cwd(), "dist");
 const indexFilePath = join(distDir, "index.html");
 
 const jsonResponse = (payload: unknown, status: number) =>
