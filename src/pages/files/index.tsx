@@ -67,7 +67,8 @@ const uploadSchema = z.object({
     .default("all"),
 });
 
-type UploadFormSchema = z.infer<typeof uploadSchema>;
+type UploadFormInput = z.input<typeof uploadSchema>;
+type UploadFormSchema = z.output<typeof uploadSchema>;
 
 type ProjectLookup = Map<number, ProjectWithTaskCount>;
 
@@ -113,7 +114,7 @@ export default function FilesPage() {
   const [showLeftIndicator, setShowLeftIndicator] = useState(false);
   const [showRightIndicator, setShowRightIndicator] = useState(false);
 
-  const uploadForm = useForm<UploadFormSchema>({
+  const uploadForm = useForm<UploadFormInput, undefined, UploadFormSchema>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       description: "",

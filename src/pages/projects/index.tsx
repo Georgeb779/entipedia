@@ -118,9 +118,10 @@ const projectSchema = z
     priority: values.priority,
   }));
 
-type ProjectSchema = z.infer<typeof projectSchema>;
+type ProjectFormInput = z.input<typeof projectSchema>;
+type ProjectSchema = z.output<typeof projectSchema>;
 
-const defaultFormValues: ProjectSchema = {
+const defaultFormValues: ProjectFormInput = {
   name: "",
   description: null,
   status: "todo",
@@ -135,7 +136,7 @@ const STATUS_TITLES: Record<ProjectStatus, string> = {
   done: "Completado",
 };
 
-const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectSchema => ({
+const mapProjectToFormValues = (project: ProjectWithTaskCount): ProjectFormInput => ({
   name: project.name,
   description: project.description ?? null,
   status: project.status,
@@ -578,12 +579,12 @@ const ProjectsPage = () => {
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
-  const createForm = useForm<ProjectSchema>({
+  const createForm = useForm<ProjectFormInput, undefined, ProjectSchema>({
     resolver: zodResolver(projectSchema),
     defaultValues: defaultFormValues,
   });
 
-  const editForm = useForm<ProjectSchema>({
+  const editForm = useForm<ProjectFormInput, undefined, ProjectSchema>({
     resolver: zodResolver(projectSchema),
     defaultValues: defaultFormValues,
   });

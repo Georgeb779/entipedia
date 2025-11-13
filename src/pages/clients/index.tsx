@@ -60,8 +60,9 @@ const clientSchema = z
       .max(255, "El nombre debe tener 255 caracteres o menos."),
     type: z.enum(["person", "company"]),
     value: z.coerce
-      .number({ message: "El valor debe ser un número." })
-      .positive("El valor debe ser positivo."),
+      .number()
+      .refine((val) => !Number.isNaN(val), { message: "El valor debe ser un número." })
+      .gt(0, { message: "El valor debe ser positivo." }),
     startDate: z
       .string()
       .min(1, "La fecha de inicio es requerida.")
@@ -94,9 +95,10 @@ const clientSchema = z
     }
   });
 
-type ClientFormSchema = z.infer<typeof clientSchema>;
+type ClientFormInput = z.input<typeof clientSchema>;
+type ClientFormSchema = z.output<typeof clientSchema>;
 
-const defaultFormValues: ClientFormSchema = {
+const defaultFormValues: ClientFormInput = {
   name: "",
   type: "person",
   value: 0,
@@ -161,12 +163,12 @@ function ClientsPage() {
   const [showLeftIndicator, setShowLeftIndicator] = useState(false);
   const [showRightIndicator, setShowRightIndicator] = useState(false);
 
-  const createForm = useForm<ClientFormSchema>({
+  const createForm = useForm<ClientFormInput, undefined, ClientFormSchema>({
     resolver: zodResolver(clientSchema),
     defaultValues: defaultFormValues,
   });
 
-  const editForm = useForm<ClientFormSchema>({
+  const editForm = useForm<ClientFormInput, undefined, ClientFormSchema>({
     resolver: zodResolver(clientSchema),
     defaultValues: defaultFormValues,
   });
@@ -990,7 +992,21 @@ function ClientsPage() {
                     <FormItem>
                       <FormLabel>Valor (DOP)</FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={
+                            typeof field.value === "number" || typeof field.value === "string"
+                              ? field.value
+                              : ""
+                          }
+                          onChange={(event) => field.onChange(event.target.value)}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1099,7 +1115,21 @@ function ClientsPage() {
                     <FormItem>
                       <FormLabel>Valor (DOP)</FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={
+                            typeof field.value === "number" || typeof field.value === "string"
+                              ? field.value
+                              : ""
+                          }
+                          onChange={(event) => field.onChange(event.target.value)}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
