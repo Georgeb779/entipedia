@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env VITE_USE_PROXY=true concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "cross-env VITE_USE_PROXY=true vite --config vite.config.ts",
-    "dev:server": "cross-env NITRO_PORT=5999 NITRO_HOST=0.0.0.0 nitro dev",
+    "dev:server": "cross-env NITRO_PORT=5999 NITRO_HOST=0.0.0.0 nitro dev --host 0.0.0.0 --port 5999",
     "dev:integrated": "cross-env VITE_USE_PROXY=false vite --config vite.config.ts",
     "build": "tsc -b && vite build --config vite.config.ts && npm run build:server && mkdir -p .output/public && cp -r dist/* .output/public/",
     "build:server": "nitro build",

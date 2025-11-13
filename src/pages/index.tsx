@@ -7,20 +7,20 @@ import { useAuth } from "@/hooks";
 
 const features = [
   {
-    title: "Gestiona tareas sin esfuerzo",
-    body: "Organiza pendientes con estatus, prioridades y fechas de vencimiento. Cambia entre vista de lista y Kanban al instante.",
+    title: "Gestiona clientes con valor y fechas",
+    body: "Registra personas y empresas, distingue su tipo y lleva el seguimiento del valor del contrato, fecha de inicio y fin. Edita en línea para actualizar datos al instante.",
   },
   {
-    title: "Planifica cada proyecto",
-    body: "Supervisa el progreso con tableros y vistas detalladas adaptadas a tu flujo de trabajo.",
+    title: "Tableros Kanban para tareas y proyectos",
+    body: "Flujo de tres columnas (Por hacer, En progreso, Completado) con arrastrar y soltar, y navegación por teclado. Gestiona visualmente tanto tareas como proyectos.",
   },
   {
-    title: "Colabora en contexto",
-    body: "Mantén a todos alineados con tableros compartidos, actividad reciente e información en tiempo real.",
+    title: "Archivos organizados por categorías",
+    body: "Imágenes, documentos, videos, audio, archivos comprimidos y otros. Sube por arrastrar y soltar, asocia a proyectos y filtra por proyecto o tipo de archivo.",
   },
   {
-    title: "Protege cada archivo",
-    body: "Sube, clasifica y recupera documentos clave sin salir de tu espacio de trabajo.",
+    title: "Gestión completa de proyectos y tareas",
+    body: "Estatus (todo, in_progress, done), prioridades (low, medium, high), fechas límite y relación proyecto‑tarea. Cambia entre tabla y tablero según lo necesites.",
   },
 ];
 
@@ -49,15 +49,16 @@ export default function Home(): JSX.Element {
         <section className="grid items-center gap-16 text-left md:grid-cols-[1.05fr,0.95fr]">
           <div className="space-y-8">
             <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/70 px-4 py-1 text-xs font-medium tracking-[0.2em] text-neutral-600 uppercase shadow-sm">
-              <span>Avance constante, claridad compartida</span>
+              <span>Clientes, proyectos y archivos en un flujo visual</span>
             </div>
             <div className="space-y-4">
               <h1 className="text-5xl leading-[1.08] font-semibold tracking-tight text-neutral-900 md:text-6xl">
-                Entrega más rápido sin reuniones de seguimiento frenéticas
+                Gestiona clientes, proyectos y archivos en un solo lugar
               </h1>
               <p className="max-w-xl text-lg text-neutral-600">
-                Entipedia mantiene tareas, documentos y actualizaciones avanzando juntas para que
-                cada entrega se sienta tranquila y todos sepan qué es lo siguiente.
+                Seguimiento de clientes (personas y empresas) con valores de contrato y fechas,
+                tableros Kanban para tareas y proyectos, y archivos categorizados por tipo
+                vinculados a proyectos.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -85,17 +86,15 @@ export default function Home(): JSX.Element {
             </div>
             <dl className="grid gap-4 text-sm text-neutral-600 sm:grid-cols-3">
               <div>
-                <dt className="font-semibold text-neutral-900">
-                  Reuniones diarias 78% más rápidas
-                </dt>
+                <dt className="font-semibold text-neutral-900">Tableros Kanban listos para usar</dt>
                 <dd className="mt-1 text-xs tracking-[0.18em] text-neutral-500 uppercase">
-                  Después de centralizar las actualizaciones
+                  Por hacer · En progreso · Completado
                 </dd>
               </div>
               <div>
-                <dt className="font-semibold text-neutral-900">Espacio de trabajo todo en uno</dt>
+                <dt className="font-semibold text-neutral-900">Módulos esenciales integrados</dt>
                 <dd className="mt-1 text-xs tracking-[0.18em] text-neutral-500 uppercase">
-                  Documentos, tareas y notas alineados
+                  Clientes, Proyectos, Tareas y Archivos
                 </dd>
               </div>
               <div>
@@ -103,7 +102,7 @@ export default function Home(): JSX.Element {
                   Diseñado para equipos en crecimiento
                 </dt>
                 <dd className="mt-1 text-xs tracking-[0.18em] text-neutral-500 uppercase">
-                  Permisos y análisis incluidos
+                  Edición en línea y filtros por estado, prioridad y tipo
                 </dd>
               </div>
             </dl>
@@ -124,35 +123,35 @@ export default function Home(): JSX.Element {
               <div className="mt-6 space-y-4 text-sm">
                 <div className="rounded-xl border border-neutral-200/60 bg-amber-50/80 px-4 py-3 text-neutral-800 shadow-sm">
                   <p className="text-xs font-medium tracking-[0.28em] text-neutral-500 uppercase">
-                    Enfoque del sprint
+                    Cliente activo
                   </p>
                   <p className="mt-1 font-semibold text-neutral-900">
-                    Finaliza la lista de lanzamiento
+                    ACME S.A. · Empresa · Valor $25,000
                   </p>
                   <p className="mt-1 text-xs text-neutral-600">
-                    3 tareas para hoy · Producto · Actualizado hace 2 min
+                    Periodo: 01/01/2025 — 30/06/2025 · Edición en línea
                   </p>
                 </div>
                 <div className="rounded-xl border border-neutral-200/60 bg-white/80 px-4 py-3 text-neutral-800 shadow-sm">
                   <p className="text-xs font-medium tracking-[0.28em] text-neutral-500 uppercase">
-                    Notas en vivo
+                    Proyecto en progreso
                   </p>
                   <p className="mt-1 font-semibold text-neutral-900">
-                    Revisión de la hoja de ruta lista
+                    Sitio web corporativo · En Progreso
                   </p>
                   <p className="mt-1 text-xs text-neutral-600">
-                    Compartido con Marketing · Comentarios resueltos
+                    2 tareas en progreso · 5 por hacer · Tablero Kanban
                   </p>
                 </div>
                 <div className="rounded-xl border border-neutral-200/60 bg-white/80 px-4 py-3 text-neutral-800 shadow-sm">
                   <p className="text-xs font-medium tracking-[0.28em] text-neutral-500 uppercase">
-                    Actividad reciente
+                    Archivos categorizados
                   </p>
                   <p className="mt-1 font-semibold text-neutral-900">
-                    Nuevo integrante se unió al espacio de trabajo
+                    3 archivos subidos · Imágenes y documentos
                   </p>
                   <p className="mt-1 text-xs text-neutral-600">
-                    Acceso asignado automáticamente · hace 4 min
+                    Asociados al proyecto Marketing · hace 4 min
                   </p>
                 </div>
               </div>

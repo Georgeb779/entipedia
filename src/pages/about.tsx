@@ -5,20 +5,20 @@ import { Button, LogoMark } from "@/components";
 
 const pillars = [
   {
-    title: "Unifica flujos de tareas",
-    body: "Sigue asignaciones desde listas rápidas hasta flujos Kanban detallados, con prioridades, fechas de vencimiento y contexto del proyecto.",
+    title: "Gestiona clientes con precisión",
+    body: "Distingue entre personas y empresas, registra el valor del contrato y gestiona fechas de inicio y cierre. Actualiza en línea con edición por celda y navegación por teclado para cambios rápidos.",
   },
   {
-    title: "Destaca la información de tus proyectos",
-    body: "Monitorea el progreso con tableros desde el momento en que inicias sesión, para que cuellos de botella y logros permanezcan visibles.",
+    title: "Visualiza el trabajo con tableros Kanban",
+    body: "Flujo de tres columnas (Por Hacer, En Progreso, Completado) con arrastrar y soltar para tareas y proyectos. Alterna entre vista tabla y tablero, con soporte de accesibilidad mediante teclado.",
   },
   {
-    title: "Impulsa la colaboración del equipo",
-    body: "Mantén a todos alineados con tableros compartidos, filtros rápidos y una navegación familiar en cualquier lugar.",
+    title: "Organiza archivos con categorías inteligentes",
+    body: "Clasificación automática en seis categorías (imágenes, documentos, videos, audio, archivos y otros). Sube por arrastrar y soltar, asocia cada archivo a su proyecto y filtra por tipo o proyecto.",
   },
   {
-    title: "Asegura un almacenamiento inteligente",
-    body: "Organiza archivos críticos junto a cada proyecto para que el contexto siempre esté al alcance.",
+    title: "Controla tareas y proyectos con flexibilidad",
+    body: "Seguimiento de estado (por hacer, en progreso, completado), prioridades (baja, media, alta) y fechas de vencimiento. Relaciona tareas a proyectos, filtra por estado/prioridad/proyecto y usa vistas tabla o tablero.",
   },
 ];
 
@@ -33,13 +33,16 @@ export default function About(): JSX.Element {
               Acerca de Entipedia
             </h1>
             <p className="text-muted-foreground mx-auto max-w-2xl text-base">
-              Construimos Entipedia para unificar planificación, documentación y ejecución, de modo
-              que los equipos modernos colaboren con claridad y ritmo.
+              Entipedia centraliza cuatro capacidades clave: gestión de clientes, flujos de trabajo
+              visuales, organización de archivos y seguimiento flexible de tareas y proyectos. Ideal
+              para equipos que necesitan alinear relaciones con clientes y trabajo operativo.
             </p>
           </div>
           <p className="text-muted-foreground mx-auto max-w-2xl text-sm">
-            Desde tableros Kanban hasta centros de documentos, cada superficie se mantiene en
-            sincronía para ayudarte a entregar más rápido sin sacrificar enfoque ni contexto.
+            Incluye edición en línea compatible con teclado, arrastrar y soltar en tableros, filtros
+            por estado y prioridad, y vistas duales (tabla/kanban) para adaptarse a cada necesidad.
+            Los archivos se categorizan automáticamente y permanecen vinculados al contexto del
+            proyecto.
           </p>
         </header>
 
