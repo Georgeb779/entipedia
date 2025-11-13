@@ -1,10 +1,6 @@
-export const fonts = [
+export const fonts: Array<string | { name: string; styles?: string }> = [
   {
     name: "Inter",
-    styles: "wght@300;400;500;600;700",
-  },
-  {
-    name: "Space Grotesk",
     styles: "wght@300;400;500;600;700",
   },
 ];

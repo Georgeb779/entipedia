@@ -10,7 +10,9 @@ import tseslint from "typescript-eslint";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
-  { ignores: ["dist", "dev-dist", "node_modules", "auto-imports.d.ts", "**/*.d.ts"] },
+  {
+    ignores: ["dist", "dev-dist", "node_modules", "auto-imports.d.ts", "**/*.d.ts", "nitro-app/**"],
+  },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
