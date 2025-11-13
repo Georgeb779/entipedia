@@ -91,6 +91,13 @@ export default defineNitroConfig({
       extends: "./tsconfig.json",
     },
   },
+  publicAssets: [
+    {
+      dir: "dist",
+      baseURL: "/",
+      fallthrough: false,
+    },
+  ],
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL,
     sessionSecret: process.env.SESSION_SECRET,
