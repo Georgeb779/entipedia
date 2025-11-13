@@ -47,9 +47,9 @@ if (!useProxy) {
 }
 
 export default defineConfig({
-  appType: "custom",
+  base: "./",
+  appType: "spa",
   server: {
-    host: "0.0.0.0",
     port: 5000,
     ...(useProxy
       ? {

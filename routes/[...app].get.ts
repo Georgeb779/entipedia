@@ -32,6 +32,18 @@ export default defineHandler(async (event) => {
     return createNotFoundResponse();
   }
 
+  if (pathname.startsWith("/assets/") || pathname.startsWith("/src/")) {
+    return;
+  }
+
+  if (
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/manifest.webmanifest"
+  ) {
+    return;
+  }
+
   if (pathname.includes(".") && !pathname.endsWith(".html")) {
     return createNotFoundResponse();
   }
