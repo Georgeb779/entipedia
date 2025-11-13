@@ -42,12 +42,13 @@ const plugins: PluginOption[] = [
   }),
 ];
 
-if (!useProxy) {
+// Only use Nitro plugin in dev mode for integrated server
+if (!useProxy && process.env.NODE_ENV !== "production") {
   plugins.unshift(nitro());
 }
 
 export default defineConfig({
-  base: "./",
+  base: "/",
   appType: "spa",
   server: {
     port: 5000,

@@ -15,16 +15,17 @@ export default defineNitroConfig({
   logLevel: 3,
   port: resolvedPort,
   host: resolvedHost,
+  renderer: undefined,
+  experimental: {
+    openAPI: true,
+  },
   alias: {
     "@": srcAliasPath,
     db: dbAliasPath,
   },
-  publicAssets: [
-    {
-      baseURL: "/",
-      dir: "dist",
-    },
-  ],
+  prerender: {
+    autoSubfolderIndex: false,
+  },
   typescript: {
     tsConfig: {
       extends: "./tsconfig.json",

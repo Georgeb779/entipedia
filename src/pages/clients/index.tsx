@@ -60,7 +60,7 @@ const clientSchema = z
       .max(255, "El nombre debe tener 255 caracteres o menos."),
     type: z.enum(["person", "company"]),
     value: z.coerce
-      .number({ invalid_type_error: "El valor debe ser un número." })
+      .number({ message: "El valor debe ser un número." })
       .positive("El valor debe ser positivo."),
     startDate: z
       .string()
