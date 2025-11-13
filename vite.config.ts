@@ -13,63 +13,71 @@ import svgr from "vite-plugin-svgr";
 
 import { fonts } from "./configs/fonts.config";
 
-const useProxy = process.env.VITE_USE_PROXY === "true";
+export default defineConfig((env) => {
+  const isSsrBuild = env.isSsrBuild ?? false;
+  const useProxy = process.env.VITE_USE_PROXY === "true";
 
-const plugins: PluginOption[] = [
-  react(),
-  Pages({
-    dirs: "src/pages",
-    extensions: ["tsx", "jsx"],
-    importMode: "sync",
-  }),
-  svgr(),
+  const plugins: PluginOption[] = [
+    react(),
+    Pages({
+      dirs: "src/pages",
+      extensions: ["tsx", "jsx"],
+      importMode: "sync",
+    }),
+    svgr(),
+    Inspect(),
+    // ViteImagemin() - commented out due to type issues, uncomment if needed
+    tailwindcss(),
+    Fonts({ google: { families: fonts } }),
+  ];
 
-  Inspect(),
-  // ViteImagemin() - commented out due to type issues, uncomment if needed
-  tailwindcss(),
-  Fonts({ google: { families: fonts } }),
-  AutoImport({
-    imports: ["react", "react-router"],
-    dts: "./auto-imports.d.ts",
-    eslintrc: {
-      enabled: true,
-      // filepath: "./eslint.config.js",
-    },
-    viteOptimizeDeps: true,
+  if (!isSsrBuild) {
+    plugins.push(
+      AutoImport({
+        imports: ["react", "react-router"],
+        dts: "./auto-imports.d.ts",
+        eslintrc: {
+          enabled: true,
+          // filepath: "./eslint.config.js",
+        },
+        viteOptimizeDeps: true,
+        include: [/(?:^|[\\/])src[\\/].*\.[tj]sx$/],
+        exclude: ["**/routes/**", "**/middleware/**", "**/server.ts", "**/db/**"],
+        // uncomment if you want to auto import ui components
+        // dirs: ['./src/components/ui'],
+      }),
+    );
+  }
 
-    // uncomment if you want to auto import ui components
-    // dirs: ['./src/components/ui'],
-  }),
-];
+  // Only use Nitro plugin in dev mode for integrated server
+  if (!useProxy && process.env.NODE_ENV !== "production") {
+    plugins.unshift(nitro());
+  }
 
-// Only use Nitro plugin in dev mode for integrated server
-if (!useProxy && process.env.NODE_ENV !== "production") {
-  plugins.unshift(nitro());
-}
-
-export default defineConfig({
-  base: "/",
-  appType: "spa",
-  server: {
-    port: 5000,
-    ...(useProxy
-      ? {
-          proxy: {
-            "/api": {
-              target: "http://localhost:5999",
-              changeOrigin: true,
-              secure: false,
+  return {
+    base: "/",
+    appType: "spa",
+    server: {
+      port: 5000,
+      ...(useProxy
+        ? {
+            proxy: {
+              "/api": {
+                target: "http://localhost:5999",
+                changeOrigin: true,
+                secure: false,
+              },
             },
-          },
-        }
-      : {}),
-  },
-
-  plugins,
-
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+          }
+        : {}),
     },
-  },
+
+    plugins,
+
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
+  };
 });
