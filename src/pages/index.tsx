@@ -52,7 +52,7 @@ export default function Home(): JSX.Element {
               <span>Clientes, proyectos y archivos en un flujo visual</span>
             </div>
             <div className="space-y-4">
-              <h1 className="text-5xl leading-[1.08] font-semibold tracking-tight text-neutral-900 md:text-6xl">
+              <h1 className="max-w-[760px] text-5xl leading-[1.08] font-semibold tracking-tight text-neutral-900 md:text-6xl">
                 Gestiona clientes, proyectos y archivos en un solo lugar
               </h1>
               <p className="max-w-xl text-lg text-neutral-600">

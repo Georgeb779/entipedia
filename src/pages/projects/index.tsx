@@ -31,6 +31,7 @@ import {
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   closestCorners,
   useDroppable,
   useSensor,
@@ -91,7 +92,13 @@ import {
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_OPTIONS,
 } from "@/constants";
-import { useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "@/hooks";
+import {
+  useCreateProject,
+  useDeleteProject,
+  useProjects,
+  useUpdateProject,
+  useIsMobile,
+} from "@/hooks";
 import type { ProjectPriority, ProjectStatus, ProjectWithTaskCount } from "@/types";
 import { cn, formatTaskDateTime, resolveStatusValue } from "@/utils";
 
@@ -167,6 +174,8 @@ type ProjectCardProps = {
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onMoveProjectStatus?: (project: ProjectWithTaskCount, newStatus: ProjectStatus) => void;
+  showDragHandle?: boolean;
 };
 
 type ProjectCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
@@ -177,6 +186,8 @@ type ProjectCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   showActions?: boolean;
   isActive?: boolean;
   isDragging?: boolean;
+  onMoveProjectStatus?: (newStatus: ProjectStatus) => void;
+  showDragHandle?: boolean;
 };
 
 const resolveProjectStatus = (value: unknown): ProjectStatus | null =>
@@ -228,9 +239,9 @@ const KanbanColumn = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">{title}</h2>
-        <span className="inline-flex h-8 min-w-10 items-center justify-center rounded-full bg-neutral-100 px-3 text-xs font-semibold text-neutral-700">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">{title}</h2>
+        <span className="inline-flex h-6 min-w-8 items-center justify-center self-start rounded-full border border-neutral-200 bg-neutral-50 px-2 text-[11px] font-semibold text-neutral-700">
           {projects.length}
         </span>
       </div>
@@ -242,8 +253,10 @@ const KanbanColumn = ({
         <div
           ref={setNodeRef}
           className={cn(
-            "flex min-h-[500px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-5 shadow-sm transition-all duration-200 md:min-h-[400px] md:p-4",
-            isOver ? "drop-zone-active animate-pulse-ring" : "drop-zone-idle",
+            "flex min-h-[460px] flex-col gap-3 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-4 shadow-sm transition-all duration-200 md:min-h-[380px] md:p-3",
+            isOver
+              ? "drop-zone-active animate-pulse-ring ring-2 ring-yellow-300 ring-offset-1"
+              : "drop-zone-idle",
             isUpdating ? "opacity-80" : "",
           )}
           aria-label={`Columna ${title}`}
@@ -251,9 +264,11 @@ const KanbanColumn = ({
           role="list"
         >
           {projects.length === 0 ? (
-            <p className="text-muted-foreground rounded border border-dashed border-[rgba(28,36,49,0.15)] p-4 text-center text-sm">
-              No hay proyectos en esta columna
-            </p>
+            <div className="rounded-xl border border-black/5 bg-white p-4 shadow-sm">
+              <p className="text-muted-foreground flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] px-3 text-center text-sm">
+                No hay proyectos en esta columna
+              </p>
+            </div>
           ) : (
             projects.map((project) => (
               <ProjectCard
@@ -283,6 +298,8 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
       showActions = true,
       isActive = false,
       isDragging = false,
+      onMoveProjectStatus,
+      showDragHandle = true,
       ...rest
     },
     ref,
@@ -297,16 +314,16 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
       <article
         ref={ref}
         className={cn(
-          "group touch-action-none relative flex max-w-[360px] flex-col gap-3 rounded-xl border border-black/5 bg-white p-5 text-neutral-900 shadow-sm transition-transform duration-200 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-6",
+          "group touch-action-none relative flex max-w-full flex-col gap-2 rounded-xl border border-black/5 bg-white p-4 text-neutral-900 shadow-sm transition-transform duration-200 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none sm:max-w-[360px] md:p-5",
           isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
-          isDragging ? "scale-[0.99]" : "",
+          isDragging ? "z-10 scale-[1.02] shadow-lg" : "",
           className,
         )}
         {...rest}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            {showActions ? (
+            {showDragHandle ? (
               <div
                 aria-label="Arrastrar proyecto"
                 className="flex h-6 w-6 items-center justify-center rounded-xl"
@@ -328,12 +345,14 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
                 <button
                   type="button"
                   onClick={onView}
-                  className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
+                  className="text-left text-base font-semibold transition-colors hover:text-[#E8B90D] md:text-lg"
                 >
                   <span className="line-clamp-1">{project.name}</span>
                 </button>
               ) : (
-                <span className="line-clamp-1 text-lg font-semibold">{project.name}</span>
+                <span className="line-clamp-1 text-base font-semibold md:text-lg">
+                  {project.name}
+                </span>
               )}
             </div>
           </div>
@@ -352,6 +371,20 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-36">
+                {onMoveProjectStatus ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => onMoveProjectStatus("todo")}>
+                      Mover a: Por hacer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onMoveProjectStatus("in_progress")}>
+                      Mover a: En progreso
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onMoveProjectStatus("done")}>
+                      Mover a: Completado
+                    </DropdownMenuItem>
+                    <div className="my-1 h-px bg-neutral-200" />
+                  </>
+                ) : null}
                 {onView ? (
                   <DropdownMenuItem
                     onSelect={(event) => {
@@ -388,37 +421,43 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className={cn("rounded-md px-2 py-0.5 text-xs font-medium", statusDisplay.badgeClass)}
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+              statusDisplay.badgeClass,
+            )}
           >
             {PROJECT_STATUS_LABELS[project.status]}
           </span>
           <span
             className={cn(
-              "rounded-md px-2 py-0.5 text-xs font-medium",
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
               PROJECT_PRIORITY_BADGE_STYLES[project.priority],
             )}
           >
             {PROJECT_PRIORITY_LABELS[project.priority]}
           </span>
           <span
-            className={cn("rounded-md px-2 py-0.5 text-xs font-medium", PROJECT_TASK_BADGE_CLASS)}
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+              PROJECT_TASK_BADGE_CLASS,
+            )}
           >
             {project.taskCount} tareas
           </span>
         </div>
 
-        <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
+        <p className="line-clamp-2 text-[13px] text-neutral-600">{description}</p>
 
-        <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
-          <div className="flex flex-wrap items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+        <div className="flex flex-col gap-1.5 border-t border-black/5 pt-2 text-xs text-neutral-600">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">Creado:</span>
             <span>{formatTaskDateTime(project.createdAt)}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ClipboardList className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">
               {project.completedTaskCount} tareas completadas
             </span>
@@ -431,7 +470,15 @@ const ProjectCardLayout = forwardRef<HTMLDivElement, ProjectCardLayoutProps>(
 
 ProjectCardLayout.displayName = "ProjectCardLayout";
 
-const ProjectCard = ({ project, isActive, onView, onEdit, onDelete }: ProjectCardProps) => {
+const ProjectCard = ({
+  project,
+  isActive,
+  onView,
+  onEdit,
+  onDelete,
+  onMoveProjectStatus,
+  showDragHandle,
+}: ProjectCardProps) => {
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: project.id,
     data: { status: project.status },
@@ -456,6 +503,10 @@ const ProjectCard = ({ project, isActive, onView, onEdit, onDelete }: ProjectCar
       onDelete={onDelete}
       isActive={isActive}
       isDragging={isDragging}
+      onMoveProjectStatus={
+        onMoveProjectStatus ? (newStatus) => onMoveProjectStatus(project, newStatus) : undefined
+      }
+      showDragHandle={showDragHandle}
       style={style}
       data-status={project.status}
       {...attributes}
@@ -558,6 +609,7 @@ const ProjectsPage = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { editProjectId?: number } };
   const [searchParams, setSearchParams] = useSearchParams();
+  const isMobile = useIsMobile();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -693,8 +745,11 @@ const ProjectsPage = () => {
   }, [projects, updateScrollIndicators]);
 
   const sensors = useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: { distance: 15, delay: 200 },
+    }),
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 10 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -753,11 +808,11 @@ const ProjectsPage = () => {
     }
   };
 
-  const openDeleteDialog = (project: ProjectWithTaskCount) => {
+  const openDeleteDialog = useCallback((project: ProjectWithTaskCount) => {
     setProjectPendingDeletion(project);
     setDeleteError(null);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
   const closeDeleteDialog = () => {
     setIsDeleteDialogOpen(false);
@@ -780,14 +835,17 @@ const ProjectsPage = () => {
     }
   };
 
-  const handleNavigateToDetails = (project: ProjectWithTaskCount) => {
-    navigate(`/projects/${project.id}`);
-  };
+  const handleNavigateToDetails = useCallback(
+    (project: ProjectWithTaskCount) => {
+      navigate(`/projects/${project.id}`);
+    },
+    [navigate],
+  );
 
-  const handleOpenEdit = (project: ProjectWithTaskCount) => {
+  const handleOpenEdit = useCallback((project: ProjectWithTaskCount) => {
     setEditingProject(project);
     setIsEditModalOpen(true);
-  };
+  }, []);
 
   const handleViewChange = useCallback(
     (value: string) => {
@@ -817,6 +875,84 @@ const ProjectsPage = () => {
   );
 
   const sensorsUpdating = updateProject.isPending;
+
+  // Mobile alternative UI: single-lane tabbed lists with compact headers
+  const mobileContent = useMemo(() => {
+    const counts = {
+      todo: projectBuckets.todo.length,
+      in_progress: projectBuckets.in_progress.length,
+      done: projectBuckets.done.length,
+    } as const;
+
+    const renderList = (list: ProjectWithTaskCount[]) =>
+      list.length === 0 ? (
+        <div className="rounded-xl border border-black/5 bg-white p-3 shadow-sm">
+          <p className="text-muted-foreground flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] px-3 text-center text-[13px]">
+            No hay proyectos en esta columna
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {list.map((project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              isActive={false}
+              onView={() => handleNavigateToDetails(project)}
+              onEdit={() => handleOpenEdit(project)}
+              onDelete={() => openDeleteDialog(project)}
+              onMoveProjectStatus={async (p, newStatus) => {
+                if (p.status !== newStatus) {
+                  try {
+                    await updateProject.mutateAsync({
+                      projectId: p.id,
+                      data: { status: newStatus },
+                    });
+                  } catch {
+                    // mutation hook reports errors; nothing else here
+                  }
+                }
+              }}
+              showDragHandle={false}
+            />
+          ))}
+        </div>
+      );
+
+    return (
+      <Tabs defaultValue="todo">
+        <TabsList className="grid w-full grid-cols-3 rounded-md bg-neutral-50 p-0.5">
+          <TabsTrigger
+            className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+            value="todo"
+          >
+            Por hacer ({counts.todo})
+          </TabsTrigger>
+          <TabsTrigger
+            className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+            value="in_progress"
+          >
+            En progreso ({counts.in_progress})
+          </TabsTrigger>
+          <TabsTrigger
+            className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+            value="done"
+          >
+            Completado ({counts.done})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="todo" className="mt-4">
+          {renderList(projectBuckets.todo)}
+        </TabsContent>
+        <TabsContent value="in_progress" className="mt-4">
+          {renderList(projectBuckets.in_progress)}
+        </TabsContent>
+        <TabsContent value="done" className="mt-4">
+          {renderList(projectBuckets.done)}
+        </TabsContent>
+      </Tabs>
+    );
+  }, [projectBuckets, updateProject, handleNavigateToDetails, handleOpenEdit, openDeleteDialog]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const sourceId = Number(event.active.id);
@@ -1014,7 +1150,7 @@ const ProjectsPage = () => {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-0 py-10 md:px-6">
+        <div className="text-foreground px-0 sm:py-4 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1056,44 +1192,55 @@ const ProjectsPage = () => {
                       : "No se pudieron cargar los proyectos."}
                   </div>
                 ) : (
-                  <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
+                  <section className="rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-4 shadow-sm md:p-5">
                     {boardError ? (
                       <div className="text-destructive mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm">
                         {boardError}
                       </div>
                     ) : null}
-                    <DndContext
-                      accessibility={accessibility}
-                      sensors={sensors}
-                      collisionDetection={closestCorners}
-                      onDragStart={handleDragStart}
-                      onDragEnd={handleDragEnd}
-                      onDragCancel={handleDragCancel}
-                    >
-                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {STATUSES.map((status) => (
-                          <KanbanColumn
-                            key={status}
-                            title={STATUS_TITLES[status]}
-                            status={status}
-                            projects={projectBuckets[status]}
-                            activeId={activeId}
-                            isUpdating={sensorsUpdating}
-                            onView={handleNavigateToDetails}
-                            onEdit={handleOpenEdit}
-                            onDelete={openDeleteDialog}
-                          />
-                        ))}
-                      </div>
-                      <DragOverlay>
-                        {activeProject ? <ProjectCardPreview project={activeProject} /> : null}
-                      </DragOverlay>
-                    </DndContext>
+                    {isMobile ? (
+                      mobileContent
+                    ) : (
+                      <DndContext
+                        accessibility={accessibility}
+                        sensors={sensors}
+                        collisionDetection={closestCorners}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onDragCancel={handleDragCancel}
+                      >
+                        <div className="-mx-2 overflow-x-auto overscroll-x-contain pb-1.5 md:mx-0">
+                          <div className="flex snap-x snap-mandatory gap-3 px-2 md:grid md:grid-cols-2 md:gap-5 md:px-0 xl:grid-cols-3">
+                            {STATUSES.map((status) => (
+                              <div
+                                key={status}
+                                className="min-w-[280px] snap-start sm:min-w-[340px] md:min-w-0"
+                              >
+                                <KanbanColumn
+                                  title={STATUS_TITLES[status]}
+                                  status={status}
+                                  projects={projectBuckets[status]}
+                                  activeId={activeId}
+                                  isUpdating={sensorsUpdating}
+                                  onView={handleNavigateToDetails}
+                                  onEdit={handleOpenEdit}
+                                  onDelete={openDeleteDialog}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <DragOverlay>
+                          {activeProject ? <ProjectCardPreview project={activeProject} /> : null}
+                        </DragOverlay>
+                      </DndContext>
+                    )}
                   </section>
                 )}
                 <p className="text-muted-foreground mt-3 text-center text-xs">
-                  Usa el mouse o el teclado (Tab + flechas + Espacio/Enter) para mover los proyectos
-                  entre columnas.
+                  Puedes reordenar con mouse o teclado (Tab + flechas + Espacio/Enter) y, en
+                  pantallas pequeñas, usar el menú “Mover a” de cada tarjeta para cambiar su
+                  estatus.
                 </p>
               </TabsContent>
 

@@ -368,7 +368,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground h-11 w-11 rounded-full p-0"
+                className="text-muted-foreground hover:text-foreground rounded-full p-0 md:h-11 md:w-11"
                 onClick={closeSidebar}
                 aria-label="Cerrar navegación"
               >
@@ -407,12 +407,12 @@ export default function Layout({ children }: LayoutProps) {
       ) : null}
 
       <div className="flex h-full min-h-0 w-full flex-1 flex-col md:ml-64">
-        <main className="bg-background min-h-0 flex-1 overflow-y-auto p-6 pt-4">
-          <div className="mb-8 flex min-h-14 items-center justify-between md:justify-end">
+        <main className="bg-background min-h-0 flex-1 overflow-y-auto p-4 pt-4">
+          <div className="mb-4 flex min-h-14 items-center justify-between md:justify-end">
             <div className="flex items-center gap-3 md:hidden">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground h-11 w-11 rounded-full p-0"
+                className="text-muted-foreground hover:text-foreground rounded-full p-0 md:h-11 md:w-11"
                 onClick={openSidebar}
                 aria-label="Abrir navegación"
               >

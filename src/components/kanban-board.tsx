@@ -45,10 +45,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/constants";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 import { cn, formatTaskDate, formatTaskDateTime, resolveStatusValue } from "@/utils";
+import { useIsMobile } from "@/hooks";
 
 const STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
 const STATUS_TITLES: Record<TaskStatus, string> = {
@@ -94,6 +99,8 @@ type TaskCardProps = {
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
   projectName?: string | null;
+  onMoveTaskStatus?: (task: Task, newStatus: TaskStatus) => void;
+  showDragHandle?: boolean;
 };
 
 type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
@@ -101,7 +108,9 @@ type TaskCardLayoutProps = HTMLAttributes<HTMLDivElement> & {
   onViewTask?: () => void;
   onEditTask?: () => void;
   onDeleteTask?: () => void;
+  onMoveTaskStatus?: (newStatus: TaskStatus) => void;
   showActions?: boolean;
+  showDragHandle?: boolean;
   isActive?: boolean;
   isDragging?: boolean;
   projectName?: string | null;
@@ -192,9 +201,9 @@ const KanbanColumn = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">{title}</h2>
-        <span className="inline-flex h-8 min-w-10 items-center justify-center rounded-full bg-neutral-100 px-3 text-xs font-semibold text-neutral-700">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">{title}</h2>
+        <span className="inline-flex h-6 min-w-8 items-center justify-center self-start rounded-full border border-neutral-200 bg-neutral-50 px-2 text-[11px] font-semibold text-neutral-700">
           {tasks.length}
         </span>
       </div>
@@ -206,8 +215,10 @@ const KanbanColumn = ({
         <div
           ref={setNodeRef}
           className={cn(
-            "flex min-h-[500px] flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-5 shadow-sm transition-all duration-200 md:min-h-[400px] md:p-4",
-            isOver ? "drop-zone-active animate-pulse-ring" : "drop-zone-idle",
+            "flex min-h-[460px] flex-col gap-3 rounded-xl border border-[rgba(0,0,0,0.05)] bg-[#f8f7f3] p-4 shadow-sm transition-all duration-200 md:min-h-[380px] md:p-3",
+            isOver
+              ? "drop-zone-active animate-pulse-ring ring-2 ring-yellow-300 ring-offset-1"
+              : "drop-zone-idle",
             isUpdating ? "opacity-80" : "",
           )}
           aria-label={`Columna ${title}`}
@@ -215,9 +226,11 @@ const KanbanColumn = ({
           role="list"
         >
           {tasks.length === 0 ? (
-            <p className="text-muted-foreground rounded border border-dashed border-[rgba(28,36,49,0.15)] p-4 text-center text-sm">
-              No hay tareas en esta columna
-            </p>
+            <div className="rounded-xl border border-black/5 bg-white p-4 shadow-sm">
+              <p className="text-muted-foreground flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] px-3 text-center text-sm">
+                No hay tareas en esta columna
+              </p>
+            </div>
           ) : (
             tasks.map((task) => (
               <TaskCard
@@ -247,7 +260,9 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
       onViewTask,
       onEditTask,
       onDeleteTask,
+      onMoveTaskStatus,
       showActions = true,
+      showDragHandle = true,
       isActive = false,
       isDragging = false,
       projectName,
@@ -277,16 +292,16 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
       <article
         ref={ref}
         className={cn(
-          "group relative flex max-w-[360px] flex-col gap-3 rounded-xl border border-black/5 bg-white p-5 text-neutral-900 shadow-sm transition-transform duration-150 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-6",
+          "group relative flex max-w-full flex-col gap-2 rounded-xl border border-black/5 bg-white p-4 text-neutral-900 shadow-sm transition-transform duration-150 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none sm:max-w-[360px] md:p-5",
           isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
-          isDragging ? "scale-[0.99]" : "",
+          isDragging ? "z-10 scale-[1.02] shadow-lg" : "",
           className,
         )}
         {...rest}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            {showActions ? (
+            {showDragHandle ? (
               <div
                 aria-label="Arrastrar tarea"
                 className="flex h-6 w-6 items-center justify-center rounded-xl"
@@ -308,12 +323,14 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
                 <button
                   type="button"
                   onClick={onViewTask}
-                  className="text-left text-lg font-semibold transition-colors hover:text-[#E8B90D]"
+                  className="text-left text-base font-semibold transition-colors hover:text-[#E8B90D] md:text-lg"
                 >
                   <span className="line-clamp-1">{task.title}</span>
                 </button>
               ) : (
-                <span className="line-clamp-1 text-lg font-semibold">{task.title}</span>
+                <span className="line-clamp-1 text-base font-semibold md:text-lg">
+                  {task.title}
+                </span>
               )}
             </div>
           </div>
@@ -332,6 +349,20 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-36">
+                {onMoveTaskStatus ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => onMoveTaskStatus("todo")}>
+                      Mover a: Por hacer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onMoveTaskStatus("in_progress")}>
+                      Mover a: En progreso
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onMoveTaskStatus("done")}>
+                      Mover a: Completado
+                    </DropdownMenuItem>
+                    <div className="my-1 h-px bg-neutral-200" />
+                  </>
+                ) : null}
                 {onViewTask ? (
                   <DropdownMenuItem onSelect={() => onViewTask()}>Ver detalles</DropdownMenuItem>
                 ) : null}
@@ -348,16 +379,19 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className={cn("rounded-md px-2 py-0.5 text-xs font-medium", statusDisplay.badgeClass)}
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+              statusDisplay.badgeClass,
+            )}
           >
             {TASK_STATUS_LABELS[task.status]}
           </span>
           {priority ? (
             <span
               className={cn(
-                "rounded-md px-2 py-0.5 text-xs font-medium",
+                "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
                 PRIORITY_BADGE_STYLES[priority],
               )}
             >
@@ -365,26 +399,31 @@ const TaskCardLayout = forwardRef<HTMLDivElement, TaskCardLayoutProps>(
             </span>
           ) : (
             <span
-              className={cn("rounded-md px-2 py-0.5 text-xs font-medium", PRIORITY_FALLBACK_CLASS)}
+              className={cn(
+                "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+                PRIORITY_FALLBACK_CLASS,
+              )}
             >
               Sin prioridad
             </span>
           )}
-          <span className={cn("rounded-md px-2 py-0.5 text-xs font-medium", projectBadgeClass)}>
+          <span
+            className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-medium", projectBadgeClass)}
+          >
             {resolvedProjectName}
           </span>
         </div>
 
-        <p className="line-clamp-3 text-sm text-neutral-600">{description}</p>
+        <p className="line-clamp-2 text-[13px] text-neutral-600">{description}</p>
 
-        <div className="flex flex-col gap-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
-          <div className="flex flex-wrap items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+        <div className="flex flex-col gap-1.5 border-t border-black/5 pt-2 text-xs text-neutral-600">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">Vence:</span>
             <span className={cn("font-medium", dueDateInfo.toneClass)}>{dueDateInfo.label}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Clock className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
             <span className="font-medium text-neutral-700">Actualizada:</span>
             <span>{formatTaskDateTime(task.updatedAt)}</span>
           </div>
@@ -402,7 +441,9 @@ const TaskCard = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
+  onMoveTaskStatus,
   projectName,
+  showDragHandle,
 }: TaskCardProps) => {
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
@@ -431,7 +472,11 @@ const TaskCard = ({
       onViewTask={onViewTask ? () => onViewTask(task) : undefined}
       onEditTask={onEditTask ? () => onEditTask(task) : undefined}
       onDeleteTask={onDeleteTask ? () => onDeleteTask(task) : undefined}
+      onMoveTaskStatus={
+        onMoveTaskStatus ? (newStatus) => onMoveTaskStatus(task, newStatus) : undefined
+      }
       projectName={projectName ?? null}
+      showDragHandle={showDragHandle}
       {...attributes}
       {...listeners}
       aria-label={`Tarea: ${task.title}`}
@@ -461,6 +506,7 @@ const KanbanBoard = ({
   onDeleteTask,
   projectNames,
 }: KanbanBoardProps) => {
+  const isMobile = useIsMobile();
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const sensors = useSensors(
@@ -501,6 +547,78 @@ const KanbanBoard = ({
     () => (activeId ? (taskLookup.get(activeId) ?? null) : null),
     [activeId, taskLookup],
   );
+
+  // Prepare alternative mobile render; we will choose at return time to preserve hook order.
+  const mobileContent = (() => {
+    const counts = {
+      todo: buckets.todo.length,
+      in_progress: buckets.in_progress.length,
+      done: buckets.done.length,
+    };
+
+    const renderList = (list: Task[]) =>
+      list.length === 0 ? (
+        <div className="rounded-xl border border-black/5 bg-white p-3 shadow-sm">
+          <p className="text-muted-foreground flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-[rgba(28,36,49,0.15)] px-3 text-center text-[13px]">
+            No hay tareas en esta columna
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {list.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              isActive={false}
+              showDragHandle={false}
+              onViewTask={onViewTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              onMoveTaskStatus={(t: Task, newStatus: TaskStatus) => {
+                if (t.status !== newStatus) onTaskStatusChange(t.id, newStatus);
+              }}
+              projectName={
+                task.projectId !== null ? (projectNames?.get(task.projectId) ?? null) : null
+              }
+            />
+          ))}
+        </div>
+      );
+
+    return (
+      <Tabs defaultValue="todo">
+        <TabsList className="grid w-full grid-cols-3 rounded-md bg-neutral-50 p-0.5">
+          <TabsTrigger
+            className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+            value="todo"
+          >
+            Por hacer ({counts.todo})
+          </TabsTrigger>
+          <TabsTrigger
+            className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+            value="in_progress"
+          >
+            En progreso ({counts.in_progress})
+          </TabsTrigger>
+          <TabsTrigger
+            className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+            value="done"
+          >
+            Completado ({counts.done})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="todo" className="mt-4">
+          {renderList(buckets.todo)}
+        </TabsContent>
+        <TabsContent value="in_progress" className="mt-4">
+          {renderList(buckets.in_progress)}
+        </TabsContent>
+        <TabsContent value="done" className="mt-4">
+          {renderList(buckets.done)}
+        </TabsContent>
+      </Tabs>
+    );
+  })();
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const sourceId = Number(event.active.id);
@@ -637,7 +755,9 @@ const KanbanBoard = ({
     };
   }, [taskLookup]);
 
-  return (
+  return isMobile ? (
+    mobileContent
+  ) : (
     <DndContext
       accessibility={accessibility}
       sensors={sensors}
@@ -646,40 +766,48 @@ const KanbanBoard = ({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <KanbanColumn
-          title={STATUS_TITLES.todo}
-          status="todo"
-          tasks={buckets.todo}
-          activeId={activeId}
-          isUpdating={isUpdating}
-          onViewTask={onViewTask}
-          onEditTask={onEditTask}
-          onDeleteTask={onDeleteTask}
-          projectNames={projectNames}
-        />
-        <KanbanColumn
-          title={STATUS_TITLES.in_progress}
-          status="in_progress"
-          tasks={buckets.in_progress}
-          activeId={activeId}
-          isUpdating={isUpdating}
-          onViewTask={onViewTask}
-          onEditTask={onEditTask}
-          onDeleteTask={onDeleteTask}
-          projectNames={projectNames}
-        />
-        <KanbanColumn
-          title={STATUS_TITLES.done}
-          status="done"
-          tasks={buckets.done}
-          activeId={activeId}
-          isUpdating={isUpdating}
-          onViewTask={onViewTask}
-          onEditTask={onEditTask}
-          onDeleteTask={onDeleteTask}
-          projectNames={projectNames}
-        />
+      <div className="-mx-2 overflow-x-auto overscroll-x-contain pb-1.5 md:mx-0">
+        <div className="flex snap-x snap-mandatory gap-3 px-2 md:grid md:grid-cols-2 md:gap-5 md:px-0 xl:grid-cols-3">
+          <div className="min-w-[280px] snap-start sm:min-w-[340px] md:min-w-0">
+            <KanbanColumn
+              title={STATUS_TITLES.todo}
+              status="todo"
+              tasks={buckets.todo}
+              activeId={activeId}
+              isUpdating={isUpdating}
+              onViewTask={onViewTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              projectNames={projectNames}
+            />
+          </div>
+          <div className="min-w-[280px] snap-start sm:min-w-[340px] md:min-w-0">
+            <KanbanColumn
+              title={STATUS_TITLES.in_progress}
+              status="in_progress"
+              tasks={buckets.in_progress}
+              activeId={activeId}
+              isUpdating={isUpdating}
+              onViewTask={onViewTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              projectNames={projectNames}
+            />
+          </div>
+          <div className="min-w-[280px] snap-start sm:min-w-[340px] md:min-w-0">
+            <KanbanColumn
+              title={STATUS_TITLES.done}
+              status="done"
+              tasks={buckets.done}
+              activeId={activeId}
+              isUpdating={isUpdating}
+              onViewTask={onViewTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              projectNames={projectNames}
+            />
+          </div>
+        </div>
       </div>
       <DragOverlay>
         {activeTask ? (

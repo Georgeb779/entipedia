@@ -33,7 +33,7 @@ const PageTransitionWrapper = ({ children }: { children: ReactNode }) => {
   }, [location.pathname, prefersReducedMotion]);
 
   const baseClass =
-    "page-transition-container gpu-accelerate will-change-transform will-change-opacity";
+    "page-transition-container gpu-accelerate will-change-transform will-change-opacity overflow-x-hidden";
   const classes = prefersReducedMotion ? baseClass : cn(baseClass, "page-transition-active");
 
   return (

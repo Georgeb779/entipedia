@@ -512,7 +512,7 @@ function TasksPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-0 py-10 md:px-6">
+        <div className="text-foreground px-0 sm:py-4 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
               <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -541,7 +541,7 @@ function TasksPage() {
                 </div>
               </header>
 
-              <section className="flex flex-col gap-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm sm:flex-row sm:flex-wrap sm:gap-5 md:p-6">
+              <section className="flex flex-col gap-3 rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:gap-4 md:p-5">
                 <div className="w-full sm:max-w-xs">
                   <Label className="text-muted-foreground mb-2 block text-sm">Estatus</Label>
                   <Select
@@ -625,7 +625,7 @@ function TasksPage() {
               </section>
 
               <TabsContent value="table" className="mt-0 border-0 bg-transparent p-0">
-                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
+                <section className="mt-4 rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
                   {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <Spinner size="lg" label="Cargando tareas..." />
@@ -689,7 +689,7 @@ function TasksPage() {
               </TabsContent>
 
               <TabsContent value="board" className="mt-0 border-0 bg-transparent p-0">
-                <section className="rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6">
+                <section className="mt-3 rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-4 shadow-sm md:p-5">
                   {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <Spinner size="lg" label="Cargando tareas..." />
@@ -714,8 +714,9 @@ function TasksPage() {
                   )}
                 </section>
                 <p className="text-muted-foreground mt-3 text-center text-xs">
-                  Usa el mouse o el teclado (Tab + flechas + Espacio/Enter) para mover las tareas
-                  entre columnas.
+                  Puedes reordenar con mouse o teclado (Tab + flechas + Espacio/Enter) y, en
+                  pantallas pequeñas, usar el menú “Mover a” de cada tarjeta para cambiar su
+                  estatus.
                 </p>
               </TabsContent>
             </Tabs>

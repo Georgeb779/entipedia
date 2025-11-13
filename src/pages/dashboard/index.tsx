@@ -354,7 +354,7 @@ const DashboardPage = () => {
     <ProtectedRoute>
       <Layout>
         <div className="bg-[#FFFCF5]">
-          <div className="mx-auto max-w-7xl px-6 py-4">
+          <div className="mx-auto max-w-7xl md:px-6 md:py-4">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-3xl font-semibold">Panel</h1>
