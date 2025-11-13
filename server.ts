@@ -2,25 +2,36 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 let cachedIndexHtml: string | null = null;
+let triedLoadingIndex = false;
 
-async function getIndexHtml(): Promise<string> {
-  if (cachedIndexHtml) return cachedIndexHtml;
+async function loadBuiltIndexHtml(): Promise<string | null> {
+  if (cachedIndexHtml) {
+    return cachedIndexHtml;
+  }
+  if (triedLoadingIndex) {
+    return null;
+  }
+
   const cwd = process.cwd();
   const candidates = [
+    process.env.NITRO_PUBLIC_DIR ? join(process.env.NITRO_PUBLIC_DIR, "index.html") : null,
     join(cwd, ".output/public/index.html"),
     join(cwd, "dist/index.html"),
-    join(cwd, "public/index.html"),
-    join(cwd, "index.html"),
-  ];
-  for (const p of candidates) {
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
+  for (const candidatePath of candidates) {
     try {
-      cachedIndexHtml = await readFile(p, "utf-8");
+      const html = await readFile(candidatePath, "utf-8");
+      cachedIndexHtml = html;
+      triedLoadingIndex = true;
       return cachedIndexHtml;
     } catch {
-      // try next
+      continue;
     }
   }
-  throw new Error("index.html not found");
+
+  triedLoadingIndex = true;
+  return null;
 }
 
 export default {
@@ -30,27 +41,35 @@ export default {
     const accept = req.headers.get("accept") ?? "";
     const secFetchDest = req.headers.get("sec-fetch-dest") ?? "";
 
-    // Let API calls fall through to Nitro internals
-    if (url.pathname.startsWith("/api/")) {
-      return undefined;
-    }
-
-    // Avoid intercepting obvious static asset requests
-    const assetLike = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|json|txt|map)$/i;
     if (
+      url.pathname.startsWith("/api/") ||
       url.pathname.startsWith("/assets/") ||
-      url.pathname.startsWith("/uploads/") ||
-      assetLike.test(url.pathname)
+      url.pathname.startsWith("/uploads/")
     ) {
       return undefined;
     }
 
-    // Only intercept document navigations (SPA fallback)
+    const isDev = process.env.NODE_ENV !== "production";
+    const useProxy = process.env.VITE_USE_PROXY === "true";
+
+    // When running integrated dev mode (Vite handles routes), skip the fallback
+    if (isDev && !useProxy) {
+      return undefined;
+    }
+
+    const assetLike = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|json|txt|map)$/i;
+    if (assetLike.test(url.pathname)) {
+      return undefined;
+    }
+
     const isDocumentRequest = secFetchDest === "" || secFetchDest === "document";
     const acceptsHtml = accept.includes("text/html");
+
     if ((method === "GET" || method === "HEAD") && (isDocumentRequest || acceptsHtml)) {
-      const html = await getIndexHtml();
-      return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+      const html = await loadBuiltIndexHtml();
+      if (html) {
+        return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+      }
     }
 
     return undefined;
