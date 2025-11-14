@@ -120,6 +120,7 @@ const SortableCard = <TItem extends { id: number; status: TStatus }, TStatus ext
     ref: setNodeRef,
     style,
     ...attributes,
+    ...listeners,
     "data-status": item.status,
   } as CardContainerProps;
 
