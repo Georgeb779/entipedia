@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -25,7 +25,13 @@ import {
   PROJECT_STATUS_COLORS,
   PROJECT_STATUS_LABELS,
 } from "@/constants";
-import { useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "@/hooks";
+import {
+  useCreateProject,
+  useDeleteProject,
+  usePersistentViewMode,
+  useProjects,
+  useUpdateProject,
+} from "@/hooks";
 import type { ProjectStatus, ProjectWithTaskCount } from "@/types";
 import { cn, formatTaskDateTime } from "@/utils";
 
@@ -41,13 +47,18 @@ import {
   STATUSES,
   STATUS_TITLES,
   type ProjectFormInput,
+  type ProjectViewMode,
   type ProjectSchema,
 } from "./project-schema";
 
 function ProjectsPage() {
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { editProjectId?: number } };
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation() as { state?: { editProjectId?: string } };
+  const [activeView, setActiveView] = usePersistentViewMode<ProjectViewMode>({
+    storageKey: "projects:view-mode",
+    paramName: "view",
+    resolve: resolveProjectViewMode,
+  });
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -57,10 +68,6 @@ function ProjectsPage() {
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const activeView = useMemo(
-    () => resolveProjectViewMode(searchParams.get("view")),
-    [searchParams],
-  );
 
   const { data: projects = [], isLoading, error } = useProjects();
   const createProject = useCreateProject();
@@ -246,35 +253,15 @@ function ProjectsPage() {
 
   const handleViewChange = useCallback(
     (value: string) => {
-      const nextView = resolveProjectViewMode(value);
-      const currentParam = searchParams.get("view");
-
-      if (nextView === activeView) {
-        if (nextView === "board" && !currentParam) {
-          return;
-        }
-
-        if (nextView === "table" && currentParam === "table") {
-          return;
-        }
-      }
-
-      const nextParams = new URLSearchParams(searchParams);
-      if (nextView === "board") {
-        nextParams.delete("view");
-      } else {
-        nextParams.set("view", nextView);
-      }
-
-      setSearchParams(nextParams);
+      setActiveView(resolveProjectViewMode(value));
     },
-    [activeView, searchParams, setSearchParams],
+    [setActiveView],
   );
 
   const getProjectTitle = useCallback((project: ProjectWithTaskCount) => project.name, []);
 
   const handleProjectStatusChange = useCallback(
-    async (projectId: number, newStatus: ProjectStatus) => {
+    async (projectId: string, newStatus: ProjectStatus) => {
       try {
         await updateProject.mutateAsync({ projectId, data: { status: newStatus } });
       } catch {

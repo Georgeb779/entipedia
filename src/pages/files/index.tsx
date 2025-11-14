@@ -70,7 +70,7 @@ const uploadSchema = z.object({
 type UploadFormInput = z.input<typeof uploadSchema>;
 type UploadFormSchema = z.output<typeof uploadSchema>;
 
-type ProjectLookup = Map<number, ProjectWithTaskCount>;
+type ProjectLookup = Map<string, ProjectWithTaskCount>;
 
 type FileDialogState = {
   isOpen: boolean;
@@ -145,7 +145,7 @@ export default function FilesPage() {
           return true;
         }
 
-        if (typeof filters.projectId === "number") {
+        if (typeof filters.projectId === "string") {
           return file.projectId === filters.projectId;
         }
 
@@ -322,7 +322,7 @@ export default function FilesPage() {
 
     const trimmedDescription = values.description.trim();
     const description = trimmedDescription.length > 0 ? trimmedDescription : null;
-    const projectId = values.projectId === "all" ? null : Number.parseInt(values.projectId, 10);
+    const projectId = values.projectId === "all" ? null : values.projectId;
 
     try {
       await uploadFile.mutateAsync({
@@ -367,7 +367,7 @@ export default function FilesPage() {
   const handleProjectFilterChange = (value: string) => {
     setFilters((current) => ({
       ...current,
-      projectId: value === "all" ? "all" : Number.parseInt(value, 10),
+      projectId: value === "all" ? "all" : value,
     }));
   };
 
@@ -491,7 +491,7 @@ export default function FilesPage() {
                   Proyecto
                 </Label>
                 <Select
-                  value={(filters.projectId ?? "all").toString()}
+                  value={filters.projectId ?? "all"}
                   onValueChange={handleProjectFilterChange}
                 >
                   <SelectTrigger id="project-filter">
@@ -500,7 +500,7 @@ export default function FilesPage() {
                   <SelectContent>
                     <SelectItem value="all">Todos los proyectos</SelectItem>
                     {projectOptions.map((project) => (
-                      <SelectItem key={project.id} value={project.id.toString()}>
+                      <SelectItem key={project.id} value={project.id}>
                         {project.name}
                       </SelectItem>
                     ))}
@@ -791,7 +791,7 @@ export default function FilesPage() {
                         <SelectContent>
                           <SelectItem value="all">Sin proyecto</SelectItem>
                           {projectOptions.map((project) => (
-                            <SelectItem key={project.id} value={project.id.toString()}>
+                            <SelectItem key={project.id} value={project.id}>
                               {project.name}
                             </SelectItem>
                           ))}

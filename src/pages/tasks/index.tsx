@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useSearchParams } from "react-router";
 
 import { Button, KanbanBoard, Layout, ProtectedRoute } from "@/components";
 import type { CardRenderProps } from "@/components/kanban-board";
@@ -36,6 +35,7 @@ import {
 import {
   useCreateTask,
   useDeleteTask,
+  usePersistentViewMode,
   useProjects,
   useTasks,
   useUpdateTask,
@@ -56,11 +56,16 @@ import {
   TASK_BOARD_STATUSES,
   TASK_BOARD_STATUS_TITLES,
   toSchemaValues,
+  type TaskViewMode,
   type TaskFormSchema,
 } from "./task-schema";
 
 function TasksPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeView, setActiveView] = usePersistentViewMode<TaskViewMode>({
+    storageKey: "tasks:view-mode",
+    paramName: "view",
+    resolve: resolveViewMode,
+  });
   const [filters, setFilters] = useState<TaskFilters>({
     status: "all",
     priority: "all",
@@ -72,7 +77,6 @@ function TasksPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [taskBeingDeleted, setTaskBeingDeleted] = useState<Task | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const activeView = useMemo(() => resolveViewMode(searchParams.get("view")), [searchParams]);
 
   const { data: tasks = [], isLoading, error } = useTasks(filters);
   const { data: projects = [] } = useProjects();
@@ -199,31 +203,16 @@ function TasksPage() {
   const handleViewChange = useCallback(
     (value: string) => {
       const nextView = resolveViewMode(value);
-      const currentParam = searchParams.get("view");
-      if (nextView === activeView) {
-        if (nextView === "board" && !currentParam) {
-          return;
-        }
 
-        if (nextView === "table" && currentParam === "table") {
-          return;
-        }
+      if (nextView !== activeView) {
+        setActiveView(nextView);
       }
-
-      const nextParams = new URLSearchParams(searchParams);
-      if (nextView === "board") {
-        nextParams.delete("view");
-      } else {
-        nextParams.set("view", nextView);
-      }
-
-      setSearchParams(nextParams);
     },
-    [activeView, searchParams, setSearchParams],
+    [activeView, setActiveView],
   );
 
   const handleTaskStatusChange = useCallback(
-    async (taskId: number, newStatus: TaskStatus) => {
+    async (taskId: string, newStatus: TaskStatus) => {
       try {
         await updateTaskStatus.mutateAsync({ taskId, status: newStatus });
       } catch {
@@ -236,7 +225,7 @@ function TasksPage() {
   const activeTasks = useMemo(() => tasks, [tasks]);
 
   const projectNameMap = useMemo(() => {
-    const map = new Map<number, string>();
+    const map = new Map<string, string>();
 
     projects.forEach((project) => {
       const trimmedName = project.name.trim();
@@ -570,12 +559,12 @@ function TasksPage() {
                         ? "all"
                         : filters.projectId === "all"
                           ? "all"
-                          : filters.projectId.toString()
+                          : filters.projectId
                     }
                     onValueChange={(value) =>
                       setFilters((current) => ({
                         ...current,
-                        projectId: value === "all" ? "all" : Number.parseInt(value, 10),
+                        projectId: value === "all" ? "all" : value,
                       }))
                     }
                   >
@@ -585,7 +574,7 @@ function TasksPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
+                        <SelectItem key={project.id} value={project.id}>
                           {project.name}
                         </SelectItem>
                       ))}

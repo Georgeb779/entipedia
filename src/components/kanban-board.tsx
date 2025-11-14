@@ -41,7 +41,7 @@ type CardContainerProps = Omit<HTMLAttributes<HTMLDivElement>, "ref" | "style"> 
 type DragHandleProps = HTMLAttributes<HTMLElement>;
 
 export type CardRenderProps<
-  TItem extends { id: number; status: TStatus },
+  TItem extends { id: string; status: TStatus },
   TStatus extends string,
 > = {
   item: TItem;
@@ -53,7 +53,7 @@ export type CardRenderProps<
   onMoveStatus?: (newStatus: TStatus) => void;
 };
 
-type KanbanBoardProps<TItem extends { id: number; status: TStatus }, TStatus extends string> = {
+type KanbanBoardProps<TItem extends { id: string; status: TStatus }, TStatus extends string> = {
   items: TItem[];
   /** Non-empty ordered collection of statuses to render columns for. */
   statuses: readonly TStatus[];
@@ -61,27 +61,27 @@ type KanbanBoardProps<TItem extends { id: number; status: TStatus }, TStatus ext
   statusTitles: Record<TStatus, string>;
   emptyColumnMessage: string;
   resolveStatus: (value: unknown) => TStatus | null;
-  onStatusChange: (itemId: number, newStatus: TStatus) => void;
+  onStatusChange: (itemId: string, newStatus: TStatus) => void;
   getItemTitle: (item: TItem) => string;
   renderCard: (props: CardRenderProps<TItem, TStatus>) => ReactNode;
   renderPreview?: (item: TItem) => ReactNode;
   isUpdating?: boolean;
 };
 
-type KanbanColumnProps<TItem extends { id: number; status: TStatus }, TStatus extends string> = {
+type KanbanColumnProps<TItem extends { id: string; status: TStatus }, TStatus extends string> = {
   title: string;
   status: TStatus;
   items: TItem[];
-  activeId: number | null;
+  activeId: string | null;
   isUpdating?: boolean;
   emptyColumnMessage: string;
   renderCard: (props: CardRenderProps<TItem, TStatus>) => ReactNode;
   onMoveStatus: (item: TItem, newStatus: TStatus) => void;
 };
 
-type SortableCardProps<TItem extends { id: number; status: TStatus }, TStatus extends string> = {
+type SortableCardProps<TItem extends { id: string; status: TStatus }, TStatus extends string> = {
   item: TItem;
-  activeId: number | null;
+  activeId: string | null;
   renderCard: (props: CardRenderProps<TItem, TStatus>) => ReactNode;
   onMoveStatus: (item: TItem, newStatus: TStatus) => void;
 };
@@ -96,7 +96,7 @@ const EmptyPlaceholder = ({ message }: { message: string }) => (
   </div>
 );
 
-const SortableCard = <TItem extends { id: number; status: TStatus }, TStatus extends string>({
+const SortableCard = <TItem extends { id: string; status: TStatus }, TStatus extends string>({
   item,
   activeId,
   renderCard,
@@ -143,7 +143,7 @@ const SortableCard = <TItem extends { id: number; status: TStatus }, TStatus ext
   );
 };
 
-const KanbanColumn = <TItem extends { id: number; status: TStatus }, TStatus extends string>({
+const KanbanColumn = <TItem extends { id: string; status: TStatus }, TStatus extends string>({
   title,
   status,
   items,
@@ -200,7 +200,7 @@ const KanbanColumn = <TItem extends { id: number; status: TStatus }, TStatus ext
   );
 };
 
-const KanbanBoard = <TItem extends { id: number; status: TStatus }, TStatus extends string>({
+const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus extends string>({
   items,
   statuses,
   statusTitles,
@@ -213,7 +213,7 @@ const KanbanBoard = <TItem extends { id: number; status: TStatus }, TStatus exte
   isUpdating = false,
 }: KanbanBoardProps<TItem, TStatus>) => {
   const isMobile = useIsMobile();
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const hasStatuses = statuses.length > 0;
   const emptyStatusesContent = useMemo(
     () => (
@@ -256,7 +256,7 @@ const KanbanBoard = <TItem extends { id: number; status: TStatus }, TStatus exte
   }, [items, statuses]);
 
   const itemLookup = useMemo(() => {
-    const lookup = new Map<number, TItem>();
+    const lookup = new Map<string, TItem>();
     items.forEach((item) => {
       lookup.set(item.id, item);
     });
@@ -269,8 +269,8 @@ const KanbanBoard = <TItem extends { id: number; status: TStatus }, TStatus exte
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    const sourceId = Number(event.active.id);
-    if (Number.isInteger(sourceId)) {
+    const sourceId = String(event.active.id);
+    if (sourceId) {
       setActiveId(sourceId);
     }
   }, []);
@@ -284,8 +284,8 @@ const KanbanBoard = <TItem extends { id: number; status: TStatus }, TStatus exte
         return;
       }
 
-      const itemId = Number(active.id);
-      if (!Number.isInteger(itemId)) {
+      const itemId = String(active.id);
+      if (!itemId) {
         return;
       }
 
@@ -329,12 +329,12 @@ const KanbanBoard = <TItem extends { id: number; status: TStatus }, TStatus exte
 
   const accessibility = useMemo(() => {
     const getItem = (id: unknown) => {
-      const numericId = Number(id);
-      if (!Number.isInteger(numericId)) {
+      const stringId = String(id);
+      if (!stringId) {
         return undefined;
       }
 
-      return itemLookup.get(numericId);
+      return itemLookup.get(stringId);
     };
 
     const resolveFromOver = (over: DragOverEvent["over"] | DragEndEvent["over"]) => {
