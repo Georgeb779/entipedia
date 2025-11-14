@@ -21,18 +21,18 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const payload = await readBody<CreateProjectPayload>(event);
   const name = isString(payload?.name) ? trim(payload.name) : undefined;
 
   if (isEmpty(name)) {
-    throw new HTTPError("Project name is required.", { statusCode: 400 });
+    throw new HTTPError("Project name is required.", { status: 400 });
   }
 
   if (name && name.length > 255) {
-    throw new HTTPError("Project name must be 255 characters or fewer.", { statusCode: 400 });
+    throw new HTTPError("Project name must be 255 characters or fewer.", { status: 400 });
   }
 
   const rawDesc = isString(payload?.description) ? trim(payload.description) : null;
@@ -45,7 +45,7 @@ export default defineHandler(async (event) => {
 
     if (!allowedStatuses.includes(statusValue)) {
       throw new HTTPError("Invalid project status. Must be 'todo', 'in_progress', or 'done'.", {
-        statusCode: 400,
+        status: 400,
       });
     }
 
@@ -59,7 +59,7 @@ export default defineHandler(async (event) => {
 
     if (!allowedPriorities.includes(priorityValue)) {
       throw new HTTPError("Invalid project priority. Must be 'low', 'medium', or 'high'.", {
-        statusCode: 400,
+        status: 400,
       });
     }
 
@@ -90,7 +90,7 @@ export default defineHandler(async (event) => {
     const [newProject] = await db.insert(projects).values(insertValues).returning();
 
     if (!newProject) {
-      throw new HTTPError("Failed to create project.", { statusCode: 500 });
+      throw new HTTPError("Failed to create project.", { status: 500 });
     }
 
     return {
@@ -105,6 +105,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to create project.", { statusCode: 500 });
+    throw new HTTPError("Failed to create project.", { status: 500 });
   }
 });

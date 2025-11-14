@@ -10,14 +10,14 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const idParam = getRouterParam(event, "id");
   const clientId = idParam;
 
   if (!isValidUUID(clientId)) {
-    throw new HTTPError("Invalid client id.", { statusCode: 400 });
+    throw new HTTPError("Invalid client id.", { status: 400 });
   }
 
   const db = getDb();
@@ -30,7 +30,7 @@ export default defineHandler(async (event) => {
       .limit(1);
 
     if (!existingClient) {
-      throw new HTTPError("Client not found or access denied.", { statusCode: 404 });
+      throw new HTTPError("Client not found or access denied.", { status: 404 });
     }
 
     await db
@@ -46,6 +46,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to delete client.", { statusCode: 500 });
+    throw new HTTPError("Failed to delete client.", { status: 500 });
   }
 });

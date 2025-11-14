@@ -14,14 +14,14 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const idParam = getRouterParam(event, "id");
   const fileId = idParam;
 
   if (!isValidUUID(fileId)) {
-    throw new HTTPError("Invalid file id.", { statusCode: 400 });
+    throw new HTTPError("Invalid file id.", { status: 400 });
   }
 
   const db = getDb();
@@ -33,7 +33,7 @@ export default defineHandler(async (event) => {
     .limit(1);
 
   if (!file) {
-    throw new HTTPError("File not found or access denied.", { statusCode: 404 });
+    throw new HTTPError("File not found or access denied.", { status: 404 });
   }
 
   const uploadsDir = join(process.cwd(), "uploads");
@@ -42,7 +42,7 @@ export default defineHandler(async (event) => {
   try {
     await fs.access(filePath);
   } catch {
-    throw new HTTPError("File not found on disk.", { statusCode: 404 });
+    throw new HTTPError("File not found on disk.", { status: 404 });
   }
 
   setHeader(event, "Content-Type", file.mimeType);

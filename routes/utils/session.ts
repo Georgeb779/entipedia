@@ -9,7 +9,7 @@ export const getSession = <T extends Record<string, unknown> = { userId?: string
   const sessionSecret = process.env.SESSION_SECRET;
 
   if (!sessionSecret) {
-    throw new HTTPError("Server configuration error: SESSION_SECRET not set.", { statusCode: 500 });
+    throw new HTTPError("Server configuration error: SESSION_SECRET not set.", { status: 500 });
   }
 
   return useSession<T>(event, {

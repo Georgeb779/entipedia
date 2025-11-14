@@ -15,7 +15,7 @@ export default defineHandler(async (event) => {
   try {
     session = await getSession<{ userId?: string }>(event);
   } catch (error) {
-    if (error instanceof HTTPError && error.statusCode === 500) {
+    if (error instanceof HTTPError && error.status === 500) {
       console.warn("SESSION_SECRET is not configured; skipping authentication middleware.");
       return;
     }

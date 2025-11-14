@@ -16,7 +16,7 @@ export default defineHandler(async (event) => {
   const password = payload?.password;
 
   if (!email || !password) {
-    throw new HTTPError("Email and password are required.", { statusCode: 400 });
+    throw new HTTPError("Email and password are required.", { status: 400 });
   }
 
   const db = getDb();
@@ -24,7 +24,7 @@ export default defineHandler(async (event) => {
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   if (!user) {
-    throw new HTTPError("Invalid email or password.", { statusCode: 401 });
+    throw new HTTPError("Invalid email or password.", { status: 401 });
   }
 
   let passwordMatches = false;
@@ -32,11 +32,11 @@ export default defineHandler(async (event) => {
   try {
     passwordMatches = await verifyPassword(password, user.password);
   } catch {
-    throw new HTTPError("Failed to verify credentials.", { statusCode: 500 });
+    throw new HTTPError("Failed to verify credentials.", { status: 500 });
   }
 
   if (!passwordMatches) {
-    throw new HTTPError("Invalid email or password.", { statusCode: 401 });
+    throw new HTTPError("Invalid email or password.", { status: 401 });
   }
 
   const session = await getSession(event);

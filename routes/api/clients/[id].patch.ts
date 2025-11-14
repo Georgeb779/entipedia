@@ -19,14 +19,14 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const idParam = getRouterParam(event, "id");
   const clientId = idParam;
 
   if (!isValidUUID(clientId)) {
-    throw new HTTPError("Invalid client id.", { statusCode: 400 });
+    throw new HTTPError("Invalid client id.", { status: 400 });
   }
 
   const payload = await readBody<UpdateClientPayload>(event);
@@ -36,11 +36,11 @@ export default defineHandler(async (event) => {
     const trimmed = payload.name.trim();
 
     if (!trimmed) {
-      throw new HTTPError("Client name is required when provided.", { statusCode: 400 });
+      throw new HTTPError("Client name is required when provided.", { status: 400 });
     }
 
     if (trimmed.length > 255) {
-      throw new HTTPError("Client name must be 255 characters or fewer.", { statusCode: 400 });
+      throw new HTTPError("Client name must be 255 characters or fewer.", { status: 400 });
     }
 
     updateData.name = trimmed;
@@ -48,7 +48,7 @@ export default defineHandler(async (event) => {
 
   if (payload?.type !== undefined) {
     if (payload.type !== "person" && payload.type !== "company") {
-      throw new HTTPError("Client type must be either 'person' or 'company'.", { statusCode: 400 });
+      throw new HTTPError("Client type must be either 'person' or 'company'.", { status: 400 });
     }
 
     updateData.type = payload.type;
@@ -60,7 +60,7 @@ export default defineHandler(async (event) => {
       !Number.isInteger(payload.value) ||
       payload.value <= 0
     ) {
-      throw new HTTPError("Client value must be a positive integer.", { statusCode: 400 });
+      throw new HTTPError("Client value must be a positive integer.", { status: 400 });
     }
 
     updateData.value = payload.value;
@@ -68,13 +68,13 @@ export default defineHandler(async (event) => {
 
   if (payload?.startDate !== undefined) {
     if (!payload.startDate) {
-      throw new HTTPError("Client start date cannot be empty when provided.", { statusCode: 400 });
+      throw new HTTPError("Client start date cannot be empty when provided.", { status: 400 });
     }
 
     const parsedStart = new Date(payload.startDate);
     if (Number.isNaN(parsedStart.getTime())) {
       throw new HTTPError("Client start date must be a valid ISO date string.", {
-        statusCode: 400,
+        status: 400,
       });
     }
 
@@ -88,7 +88,7 @@ export default defineHandler(async (event) => {
       const parsedEnd = new Date(payload.endDate);
       if (Number.isNaN(parsedEnd.getTime())) {
         throw new HTTPError("Client end date must be a valid ISO date string when provided.", {
-          statusCode: 400,
+          status: 400,
         });
       }
       updateData.endDate = parsedEnd;
@@ -96,14 +96,14 @@ export default defineHandler(async (event) => {
       throw new HTTPError(
         "Client end date must be null or a valid ISO date string when provided.",
         {
-          statusCode: 400,
+          status: 400,
         },
       );
     }
   }
 
   if (Object.keys(updateData).length === 0) {
-    throw new HTTPError("No valid fields provided for update.", { statusCode: 400 });
+    throw new HTTPError("No valid fields provided for update.", { status: 400 });
   }
 
   const db = getDb();
@@ -116,7 +116,7 @@ export default defineHandler(async (event) => {
       .limit(1);
 
     if (!existingClient) {
-      throw new HTTPError("Client not found or access denied.", { statusCode: 404 });
+      throw new HTTPError("Client not found or access denied.", { status: 404 });
     }
 
     const effectiveStartDate =
@@ -127,7 +127,7 @@ export default defineHandler(async (event) => {
         : existingClient.endDate;
 
     if (effectiveEndDate && effectiveEndDate.getTime() <= effectiveStartDate.getTime()) {
-      throw new HTTPError("Client end date must be after the start date.", { statusCode: 400 });
+      throw new HTTPError("Client end date must be after the start date.", { status: 400 });
     }
 
     const [updatedClient] = await db
@@ -137,7 +137,7 @@ export default defineHandler(async (event) => {
       .returning();
 
     if (!updatedClient) {
-      throw new HTTPError("Failed to update client.", { statusCode: 500 });
+      throw new HTTPError("Failed to update client.", { status: 500 });
     }
 
     return {
@@ -154,6 +154,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to update client.", { statusCode: 500 });
+    throw new HTTPError("Failed to update client.", { status: 500 });
   }
 });

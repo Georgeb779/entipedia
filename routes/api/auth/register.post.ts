@@ -20,19 +20,19 @@ export default defineHandler(async (event) => {
   const name = payload?.name?.trim();
 
   if (!email || !password || !name) {
-    throw new HTTPError("Email, password, and name are required.", { statusCode: 400 });
+    throw new HTTPError("Email, password, and name are required.", { status: 400 });
   }
 
   if (!email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) {
-    throw new HTTPError("Invalid email address.", { statusCode: 400 });
+    throw new HTTPError("Invalid email address.", { status: 400 });
   }
 
   if (password.length < 8) {
-    throw new HTTPError("Password must be at least 8 characters long.", { statusCode: 400 });
+    throw new HTTPError("Password must be at least 8 characters long.", { status: 400 });
   }
 
   if (name.length < 2 || name.length > 100) {
-    throw new HTTPError("Name must be between 2 and 100 characters.", { statusCode: 400 });
+    throw new HTTPError("Name must be between 2 and 100 characters.", { status: 400 });
   }
 
   const db = getDb();
@@ -44,7 +44,7 @@ export default defineHandler(async (event) => {
     .limit(1);
 
   if (existingUser) {
-    throw new HTTPError("Email already registered.", { statusCode: 409 });
+    throw new HTTPError("Email already registered.", { status: 409 });
   }
 
   let passwordHash: string;
@@ -52,7 +52,7 @@ export default defineHandler(async (event) => {
   try {
     passwordHash = await hashPassword(password);
   } catch {
-    throw new HTTPError("Failed to process password.", { statusCode: 500 });
+    throw new HTTPError("Failed to process password.", { status: 500 });
   }
 
   const [newUser] = await db
@@ -65,7 +65,7 @@ export default defineHandler(async (event) => {
     .returning();
 
   if (!newUser) {
-    throw new HTTPError("Failed to create user.", { statusCode: 500 });
+    throw new HTTPError("Failed to create user.", { status: 500 });
   }
 
   const session = await getSession(event);

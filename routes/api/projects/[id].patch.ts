@@ -22,14 +22,14 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const idParam = getRouterParam(event, "id");
   const projectId = idParam;
 
   if (!isValidUUID(projectId)) {
-    throw new HTTPError("Invalid project id.", { statusCode: 400 });
+    throw new HTTPError("Invalid project id.", { status: 400 });
   }
 
   const payload = await readBody<UpdateProjectPayload>(event);
@@ -39,11 +39,11 @@ export default defineHandler(async (event) => {
     const trimmed = payload.name.trim();
 
     if (!trimmed) {
-      throw new HTTPError("Project name is required when provided.", { statusCode: 400 });
+      throw new HTTPError("Project name is required when provided.", { status: 400 });
     }
 
     if (trimmed.length > 255) {
-      throw new HTTPError("Project name must be 255 characters or fewer.", { statusCode: 400 });
+      throw new HTTPError("Project name must be 255 characters or fewer.", { status: 400 });
     }
 
     updateData.name = trimmed;
@@ -56,7 +56,7 @@ export default defineHandler(async (event) => {
       const rawDesc = payload.description.trim();
       updateData.description = rawDesc ? rawDesc : null;
     } else {
-      throw new HTTPError("Description must be a string or null.", { statusCode: 400 });
+      throw new HTTPError("Description must be a string or null.", { status: 400 });
     }
   }
 
@@ -65,7 +65,7 @@ export default defineHandler(async (event) => {
 
     if (!allowedStatuses.includes(statusValue)) {
       throw new HTTPError("Invalid project status. Must be 'todo', 'in_progress', or 'done'.", {
-        statusCode: 400,
+        status: 400,
       });
     }
 
@@ -77,7 +77,7 @@ export default defineHandler(async (event) => {
 
     if (!allowedPriorities.includes(priorityValue)) {
       throw new HTTPError("Invalid project priority. Must be 'low', 'medium', or 'high'.", {
-        statusCode: 400,
+        status: 400,
       });
     }
 
@@ -85,7 +85,7 @@ export default defineHandler(async (event) => {
   }
 
   if (Object.keys(updateData).length === 0) {
-    throw new HTTPError("No valid fields provided for update.", { statusCode: 400 });
+    throw new HTTPError("No valid fields provided for update.", { status: 400 });
   }
 
   const db = getDb();
@@ -98,7 +98,7 @@ export default defineHandler(async (event) => {
       .limit(1);
 
     if (!existingProject) {
-      throw new HTTPError("Project not found or access denied.", { statusCode: 404 });
+      throw new HTTPError("Project not found or access denied.", { status: 404 });
     }
 
     const [updatedProject] = await db
@@ -108,7 +108,7 @@ export default defineHandler(async (event) => {
       .returning();
 
     if (!updatedProject) {
-      throw new HTTPError("Failed to update project.", { statusCode: 500 });
+      throw new HTTPError("Failed to update project.", { status: 500 });
     }
 
     return {
@@ -123,6 +123,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to update project.", { statusCode: 500 });
+    throw new HTTPError("Failed to update project.", { status: 500 });
   }
 });

@@ -17,36 +17,36 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const payload = await readBody<CreateClientPayload>(event);
 
   const name = payload?.name?.trim();
   if (!name) {
-    throw new HTTPError("Client name is required.", { statusCode: 400 });
+    throw new HTTPError("Client name is required.", { status: 400 });
   }
   if (name.length > 255) {
-    throw new HTTPError("Client name must be 255 characters or fewer.", { statusCode: 400 });
+    throw new HTTPError("Client name must be 255 characters or fewer.", { status: 400 });
   }
 
   const clientType = payload?.type;
   if (clientType !== "person" && clientType !== "company") {
-    throw new HTTPError("Client type must be either 'person' or 'company'.", { statusCode: 400 });
+    throw new HTTPError("Client type must be either 'person' or 'company'.", { status: 400 });
   }
 
   const value = payload?.value;
   if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
-    throw new HTTPError("Client value must be a positive integer.", { statusCode: 400 });
+    throw new HTTPError("Client value must be a positive integer.", { status: 400 });
   }
 
   const startDateInput = payload?.startDate;
   if (!startDateInput) {
-    throw new HTTPError("Client start date is required.", { statusCode: 400 });
+    throw new HTTPError("Client start date is required.", { status: 400 });
   }
   const startDate = new Date(startDateInput);
   if (Number.isNaN(startDate.getTime())) {
-    throw new HTTPError("Client start date must be a valid ISO date string.", { statusCode: 400 });
+    throw new HTTPError("Client start date must be a valid ISO date string.", { status: 400 });
   }
 
   const endDateInput = payload?.endDate;
@@ -55,7 +55,7 @@ export default defineHandler(async (event) => {
     endDate = new Date(endDateInput);
     if (Number.isNaN(endDate.getTime())) {
       throw new HTTPError("Client end date must be a valid ISO date string when provided.", {
-        statusCode: 400,
+        status: 400,
       });
     }
   } else if (endDateInput === null) {
@@ -63,7 +63,7 @@ export default defineHandler(async (event) => {
   }
 
   if (endDate && endDate.getTime() <= startDate.getTime()) {
-    throw new HTTPError("Client end date must be after the start date.", { statusCode: 400 });
+    throw new HTTPError("Client end date must be after the start date.", { status: 400 });
   }
 
   const db = getDb();
@@ -82,7 +82,7 @@ export default defineHandler(async (event) => {
       .returning();
 
     if (!newClient) {
-      throw new HTTPError("Failed to create client.", { statusCode: 500 });
+      throw new HTTPError("Failed to create client.", { status: 500 });
     }
 
     return {
@@ -99,6 +99,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to create client.", { statusCode: 500 });
+    throw new HTTPError("Failed to create client.", { status: 500 });
   }
 });

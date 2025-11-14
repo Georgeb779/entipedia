@@ -16,7 +16,7 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const form = await readFormData(event);
@@ -24,24 +24,24 @@ export default defineHandler(async (event) => {
   const descriptionEntry = form.get("description");
 
   if (!fileEntry || !(fileEntry instanceof Blob) || !("name" in fileEntry)) {
-    throw new HTTPError("Invalid file upload payload.", { statusCode: 400 });
+    throw new HTTPError("Invalid file upload payload.", { status: 400 });
   }
 
   const file = fileEntry as Blob & { name?: string };
   const filename = typeof file.name === "string" && file.name.length > 0 ? file.name : "file";
 
   if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-    throw new HTTPError("File type not allowed.", { statusCode: 400 });
+    throw new HTTPError("File type not allowed.", { status: 400 });
   }
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   if (fileBuffer.byteLength === 0) {
-    throw new HTTPError("Empty files are not allowed.", { statusCode: 400 });
+    throw new HTTPError("Empty files are not allowed.", { status: 400 });
   }
 
   if (fileBuffer.byteLength > MAX_FILE_SIZE) {
-    throw new HTTPError("File size exceeds limit.", { statusCode: 413 });
+    throw new HTTPError("File size exceeds limit.", { status: 413 });
   }
 
   const uploadsDir = join(process.cwd(), "uploads");
@@ -62,13 +62,13 @@ export default defineHandler(async (event) => {
 
   if (descriptionEntry !== null && descriptionEntry !== undefined) {
     if (typeof descriptionEntry !== "string") {
-      throw new HTTPError("Description must be a string.", { statusCode: 400 });
+      throw new HTTPError("Description must be a string.", { status: 400 });
     }
 
     const trimmed = descriptionEntry.trim();
 
     if (trimmed.length > 2000) {
-      throw new HTTPError("Description must be 2000 characters or fewer.", { statusCode: 400 });
+      throw new HTTPError("Description must be 2000 characters or fewer.", { status: 400 });
     }
 
     description = trimmed.length > 0 ? trimmed : null;
@@ -77,7 +77,7 @@ export default defineHandler(async (event) => {
   try {
     await fs.writeFile(filePath, fileBuffer);
   } catch (error) {
-    throw new HTTPError("Failed to save file.", { statusCode: 500, cause: error });
+    throw new HTTPError("Failed to save file.", { status: 500, cause: error });
   }
 
   const db = getDb();
@@ -90,7 +90,7 @@ export default defineHandler(async (event) => {
       .limit(1);
 
     if (!project) {
-      throw new HTTPError("Project not found or access denied.", { statusCode: 400 });
+      throw new HTTPError("Project not found or access denied.", { status: 400 });
     }
   }
 
@@ -110,7 +110,7 @@ export default defineHandler(async (event) => {
       .returning();
 
     if (!newFile) {
-      throw new HTTPError("Failed to create file record.", { statusCode: 500 });
+      throw new HTTPError("Failed to create file record.", { status: 500 });
     }
 
     return {
@@ -125,6 +125,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to save file metadata.", { statusCode: 500, cause: error });
+    throw new HTTPError("Failed to save file metadata.", { status: 500, cause: error });
   }
 });

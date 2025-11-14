@@ -5,7 +5,7 @@ export default defineHandler((event) => {
   const user = event.context.user as { name: string } | null;
 
   if (!user) {
-    throw new HTTPError("Unauthorized", { statusCode: 401 });
+    throw new HTTPError("Unauthorized", { status: 401 });
   }
 
   return {

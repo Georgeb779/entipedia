@@ -10,7 +10,7 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const db = getDb();
@@ -89,6 +89,6 @@ export default defineHandler(async (event) => {
     const message =
       causeMessage ?? (error instanceof Error ? error.message : "Failed to fetch clients.");
 
-    throw new HTTPError(message, { statusCode: 500, cause: error });
+    throw new HTTPError(message, { status: 500, cause: error });
   }
 });

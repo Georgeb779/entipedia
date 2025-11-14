@@ -13,7 +13,7 @@ export default defineHandler((event) => {
 
   if (!user) {
     return {
-      statusCode: 404,
+      status: 404,
       statusMessage: "User not found",
     };
   }

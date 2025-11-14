@@ -12,7 +12,7 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const db = getDb();
@@ -33,6 +33,6 @@ export default defineHandler(async (event) => {
 
     return { tasks: serializedTasks };
   } catch {
-    throw new HTTPError("Failed to fetch tasks.", { statusCode: 500 });
+    throw new HTTPError("Failed to fetch tasks.", { status: 500 });
   }
 });

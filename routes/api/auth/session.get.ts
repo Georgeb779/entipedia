@@ -12,7 +12,7 @@ export default defineHandler(async (event) => {
   const session = await getSession<{ userId?: string }>(event);
 
   if (!session.data.userId) {
-    throw new HTTPError("Not authenticated.", { statusCode: 401 });
+    throw new HTTPError("Not authenticated.", { status: 401 });
   }
 
   const db = getDb();
@@ -21,7 +21,7 @@ export default defineHandler(async (event) => {
 
   if (!user) {
     await session.clear();
-    throw new HTTPError("Session invalid.", { statusCode: 401 });
+    throw new HTTPError("Session invalid.", { status: 401 });
   }
 
   return {

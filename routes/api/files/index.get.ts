@@ -13,7 +13,7 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const db = getDb();
@@ -24,7 +24,7 @@ export default defineHandler(async (event) => {
 
   if (isString(projectIdParam) && !isEmpty(projectIdParam) && projectIdParam !== "all") {
     if (!isValidUUID(projectIdParam)) {
-      throw new HTTPError("Invalid project filter.", { statusCode: 400 });
+      throw new HTTPError("Invalid project filter.", { status: 400 });
     }
 
     projectIdFilter = projectIdParam;
@@ -35,7 +35,7 @@ export default defineHandler(async (event) => {
 
   if (isString(mimeTypeParam) && !isEmpty(mimeTypeParam) && mimeTypeParam !== "all") {
     if (!ALLOWED_FILE_TYPES.includes(mimeTypeParam)) {
-      throw new HTTPError("Unsupported file type filter.", { statusCode: 400 });
+      throw new HTTPError("Unsupported file type filter.", { status: 400 });
     }
 
     mimeTypeFilter = mimeTypeParam;
@@ -67,6 +67,6 @@ export default defineHandler(async (event) => {
 
     return { files: serializedFiles };
   } catch (error) {
-    throw new HTTPError("Failed to fetch files.", { statusCode: 500, cause: error });
+    throw new HTTPError("Failed to fetch files.", { status: 500, cause: error });
   }
 });

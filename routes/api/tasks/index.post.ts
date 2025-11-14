@@ -25,26 +25,26 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const payload = await readBody<CreateTaskPayload>(event);
   const title = isString(payload?.title) ? trim(payload.title) : undefined;
 
   if (isEmpty(title)) {
-    throw new HTTPError("Title is required.", { statusCode: 400 });
+    throw new HTTPError("Title is required.", { status: 400 });
   }
 
   const status = payload?.status ?? "todo";
 
   if (!ALLOWED_STATUSES.includes(status)) {
-    throw new HTTPError("Invalid task status provided.", { statusCode: 400 });
+    throw new HTTPError("Invalid task status provided.", { status: 400 });
   }
 
   const priority = payload?.priority ?? null;
 
   if (priority && !ALLOWED_PRIORITIES.includes(priority)) {
-    throw new HTTPError("Invalid task priority provided.", { statusCode: 400 });
+    throw new HTTPError("Invalid task priority provided.", { status: 400 });
   }
 
   let dueDate: Date | null = null;
@@ -53,7 +53,7 @@ export default defineHandler(async (event) => {
     const parsed = new Date(payload.dueDate);
 
     if (Number.isNaN(parsed.getTime())) {
-      throw new HTTPError("Invalid due date.", { statusCode: 400 });
+      throw new HTTPError("Invalid due date.", { status: 400 });
     }
 
     dueDate = parsed;
@@ -81,7 +81,7 @@ export default defineHandler(async (event) => {
       .returning();
 
     if (!newTask) {
-      throw new HTTPError("Failed to create task.", { statusCode: 500 });
+      throw new HTTPError("Failed to create task.", { status: 500 });
     }
 
     return {
@@ -97,6 +97,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to create task.", { statusCode: 500 });
+    throw new HTTPError("Failed to create task.", { status: 500 });
   }
 });

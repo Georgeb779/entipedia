@@ -25,14 +25,14 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const idParam = getRouterParam(event, "id");
   const taskId = idParam;
 
   if (!isValidUUID(taskId)) {
-    throw new HTTPError("Invalid task id.", { statusCode: 400 });
+    throw new HTTPError("Invalid task id.", { status: 400 });
   }
 
   const payload = (await readBody<UpdateTaskPayload>(event)) ?? {};
@@ -45,7 +45,7 @@ export default defineHandler(async (event) => {
     .limit(1);
 
   if (!existingTask) {
-    throw new HTTPError("Task not found or access denied.", { statusCode: 404 });
+    throw new HTTPError("Task not found or access denied.", { status: 404 });
   }
 
   const updateData: Partial<typeof tasks.$inferInsert> = {};
@@ -54,7 +54,7 @@ export default defineHandler(async (event) => {
     const title = payload.title.trim();
 
     if (!title) {
-      throw new HTTPError("Title cannot be empty.", { statusCode: 400 });
+      throw new HTTPError("Title cannot be empty.", { status: 400 });
     }
 
     updateData.title = title;
@@ -66,7 +66,7 @@ export default defineHandler(async (event) => {
 
   if (payload.status !== undefined) {
     if (!ALLOWED_STATUSES.includes(payload.status)) {
-      throw new HTTPError("Invalid task status provided.", { statusCode: 400 });
+      throw new HTTPError("Invalid task status provided.", { status: 400 });
     }
 
     updateData.status = payload.status;
@@ -74,7 +74,7 @@ export default defineHandler(async (event) => {
 
   if (payload.priority !== undefined) {
     if (payload.priority !== null && !ALLOWED_PRIORITIES.includes(payload.priority)) {
-      throw new HTTPError("Invalid task priority provided.", { statusCode: 400 });
+      throw new HTTPError("Invalid task priority provided.", { status: 400 });
     }
 
     updateData.priority = payload.priority;
@@ -87,7 +87,7 @@ export default defineHandler(async (event) => {
       const parsed = new Date(payload.dueDate);
 
       if (Number.isNaN(parsed.getTime())) {
-        throw new HTTPError("Invalid due date.", { statusCode: 400 });
+        throw new HTTPError("Invalid due date.", { status: 400 });
       }
 
       updateData.dueDate = parsed;
@@ -100,12 +100,12 @@ export default defineHandler(async (event) => {
     } else if (isValidUUID(payload.projectId)) {
       updateData.projectId = payload.projectId;
     } else {
-      throw new HTTPError("Invalid project id.", { statusCode: 400 });
+      throw new HTTPError("Invalid project id.", { status: 400 });
     }
   }
 
   if (Object.keys(updateData).length === 0) {
-    throw new HTTPError("No valid fields provided for update.", { statusCode: 400 });
+    throw new HTTPError("No valid fields provided for update.", { status: 400 });
   }
 
   try {
@@ -116,7 +116,7 @@ export default defineHandler(async (event) => {
       .returning();
 
     if (!updatedTask) {
-      throw new HTTPError("Failed to update task.", { statusCode: 500 });
+      throw new HTTPError("Failed to update task.", { status: 500 });
     }
 
     return {
@@ -132,6 +132,6 @@ export default defineHandler(async (event) => {
       throw error;
     }
 
-    throw new HTTPError("Failed to update task.", { statusCode: 500 });
+    throw new HTTPError("Failed to update task.", { status: 500 });
   }
 });

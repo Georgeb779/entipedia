@@ -10,14 +10,14 @@ export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
 
   if (!context.user) {
-    throw new HTTPError("Authentication required.", { statusCode: 401 });
+    throw new HTTPError("Authentication required.", { status: 401 });
   }
 
   const idParam = getRouterParam(event, "id");
   const taskId = idParam;
 
   if (!isValidUUID(taskId)) {
-    throw new HTTPError("Invalid task id.", { statusCode: 400 });
+    throw new HTTPError("Invalid task id.", { status: 400 });
   }
 
   const db = getDb();
@@ -29,7 +29,7 @@ export default defineHandler(async (event) => {
     .limit(1);
 
   if (!existingTask) {
-    throw new HTTPError("Task not found or access denied.", { statusCode: 404 });
+    throw new HTTPError("Task not found or access denied.", { status: 404 });
   }
 
   try {
@@ -40,6 +40,6 @@ export default defineHandler(async (event) => {
       message: "Task deleted successfully.",
     };
   } catch {
-    throw new HTTPError("Failed to delete task.", { statusCode: 500 });
+    throw new HTTPError("Failed to delete task.", { status: 500 });
   }
 });
