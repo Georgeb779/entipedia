@@ -52,6 +52,7 @@ const basePlugins: PluginOption[] = [
     dirs: "src/pages",
     extensions: ["tsx", "jsx"],
     importMode: "sync",
+    exclude: ["**/*-schema.ts", "**/*-utils.ts", "**/*-card.tsx", "**/*-modals.tsx"],
   }),
   svgr(),
   Inspect(),
