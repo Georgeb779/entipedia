@@ -683,7 +683,7 @@ function ClientsPage() {
   const ClientMobileCard = ({ client, onEdit, onDelete, isDeleting }: ClientMobileCardProps) => (
     <article className="space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
       <header className="space-y-2">
-        <h3 className="text-lg font-semibold text-[#1C2431]">{client.name}</h3>
+        <h3 className="truncate text-lg font-semibold text-[#1C2431] ...">{client.name}</h3>
         <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
           {CLIENT_TYPE_LABELS[client.type]}
         </Badge>

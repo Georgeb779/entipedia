@@ -10,7 +10,11 @@ const SelectValue = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitiv
   const { className, ...rest } = props;
   return (
     <SelectPrimitive.Value
-      className={cn("max-w-full truncate text-ellipsis whitespace-nowrap", className)}
+      className={cn(
+        "max-w-full flex-1 truncate overflow-hidden text-left text-ellipsis whitespace-nowrap",
+        "min-w-0",
+        className,
+      )}
       {...rest}
     />
   );
@@ -24,15 +28,15 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "border-input bg-background/95 ring-offset-background text-foreground flex h-11 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm",
-      "max-w-full min-w-0",
+      "max-w-full min-w-0 overflow-hidden",
       "placeholder:text-muted-foreground focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
     {...props}
   >
-    {children}
+    <span className="min-w-0 flex-1 overflow-hidden text-left">{children}</span>
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4" />
+      <ChevronDown className="h-4 w-4 shrink-0" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -86,7 +90,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full items-center rounded-sm py-2 pr-2 pl-8 text-sm outline-none select-none",
+      "relative flex w-full min-w-0 items-center rounded-sm py-2 pr-2 pl-8 text-sm outline-none select-none",
       "cursor-default focus:bg-[rgba(246,201,14,0.12)] focus:text-[#1C2431] data-disabled:pointer-events-none data-disabled:opacity-50",
       className,
     )}
@@ -97,8 +101,8 @@ const SelectItem = React.forwardRef<
         <Check className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
-    <SelectPrimitive.ItemText>
-      <span className="block max-w-full truncate">{children}</span>
+    <SelectPrimitive.ItemText className="w-full max-w-[250px] flex-1 overflow-hidden">
+      <span className="block w-full max-w-[250px] truncate ...">{children}</span>
     </SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));

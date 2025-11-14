@@ -342,7 +342,9 @@ function TasksPage() {
       >
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-[#1C2431]">{task.title}</h3>
+            <h3 className="max-w-60 truncate text-sm font-medium text-[#1C2431] ...">
+              {task.title}
+            </h3>
             {task.description ? (
               <p className="text-muted-foreground line-clamp-2 text-xs">{task.description}</p>
             ) : null}

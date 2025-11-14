@@ -33,8 +33,10 @@ export function ProjectMobileCard({
       )}
     >
       <header className="space-y-2">
-        <h3 className="text-lg font-semibold text-[#1C2431]">{project.name}</h3>
-        <p className="text-muted-foreground text-sm">
+        <h3 className="max-w-60 truncate text-lg font-semibold text-[#1C2431] ...">
+          {project.name}
+        </h3>
+        <p className="text-muted-foreground max-w-md truncate text-sm ...">
           {project.description ? project.description : "Sin descripción proporcionada."}
         </p>
       </header>

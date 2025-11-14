@@ -988,7 +988,7 @@ export default function FilesPage() {
                       <FormLabel>Proyecto</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="max-w-full">
                             <SelectValue placeholder="Seleccionar proyecto" />
                           </SelectTrigger>
                         </FormControl>
