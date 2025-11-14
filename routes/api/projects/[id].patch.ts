@@ -6,6 +6,7 @@ import { getDb, projects } from "db";
 import type { NewProject } from "db/schema";
 import type { AuthUser, ProjectPriority, ProjectStatus } from "@/types";
 import { toIsoString } from "../../_utils/dates.ts";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 type UpdateProjectPayload = {
   name?: string;
@@ -25,9 +26,9 @@ export default defineHandler(async (event) => {
   }
 
   const idParam = getRouterParam(event, "id");
-  const projectId = Number.parseInt(idParam ?? "", 10);
+  const projectId = idParam;
 
-  if (!Number.isInteger(projectId) || projectId <= 0) {
+  if (!isValidUUID(projectId)) {
     throw new HTTPError("Invalid project id.", { statusCode: 400 });
   }
 

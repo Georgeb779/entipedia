@@ -107,7 +107,7 @@ const defaultFormValues: ClientFormInput = {
 };
 
 type EditingCell = {
-  clientId: number;
+  clientId: string;
   field: keyof ClientFormValues;
 };
 

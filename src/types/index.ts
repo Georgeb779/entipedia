@@ -72,13 +72,13 @@ export type TaskFormValues = {
   status: TaskStatus;
   priority: TaskPriority | null;
   dueDate: string | null;
-  projectId: number | null;
+  projectId: string | null;
 };
 
 export type TaskFilters = {
   status?: TaskStatus | "all";
   priority?: TaskPriority | "all";
-  projectId?: number | "all";
+  projectId?: string | "all";
 };
 
 export type ApiProject = Omit<Project, "createdAt" | "updatedAt"> & {
@@ -116,12 +116,12 @@ export type ApiFile = Omit<StoredFile, "createdAt"> & {
 
 export type FileFormValues = {
   file: File;
-  projectId: number | null;
+  projectId: string | null;
   description: string | null;
 };
 
 export type FileFilters = {
-  projectId?: number | "all";
+  projectId?: string | "all";
   mimeType?: string | "all";
 };
 

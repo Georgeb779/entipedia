@@ -8,6 +8,7 @@ import { Buffer } from "node:buffer";
 
 import { getDb, files } from "db";
 import type { AuthUser } from "@/types";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -17,9 +18,9 @@ export default defineHandler(async (event) => {
   }
 
   const idParam = getRouterParam(event, "id");
-  const fileId = Number.parseInt(idParam ?? "", 10);
+  const fileId = idParam;
 
-  if (!Number.isInteger(fileId) || fileId <= 0) {
+  if (!isValidUUID(fileId)) {
     throw new HTTPError("Invalid file id.", { statusCode: 400 });
   }
 

@@ -28,7 +28,7 @@ export const taskSchema = z.object({
       (value) =>
         !value ||
         value === "none" ||
-        (!Number.isNaN(Number.parseInt(value, 10)) && Number.parseInt(value, 10) >= 0),
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
       {
         message: "Selección de proyecto no válida.",
       },
@@ -55,7 +55,7 @@ export const toSchemaValues = (task: Task): TaskFormSchema => ({
   status: task.status,
   priority: task.priority && isTaskPriority(task.priority) ? task.priority : "none",
   dueDate: formatDateForInput(task.dueDate),
-  projectId: task.projectId !== null ? task.projectId.toString() : "none",
+  projectId: task.projectId !== null ? task.projectId : "none",
 });
 
 export const mapSchemaToTask = (values: TaskFormSchema): TaskFormValues => ({
@@ -68,8 +68,7 @@ export const mapSchemaToTask = (values: TaskFormSchema): TaskFormValues => ({
       ? values.priority
       : null,
   dueDate: values.dueDate && values.dueDate.length > 0 ? values.dueDate : null,
-  projectId:
-    values.projectId && values.projectId !== "none" ? Number.parseInt(values.projectId, 10) : null,
+  projectId: values.projectId && values.projectId !== "none" ? values.projectId : null,
 });
 
 export const TASK_BOARD_STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];

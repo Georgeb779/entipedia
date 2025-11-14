@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { getDb, tasks } from "db";
 import type { AuthUser, TaskPriority, TaskStatus } from "@/types";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 const toIsoString = (value: Date | string) =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString();
@@ -17,7 +18,7 @@ type UpdateTaskPayload = {
   status?: TaskStatus;
   priority?: TaskPriority | null;
   dueDate?: string | null;
-  projectId?: number | null;
+  projectId?: string | null;
 };
 
 export default defineHandler(async (event) => {
@@ -28,9 +29,9 @@ export default defineHandler(async (event) => {
   }
 
   const idParam = getRouterParam(event, "id");
-  const taskId = Number.parseInt(idParam ?? "", 10);
+  const taskId = idParam;
 
-  if (Number.isNaN(taskId)) {
+  if (!isValidUUID(taskId)) {
     throw new HTTPError("Invalid task id.", { statusCode: 400 });
   }
 
@@ -96,7 +97,7 @@ export default defineHandler(async (event) => {
   if (payload.projectId !== undefined) {
     if (payload.projectId === null) {
       updateData.projectId = null;
-    } else if (typeof payload.projectId === "number") {
+    } else if (isValidUUID(payload.projectId)) {
       updateData.projectId = payload.projectId;
     } else {
       throw new HTTPError("Invalid project id.", { statusCode: 400 });

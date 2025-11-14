@@ -9,6 +9,7 @@ import type { AuthUser } from "@/types";
 import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
 import { generateUniqueFilename } from "@/utils";
 import { toIsoString } from "../../_utils/dates.ts";
+import { isValidUUID } from "../../_utils/uuid.ts";
 import { and, eq } from "drizzle-orm";
 
 export default defineHandler(async (event) => {
@@ -48,15 +49,11 @@ export default defineHandler(async (event) => {
   const filePath = join(uploadsDir, storedFilename);
   const relativePath = `uploads/${storedFilename}`;
 
-  let projectId: number | null = null;
+  let projectId: string | null = null;
   const projectIdEntry = form.get("projectId");
 
-  if (typeof projectIdEntry === "string") {
-    const parsed = Number.parseInt(projectIdEntry, 10);
-
-    if (Number.isFinite(parsed) && parsed > 0) {
-      projectId = parsed;
-    }
+  if (typeof projectIdEntry === "string" && isValidUUID(projectIdEntry)) {
+    projectId = projectIdEntry;
   }
 
   await fs.mkdir(uploadsDir, { recursive: true });

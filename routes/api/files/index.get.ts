@@ -1,11 +1,13 @@
 import { defineHandler, getQuery } from "nitro/h3";
 import { HTTPError } from "h3";
 import { and, desc, eq } from "drizzle-orm";
+import { isString, isEmpty } from "lodash";
 
 import { getDb, files } from "db";
 import type { AuthUser } from "@/types";
 import { ALLOWED_FILE_TYPES } from "@/constants";
 import { toIsoString } from "../../_utils/dates.ts";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -18,22 +20,20 @@ export default defineHandler(async (event) => {
 
   const query = getQuery(event);
   const projectIdParam = Array.isArray(query.projectId) ? query.projectId[0] : query.projectId;
-  let projectIdFilter: number | null = null;
+  let projectIdFilter: string | null = null;
 
-  if (typeof projectIdParam === "string" && projectIdParam.length > 0 && projectIdParam !== "all") {
-    const parsed = Number.parseInt(projectIdParam, 10);
-
-    if (!Number.isFinite(parsed) || parsed <= 0) {
+  if (isString(projectIdParam) && !isEmpty(projectIdParam) && projectIdParam !== "all") {
+    if (!isValidUUID(projectIdParam)) {
       throw new HTTPError("Invalid project filter.", { statusCode: 400 });
     }
 
-    projectIdFilter = parsed;
+    projectIdFilter = projectIdParam;
   }
 
   const mimeTypeParam = Array.isArray(query.mimeType) ? query.mimeType[0] : query.mimeType;
   let mimeTypeFilter: string | null = null;
 
-  if (typeof mimeTypeParam === "string" && mimeTypeParam.length > 0 && mimeTypeParam !== "all") {
+  if (isString(mimeTypeParam) && !isEmpty(mimeTypeParam) && mimeTypeParam !== "all") {
     if (!ALLOWED_FILE_TYPES.includes(mimeTypeParam)) {
       throw new HTTPError("Unsupported file type filter.", { statusCode: 400 });
     }

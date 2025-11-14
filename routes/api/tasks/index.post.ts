@@ -1,8 +1,10 @@
 import { defineHandler } from "nitro/h3";
 import { HTTPError, readBody } from "h3";
+import { isString, isEmpty, trim } from "lodash";
 
 import { getDb, tasks } from "db";
 import type { AuthUser, TaskPriority, TaskStatus } from "@/types";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 const toIsoString = (value: Date | string) =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString();
@@ -16,7 +18,7 @@ type CreateTaskPayload = {
   status?: TaskStatus;
   priority?: TaskPriority | null;
   dueDate?: string | null;
-  projectId?: number | null;
+  projectId?: string | null;
 };
 
 export default defineHandler(async (event) => {
@@ -27,9 +29,9 @@ export default defineHandler(async (event) => {
   }
 
   const payload = await readBody<CreateTaskPayload>(event);
-  const title = payload?.title?.trim();
+  const title = isString(payload?.title) ? trim(payload.title) : undefined;
 
-  if (!title) {
+  if (isEmpty(title)) {
     throw new HTTPError("Title is required.", { statusCode: 400 });
   }
 
@@ -57,8 +59,10 @@ export default defineHandler(async (event) => {
     dueDate = parsed;
   }
 
-  const description = payload?.description?.trim() ?? null;
-  const projectId = typeof payload?.projectId === "number" ? payload.projectId : null;
+  const description = isString(payload?.description) ? trim(payload.description) : null;
+  const trimmedDescription = isEmpty(description) ? null : description;
+  const projectId =
+    isString(payload?.projectId) && isValidUUID(payload.projectId) ? payload.projectId : null;
 
   const db = getDb();
 
@@ -66,8 +70,8 @@ export default defineHandler(async (event) => {
     const [newTask] = await db
       .insert(tasks)
       .values({
-        title,
-        description,
+        title: title!,
+        description: trimmedDescription,
         status,
         priority,
         dueDate,

@@ -162,7 +162,7 @@ export function TaskFormModal({
                     <SelectContent>
                       <SelectItem value="none">Sin proyecto</SelectItem>
                       {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
+                        <SelectItem key={project.id} value={project.id}>
                           {project.name}
                         </SelectItem>
                       ))}

@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { getDb, tasks } from "db";
 import { toIsoString } from "../../../_utils/dates.ts";
+import { isValidUUID } from "../../../_utils/uuid.ts";
 import type { AuthUser, TaskStatus } from "@/types";
 
 const ALLOWED_STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
@@ -25,9 +26,9 @@ export default defineHandler(async (event) => {
   }
 
   const idParam = getRouterParam(event, "id");
-  const taskId = Number.parseInt(idParam ?? "", 10);
+  const taskId = idParam;
 
-  if (!Number.isInteger(taskId) || taskId <= 0) {
+  if (!isValidUUID(taskId)) {
     throw new HTTPError("Invalid task id.", { statusCode: 400 });
   }
 

@@ -3,7 +3,7 @@ import { HTTPError, useSession } from "h3";
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
-export const getSession = <T extends Record<string, unknown> = { userId?: number }>(
+export const getSession = <T extends Record<string, unknown> = { userId?: string }>(
   event: H3Event,
 ) => {
   const sessionSecret = process.env.SESSION_SECRET;

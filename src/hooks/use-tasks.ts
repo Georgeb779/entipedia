@@ -54,7 +54,7 @@ const applyFilters = (tasks: Task[], filters?: TaskFilters) => {
 type CreateTaskVariables = TaskFormValues;
 
 type UpdateTaskVariables = {
-  taskId: number;
+  taskId: string;
   data: Partial<TaskFormValues>;
 };
 
@@ -191,7 +191,7 @@ export const useUpdateTask = (): UseMutationResult<Task, Error, UpdateTaskVariab
   });
 };
 
-export const useDeleteTask = (): UseMutationResult<void, Error, number> => {
+export const useDeleteTask = (): UseMutationResult<void, Error, string> => {
   const queryClient = useQueryClient();
   const { refreshSession } = useAuthActions();
 
@@ -216,7 +216,7 @@ export const useDeleteTask = (): UseMutationResult<void, Error, number> => {
 };
 
 type UpdateTaskStatusVariables = {
-  taskId: number;
+  taskId: string;
   status: TaskStatus;
 };
 

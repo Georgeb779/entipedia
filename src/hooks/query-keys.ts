@@ -40,7 +40,7 @@ export const PROJECT_KEYS = {
   lists: () => [...PROJECT_KEYS.all, "list"],
   list: (filters?: ProjectFilters) => [...PROJECT_KEYS.lists(), createProjectFiltersKey(filters)],
   details: () => [...PROJECT_KEYS.all, "detail"],
-  detail: (id: number) => [...PROJECT_KEYS.details(), id],
+  detail: (id: string) => [...PROJECT_KEYS.details(), id],
 };
 
 export const TASK_KEYS = {
@@ -54,7 +54,7 @@ export const CLIENT_KEYS = {
   lists: () => [...CLIENT_KEYS.all, "list"],
   list: (filters?: ClientFilters) => [...CLIENT_KEYS.lists(), createClientFiltersKey(filters)],
   details: () => [...CLIENT_KEYS.all, "detail"],
-  detail: (id: number) => [...CLIENT_KEYS.details(), id],
+  detail: (id: string) => [...CLIENT_KEYS.details(), id],
 };
 
 export const FILE_KEYS = {
@@ -62,7 +62,7 @@ export const FILE_KEYS = {
   lists: () => [...FILE_KEYS.all, "list"],
   list: (filters?: FileFilters) => [...FILE_KEYS.lists(), createFileFiltersKey(filters)],
   details: () => [...FILE_KEYS.all, "detail"],
-  detail: (id: number) => [...FILE_KEYS.details(), id],
+  detail: (id: string) => [...FILE_KEYS.details(), id],
 };
 
 export {

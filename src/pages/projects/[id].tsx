@@ -41,15 +41,15 @@ export default function ProjectDetailPage(): JSX.Element | null {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const projectId = Number.parseInt(id ?? "", 10);
+  const projectId = id;
 
   useEffect(() => {
-    if (!Number.isInteger(projectId) || projectId <= 0) {
+    if (!projectId) {
       navigate("/projects", { replace: true });
     }
   }, [navigate, projectId]);
 
-  if (!Number.isInteger(projectId) || projectId <= 0) {
+  if (!projectId) {
     return null;
   }
 
@@ -57,7 +57,7 @@ export default function ProjectDetailPage(): JSX.Element | null {
 }
 
 type ProjectDetailContentProps = {
-  projectId: number;
+  projectId: string;
   navigate: NavigateFunction;
 };
 

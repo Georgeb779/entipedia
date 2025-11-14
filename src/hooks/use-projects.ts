@@ -72,7 +72,7 @@ const filterProjects = (projects: ProjectWithTaskCount[], filters?: ProjectFilte
 };
 
 type UpdateProjectVariables = {
-  projectId: number;
+  projectId: string;
   data: Partial<ProjectFormValues>;
 };
 
@@ -108,7 +108,7 @@ type ProjectDetail = {
   tasks: Task[];
 };
 
-export const useProject = (projectId: number): UseQueryResult<ProjectDetail> => {
+export const useProject = (projectId: string): UseQueryResult<ProjectDetail> => {
   const { refreshSession } = useAuthActions();
 
   return useQuery({
@@ -219,7 +219,7 @@ export const useUpdateProject = (): UseMutationResult<Project, Error, UpdateProj
   });
 };
 
-export const useDeleteProject = (): UseMutationResult<void, Error, number> => {
+export const useDeleteProject = (): UseMutationResult<void, Error, string> => {
   const queryClient = useQueryClient();
   const { refreshSession } = useAuthActions();
 

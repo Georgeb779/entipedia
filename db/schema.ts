@@ -1,5 +1,5 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const taskStatusEnum = pgEnum("taskStatus", ["todo", "in_progress", "done"]);
 export const projectStatusEnum = pgEnum("projectStatus", ["todo", "in_progress", "done"]);
@@ -7,7 +7,7 @@ export const projectPriorityEnum = pgEnum("projectPriority", ["low", "medium", "
 export const clientTypeEnum = pgEnum("clientType", ["person", "company"]);
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -19,12 +19,12 @@ export const users = pgTable("users", {
 });
 
 export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   status: projectStatusEnum("status").notNull().default("todo"),
   priority: projectPriorityEnum("priority").notNull().default("medium"),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -35,16 +35,16 @@ export const projects = pgTable("projects", {
 });
 
 export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   status: taskStatusEnum("status").notNull().default("todo"),
   priority: varchar("priority", { length: 50 }),
   dueDate: timestamp("due_date", { withTimezone: true }),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
@@ -53,28 +53,28 @@ export const tasks = pgTable("tasks", {
 });
 
 export const files = pgTable("files", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   filename: varchar("filename", { length: 255 }).notNull(),
   storedFilename: varchar("stored_filename", { length: 255 }).notNull(),
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
   size: integer("size").notNull(),
   path: text("path").notNull(),
   description: text("description"),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const clients = pgTable("clients", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   type: clientTypeEnum("type").notNull(),
   value: integer("value").notNull(),
   startDate: timestamp("start_date", { withTimezone: true }).notNull(),
   endDate: timestamp("end_date", { withTimezone: true }),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

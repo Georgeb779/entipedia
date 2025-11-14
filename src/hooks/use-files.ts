@@ -68,7 +68,7 @@ export const useFiles = (filters?: FileFilters): UseQueryResult<StoredFile[]> =>
 type UploadFileVariables = {
   file: File;
   description: string | null;
-  projectId: number | null;
+  projectId: string | null;
 };
 
 export const useUploadFile = (): UseMutationResult<StoredFile, Error, UploadFileVariables> => {
@@ -85,7 +85,7 @@ export const useUploadFile = (): UseMutationResult<StoredFile, Error, UploadFile
       }
 
       if (projectId) {
-        formData.append("projectId", String(projectId));
+        formData.append("projectId", projectId);
       }
 
       const response = await fetch("/api/files", {
@@ -108,7 +108,7 @@ export const useUploadFile = (): UseMutationResult<StoredFile, Error, UploadFile
   });
 };
 
-export const useDeleteFile = (): UseMutationResult<void, Error, number> => {
+export const useDeleteFile = (): UseMutationResult<void, Error, string> => {
   const queryClient = useQueryClient();
   const { refreshSession } = useAuthActions();
 
@@ -133,7 +133,7 @@ export const useDeleteFile = (): UseMutationResult<void, Error, number> => {
 };
 
 type DownloadFileVariables = {
-  fileId: number;
+  fileId: string;
   filename: string;
 };
 

@@ -132,7 +132,7 @@ export const useCreateClient = (): UseMutationResult<Client, Error, CreateClient
 };
 
 type UpdateClientVariables = {
-  clientId: number;
+  clientId: string;
   data: Partial<ClientFormValues>;
 };
 
@@ -189,7 +189,7 @@ export const useUpdateClient = (): UseMutationResult<Client, Error, UpdateClient
   });
 };
 
-export const useDeleteClient = (): UseMutationResult<void, Error, number> => {
+export const useDeleteClient = (): UseMutationResult<void, Error, string> => {
   const queryClient = useQueryClient();
   const { refreshSession } = useAuthActions();
 

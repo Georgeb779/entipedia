@@ -1,5 +1,6 @@
 import { defineHandler } from "nitro/h3";
 import { HTTPError, readBody } from "h3";
+import { isString, isEmpty, trim } from "lodash";
 
 import { getDb, projects } from "db";
 import type { NewProject } from "db/schema";
@@ -24,22 +25,22 @@ export default defineHandler(async (event) => {
   }
 
   const payload = await readBody<CreateProjectPayload>(event);
-  const name = payload?.name?.trim();
+  const name = isString(payload?.name) ? trim(payload.name) : undefined;
 
-  if (!name) {
+  if (isEmpty(name)) {
     throw new HTTPError("Project name is required.", { statusCode: 400 });
   }
 
-  if (name.length > 255) {
+  if (name && name.length > 255) {
     throw new HTTPError("Project name must be 255 characters or fewer.", { statusCode: 400 });
   }
 
-  const rawDesc = typeof payload?.description === "string" ? payload.description.trim() : null;
-  const description = rawDesc ? rawDesc : null;
+  const rawDesc = isString(payload?.description) ? trim(payload.description) : null;
+  const description = isEmpty(rawDesc) ? null : rawDesc;
 
   let status: ProjectStatus | undefined;
 
-  if (typeof payload?.status === "string") {
+  if (isString(payload?.status)) {
     const statusValue = payload.status as ProjectStatus;
 
     if (!allowedStatuses.includes(statusValue)) {
@@ -53,7 +54,7 @@ export default defineHandler(async (event) => {
 
   let priority: ProjectPriority | undefined;
 
-  if (typeof payload?.priority === "string") {
+  if (isString(payload?.priority)) {
     const priorityValue = payload.priority as ProjectPriority;
 
     if (!allowedPriorities.includes(priorityValue)) {
@@ -71,7 +72,7 @@ export default defineHandler(async (event) => {
     const insertValues: Partial<NewProject> & {
       name: string;
       description: string | null;
-      userId: number;
+      userId: string;
     } = {
       name,
       description,

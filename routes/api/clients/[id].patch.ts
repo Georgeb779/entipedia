@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb, clients, type NewClient } from "db";
 import type { AuthUser } from "@/types";
 import { toIsoString } from "../../_utils/dates.ts";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 type UpdateClientPayload = {
   name?: string;
@@ -22,9 +23,9 @@ export default defineHandler(async (event) => {
   }
 
   const idParam = getRouterParam(event, "id");
-  const clientId = Number.parseInt(idParam ?? "", 10);
+  const clientId = idParam;
 
-  if (!Number.isInteger(clientId) || clientId <= 0) {
+  if (!isValidUUID(clientId)) {
     throw new HTTPError("Invalid client id.", { statusCode: 400 });
   }
 

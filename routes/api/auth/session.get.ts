@@ -9,7 +9,7 @@ const toIsoString = (value: Date | string) =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 
 export default defineHandler(async (event) => {
-  const session = await getSession<{ userId?: number }>(event);
+  const session = await getSession<{ userId?: string }>(event);
 
   if (!session.data.userId) {
     throw new HTTPError("Not authenticated.", { statusCode: 401 });

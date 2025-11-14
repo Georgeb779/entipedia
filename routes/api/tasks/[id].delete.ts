@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { getDb, tasks } from "db";
 import type { AuthUser } from "@/types";
+import { isValidUUID } from "../../_utils/uuid.ts";
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -13,9 +14,9 @@ export default defineHandler(async (event) => {
   }
 
   const idParam = getRouterParam(event, "id");
-  const taskId = Number.parseInt(idParam ?? "", 10);
+  const taskId = idParam;
 
-  if (Number.isNaN(taskId)) {
+  if (!isValidUUID(taskId)) {
     throw new HTTPError("Invalid task id.", { statusCode: 400 });
   }
 
