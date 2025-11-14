@@ -3,8 +3,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useSearchParams } from "react-router";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Circle,
+  GripVertical,
+  MoreHorizontal,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { Button, KanbanBoard, Layout, ProtectedRoute } from "@/components";
+import type { CardRenderProps } from "@/components/kanban-board";
 import {
   Badge,
   Dialog,
@@ -21,6 +31,10 @@ import {
   FormMessage,
   Input,
   Label,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -56,7 +70,13 @@ import {
   useUpdateTaskStatus,
 } from "@/hooks";
 import type { Project, Task, TaskFilters, TaskFormValues, TaskPriority, TaskStatus } from "@/types";
-import { cn, formatDateForInput, formatTaskDate } from "@/utils";
+import {
+  cn,
+  formatDateForInput,
+  formatTaskDate,
+  formatTaskDateTime,
+  resolveStatusValue,
+} from "@/utils";
 
 const taskSchema = z.object({
   title: z
@@ -126,6 +146,84 @@ const mapSchemaToTask = (values: TaskFormSchema): TaskFormValues => ({
   projectId:
     values.projectId && values.projectId !== "none" ? Number.parseInt(values.projectId, 10) : null,
 });
+
+const TASK_BOARD_STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done"];
+
+const TASK_BOARD_STATUS_TITLES: Record<TaskStatus, string> = {
+  todo: "Por Hacer",
+  in_progress: "En Progreso",
+  done: "Completado",
+};
+
+const resolveTaskBoardStatus = (value: unknown): TaskStatus | null =>
+  resolveStatusValue<TaskStatus>(value, TASK_BOARD_STATUSES);
+
+const BOARD_STATUS_DISPLAY: Record<
+  TaskStatus,
+  { Icon: LucideIcon; iconClass: string; badgeClass: string; iconWrapperClass: string }
+> = {
+  todo: {
+    Icon: Circle,
+    iconClass: "text-neutral-400",
+    badgeClass: "bg-neutral-100 text-neutral-700",
+    iconWrapperClass: "bg-neutral-100",
+  },
+  in_progress: {
+    Icon: Clock,
+    iconClass: "text-yellow-600",
+    badgeClass: "bg-yellow-100 text-yellow-700",
+    iconWrapperClass: "bg-yellow-50",
+  },
+  done: {
+    Icon: CheckCircle2,
+    iconClass: "text-green-600",
+    badgeClass: "bg-green-100 text-green-700",
+    iconWrapperClass: "bg-green-50",
+  },
+};
+
+const BOARD_PRIORITY_BADGE_STYLES: Record<TaskPriority, string> = {
+  high: "bg-red-100 text-red-700",
+  medium: "bg-amber-100 text-amber-700",
+  low: "bg-neutral-200 text-neutral-700",
+};
+
+const BOARD_PRIORITY_FALLBACK_CLASS = "bg-neutral-100 text-neutral-600";
+const TASK_PROJECT_BADGE_CLASS = "bg-blue-100 text-blue-700";
+const TASK_PROJECT_BADGE_FALLBACK_CLASS = "bg-neutral-200 text-neutral-700";
+const TASK_PROJECT_NAME_FALLBACK = "Proyecto sin título";
+
+const getTaskDueDateInfo = (value: Task["dueDate"]) => {
+  if (!value) {
+    return { label: "Sin fecha", toneClass: "text-neutral-500" };
+  }
+
+  const dueDate = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return { label: "Sin fecha", toneClass: "text-neutral-500" };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const normalizedDueDate = new Date(dueDate);
+  normalizedDueDate.setHours(0, 0, 0, 0);
+
+  const diff = normalizedDueDate.getTime() - today.getTime();
+  const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+  const formatted = formatTaskDate(dueDate);
+
+  if (diff < 0) {
+    return { label: formatted, toneClass: "text-red-600" };
+  }
+
+  if (diff <= threeDaysInMs) {
+    return { label: formatted, toneClass: "text-yellow-600" };
+  }
+
+  return { label: formatted, toneClass: "text-neutral-700" };
+};
 
 type TaskViewMode = "table" | "board";
 
@@ -199,12 +297,15 @@ function TasksPage() {
     editForm.clearErrors();
   };
 
-  const handleEditOpen = (task: Task) => {
-    setTaskBeingEdited(task);
-    editForm.reset(toSchemaValues(task));
-    editForm.clearErrors();
-    setIsEditModalOpen(true);
-  };
+  const handleEditOpen = useCallback(
+    (task: Task) => {
+      setTaskBeingEdited(task);
+      editForm.reset(toSchemaValues(task));
+      editForm.clearErrors();
+      setIsEditModalOpen(true);
+    },
+    [editForm],
+  );
 
   const handleEditOpenChange = (open: boolean) => {
     if (!open) {
@@ -235,11 +336,11 @@ function TasksPage() {
     }
   };
 
-  const handleDeleteTask = async (task: Task) => {
+  const handleDeleteTask = useCallback((task: Task) => {
     setTaskBeingDeleted(task);
     setDeleteError(null);
     setIsDeleteModalOpen(true);
-  };
+  }, []);
 
   const handleDeleteOpenChange = (open: boolean) => {
     if (!open) {
@@ -315,6 +416,35 @@ function TasksPage() {
 
     return map;
   }, [projects]);
+
+  const getTaskTitle = useCallback((task: Task) => task.title, []);
+
+  const renderTaskBoardCard = useCallback(
+    (props: CardRenderProps<Task, TaskStatus>) => {
+      const projectName =
+        props.item.projectId !== null ? (projectNameMap.get(props.item.projectId) ?? null) : null;
+
+      return (
+        <TaskBoardCard
+          {...props}
+          projectName={projectName}
+          onEditTask={handleEditOpen}
+          onDeleteTask={handleDeleteTask}
+        />
+      );
+    },
+    [handleDeleteTask, handleEditOpen, projectNameMap],
+  );
+
+  const renderTaskBoardPreview = useCallback(
+    (task: Task) => {
+      const projectName =
+        task.projectId !== null ? (projectNameMap.get(task.projectId) ?? null) : null;
+
+      return <TaskBoardCardPreview task={task} projectName={projectName} />;
+    },
+    [projectNameMap],
+  );
 
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const [showLeftIndicator, setShowLeftIndicator] = useState(false);
@@ -704,12 +834,16 @@ function TasksPage() {
                     </div>
                   ) : (
                     <KanbanBoard
-                      tasks={activeTasks}
-                      onTaskStatusChange={handleTaskStatusChange}
+                      items={activeTasks}
+                      statuses={TASK_BOARD_STATUSES}
+                      statusTitles={TASK_BOARD_STATUS_TITLES}
+                      emptyColumnMessage="No hay tareas en esta columna"
+                      resolveStatus={resolveTaskBoardStatus}
+                      onStatusChange={handleTaskStatusChange}
+                      getItemTitle={getTaskTitle}
+                      renderCard={renderTaskBoardCard}
+                      renderPreview={renderTaskBoardPreview}
                       isUpdating={updateTaskStatus.isPending}
-                      onEditTask={handleEditOpen}
-                      onDeleteTask={handleDeleteTask}
-                      projectNames={projectNameMap}
                     />
                   )}
                 </section>
@@ -1074,5 +1208,242 @@ function TasksPage() {
     </ProtectedRoute>
   );
 }
+
+type TaskBoardCardLayoutProps = {
+  task: Task;
+  projectName: string | null;
+  isActive: boolean;
+  isDragging: boolean;
+  showDragHandle: boolean;
+  containerProps: CardRenderProps<Task, TaskStatus>["containerProps"];
+  dragHandleProps: CardRenderProps<Task, TaskStatus>["dragHandleProps"];
+  onMoveStatus?: (newStatus: TaskStatus) => void;
+  onEditTask?: () => void;
+  onDeleteTask?: () => void;
+  hideActions?: boolean;
+};
+
+type TaskBoardCardProps = CardRenderProps<Task, TaskStatus> & {
+  projectName: string | null;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
+};
+
+const TaskBoardCard = ({
+  item,
+  isActive,
+  isDragging,
+  showDragHandle,
+  containerProps,
+  dragHandleProps,
+  onMoveStatus,
+  projectName,
+  onEditTask,
+  onDeleteTask,
+}: TaskBoardCardProps) => (
+  <TaskBoardCardLayout
+    task={item}
+    projectName={projectName}
+    isActive={isActive}
+    isDragging={isDragging}
+    showDragHandle={showDragHandle}
+    containerProps={containerProps}
+    dragHandleProps={dragHandleProps}
+    onMoveStatus={onMoveStatus}
+    onEditTask={onEditTask ? () => onEditTask(item) : undefined}
+    onDeleteTask={onDeleteTask ? () => onDeleteTask(item) : undefined}
+  />
+);
+
+const TaskBoardCardLayout = ({
+  task,
+  projectName,
+  isActive,
+  isDragging,
+  showDragHandle,
+  containerProps,
+  dragHandleProps,
+  onMoveStatus,
+  onEditTask,
+  onDeleteTask,
+  hideActions = false,
+}: TaskBoardCardLayoutProps) => {
+  const {
+    ref: containerRef,
+    style,
+    className: containerClassName,
+    ...restContainerProps
+  } = containerProps;
+
+  const statusDisplay = BOARD_STATUS_DISPLAY[task.status];
+  const StatusIcon = statusDisplay.Icon;
+  const priority = task.priority && isTaskPriority(task.priority) ? task.priority : null;
+  const description = task.description?.trim().length
+    ? task.description
+    : "Sin descripción disponible.";
+  const dueDateInfo = getTaskDueDateInfo(task.dueDate);
+  const hasProject = task.projectId !== null;
+  const resolvedProjectName = hasProject
+    ? (projectName ?? TASK_PROJECT_NAME_FALLBACK)
+    : "Sin proyecto";
+  const projectBadgeClass = hasProject
+    ? TASK_PROJECT_BADGE_CLASS
+    : TASK_PROJECT_BADGE_FALLBACK_CLASS;
+  const hasActions = !hideActions && (onMoveStatus || onEditTask || onDeleteTask);
+
+  return (
+    <article
+      ref={containerRef}
+      style={style}
+      {...restContainerProps}
+      className={cn(
+        "group relative flex max-w-full flex-col gap-2 rounded-xl border border-black/5 bg-white p-4 text-neutral-900 shadow-sm transition-transform duration-150 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none sm:max-w-[360px] md:p-5",
+        isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
+        isDragging ? "z-10 scale-[1.02] shadow-lg" : "",
+        containerClassName,
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3">
+          {showDragHandle ? (
+            <button
+              type="button"
+              aria-label="Arrastrar tarea"
+              className="flex h-6 w-6 items-center justify-center rounded-xl"
+              {...dragHandleProps}
+            >
+              <span className="sr-only">Arrastrar tarea</span>
+              <GripVertical className="h-5 w-5 text-neutral-400" aria-hidden="true" />
+            </button>
+          ) : null}
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex h-4 w-4 items-center justify-center rounded-full",
+                statusDisplay.iconWrapperClass,
+              )}
+            >
+              <StatusIcon className={cn("h-4 w-4", statusDisplay.iconClass)} aria-hidden="true" />
+            </span>
+            <span className="line-clamp-1 text-base font-semibold md:text-lg">{task.title}</span>
+          </div>
+        </div>
+        {hasActions ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-neutral-400 hover:text-[#1C2431]"
+                aria-label={`Acciones para la tarea ${task.title}`}
+                onPointerDown={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-36">
+              {onMoveStatus ? (
+                <>
+                  {TASK_BOARD_STATUSES.map((status) => (
+                    <DropdownMenuItem key={status} onSelect={() => onMoveStatus(status)}>
+                      {`Mover a: ${TASK_BOARD_STATUS_TITLES[status]}`}
+                    </DropdownMenuItem>
+                  ))}
+                  <div className="my-1 h-px bg-neutral-200" />
+                </>
+              ) : null}
+              {onEditTask ? (
+                <DropdownMenuItem onSelect={() => onEditTask()}>Editar tarea</DropdownMenuItem>
+              ) : null}
+              {onDeleteTask ? (
+                <DropdownMenuItem className="text-destructive" onSelect={() => onDeleteTask()}>
+                  Eliminar tarea
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span
+          className={cn(
+            "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+            statusDisplay.badgeClass,
+          )}
+        >
+          {TASK_STATUS_LABELS[task.status]}
+        </span>
+        {priority ? (
+          <span
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+              BOARD_PRIORITY_BADGE_STYLES[priority],
+            )}
+          >
+            {TASK_PRIORITY_LABELS[priority]}
+          </span>
+        ) : (
+          <span
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+              BOARD_PRIORITY_FALLBACK_CLASS,
+            )}
+          >
+            Sin prioridad
+          </span>
+        )}
+        <span className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-medium", projectBadgeClass)}>
+          {resolvedProjectName}
+        </span>
+      </div>
+
+      <p className="line-clamp-2 text-[13px] text-neutral-600">{description}</p>
+
+      <div className="flex flex-col gap-1.5 border-t border-black/5 pt-2 text-xs text-neutral-600">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <CalendarDays className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
+          <span className="font-medium text-neutral-700">Vence:</span>
+          <span className={cn("font-medium", dueDateInfo.toneClass)}>{dueDateInfo.label}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
+          <span className="font-medium text-neutral-700">Actualizada:</span>
+          <span>{formatTaskDateTime(task.updatedAt)}</span>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const TaskBoardCardPreview = ({
+  task,
+  projectName,
+}: {
+  task: Task;
+  projectName: string | null;
+}) => {
+  const inertRef = () => {};
+  const previewContainerProps = {
+    ref: inertRef,
+    style: undefined,
+    className: "pointer-events-none scale-105 shadow-[0_20px_60px_rgba(0,0,0,0.3)] select-none",
+    "data-status": task.status,
+  } as CardRenderProps<Task, TaskStatus>["containerProps"];
+
+  return (
+    <TaskBoardCardLayout
+      task={task}
+      projectName={projectName}
+      isActive
+      isDragging={false}
+      showDragHandle={false}
+      containerProps={previewContainerProps}
+      dragHandleProps={{}}
+      hideActions
+    />
+  );
+};
 
 export default TasksPage;
