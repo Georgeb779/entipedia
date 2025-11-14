@@ -1,7 +1,7 @@
 import { defineHandler, getQuery } from "nitro/h3";
 import { HTTPError } from "h3";
 import { and, desc, eq } from "drizzle-orm";
-import { isString, isEmpty } from "lodash";
+import { isString, isEmpty } from "lodash-es";
 
 import { getDb, files } from "db";
 import type { AuthUser } from "@/types";

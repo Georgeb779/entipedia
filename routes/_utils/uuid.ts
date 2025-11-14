@@ -1,4 +1,4 @@
-import { isString, isEmpty } from "lodash";
+import { isString, isEmpty } from "lodash-es";
 
 /**
  * UUID validation utility

@@ -1,6 +1,6 @@
 import { defineHandler } from "nitro/h3";
 import { HTTPError, readBody } from "h3";
-import { isString, isEmpty, trim } from "lodash";
+import { isString, isEmpty, trim } from "lodash-es";
 
 import { getDb, tasks } from "db";
 import type { AuthUser, TaskPriority, TaskStatus } from "@/types";

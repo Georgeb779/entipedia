@@ -1,6 +1,6 @@
 import { defineHandler } from "nitro/h3";
 import { HTTPError, readBody } from "h3";
-import { isString, isEmpty, trim } from "lodash";
+import { isString, isEmpty, trim } from "lodash-es";
 
 import { getDb, projects } from "db";
 import type { NewProject } from "db/schema";
@@ -31,7 +31,10 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Project name is required.", { status: 400 });
   }
 
-  if (name && name.length > 255) {
+  // At this point, name is guaranteed to be a non-empty string
+  const projectName = name!;
+
+  if (projectName.length > 255) {
     throw new HTTPError("Project name must be 255 characters or fewer.", { status: 400 });
   }
 
@@ -74,7 +77,7 @@ export default defineHandler(async (event) => {
       description: string | null;
       userId: string;
     } = {
-      name,
+      name: projectName,
       description,
       userId: context.user.id,
     };

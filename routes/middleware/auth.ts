@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getDb, users } from "db";
 import type { AuthUser } from "@/types";
 import { getSession } from "../utils/session";
+import { isValidUUID } from "../_utils/uuid";
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -13,7 +14,7 @@ export default defineHandler(async (event) => {
   let session;
 
   try {
-    session = await getSession<{ userId?: string }>(event);
+    session = await getSession<{ userId?: string | number }>(event);
   } catch (error) {
     if (error instanceof HTTPError && error.status === 500) {
       console.warn("SESSION_SECRET is not configured; skipping authentication middleware.");
@@ -27,9 +28,15 @@ export default defineHandler(async (event) => {
     return;
   }
 
+  const userId = String(session.data.userId);
+  if (!isValidUUID(userId)) {
+    await session.clear();
+    return;
+  }
+
   const db = getDb();
 
-  const [user] = await db.select().from(users).where(eq(users.id, session.data.userId)).limit(1);
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
   if (!user) {
     await session.clear();
