@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Entipedia">
+  <defs>
+    <linearGradient id="entipedia-favicon-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FADF63" />
+      <stop offset="100%" stop-color="#F6C90E" />
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <circle cx="32" cy="32" r="30" fill="url(#entipedia-favicon-gradient)" stroke="#F1B300" stroke-width="2" />
+    <path fill="#1C2431" d="M23 18h18v6H29v6h10v6H29v6h12v6H23z" />
+  </g>
+</svg>
