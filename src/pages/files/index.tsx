@@ -495,12 +495,14 @@ export default function FilesPage() {
         </header>
 
         <div className="text-muted-foreground space-y-2 text-sm">
-          <p>
+          <p className="line-clamp-2">
             {file.description && file.description.length > 0 ? file.description : "Sin descripción"}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={cn("uppercase", badgeClass)}>{categoryLabel}</Badge>
-            <span className="text-xs text-[#1C2431]">{projectName}</span>
+            <span className="truncate text-xs text-[#1C2431]" title={projectName}>
+              {projectName}
+            </span>
           </div>
         </div>
 
@@ -587,7 +589,7 @@ export default function FilesPage() {
                   <SelectContent>
                     <SelectItem value="all">Todos los proyectos</SelectItem>
                     {projectOptions.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
+                      <SelectItem key={project.id} value={project.id} title={project.name}>
                         {project.name}
                       </SelectItem>
                     ))}
@@ -766,7 +768,11 @@ export default function FilesPage() {
                                   {categoryLabel}
                                 </Badge>
                               </TableCell>
-                              <TableCell>{projectName}</TableCell>
+                              <TableCell className="max-w-[150px]">
+                                <div className="truncate" title={projectName}>
+                                  <span className="text-sm">{projectName}</span>
+                                </div>
+                              </TableCell>
                               <TableCell>{formatFileSize(file.size)}</TableCell>
                               <TableCell>{formatFileDate(file.createdAt)}</TableCell>
                               <TableCell className="text-right">
@@ -889,7 +895,7 @@ export default function FilesPage() {
                         <SelectContent>
                           <SelectItem value="all">Sin proyecto</SelectItem>
                           {projectOptions.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
+                            <SelectItem key={project.id} value={project.id} title={project.name}>
                               {project.name}
                             </SelectItem>
                           ))}
@@ -989,7 +995,7 @@ export default function FilesPage() {
                         <SelectContent>
                           <SelectItem value="all">Sin proyecto</SelectItem>
                           {projectOptions.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
+                            <SelectItem key={project.id} value={project.id} title={project.name}>
                               {project.name}
                             </SelectItem>
                           ))}

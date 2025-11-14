@@ -162,7 +162,7 @@ export function TaskFormModal({
                     <SelectContent>
                       <SelectItem value="none">Sin proyecto</SelectItem>
                       {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
+                        <SelectItem key={project.id} value={project.id} title={project.name}>
                           {project.name}
                         </SelectItem>
                       ))}
@@ -238,8 +238,10 @@ export function DeleteTaskDialog({
 
         <p className="text-sm text-[#1C2431]">
           ¿Estás seguro de que deseas eliminar la tarea{" "}
-          <span className="font-semibold">{taskTitle ?? "seleccionada"}</span>? Esta acción no se
-          puede deshacer.
+          <span className="block truncate font-semibold" title={taskTitle ?? "seleccionada"}>
+            {taskTitle ?? "seleccionada"}
+          </span>
+          ? Esta acción no se puede deshacer.
         </p>
 
         {error ? <p className="text-destructive text-sm">{error}</p> : null}

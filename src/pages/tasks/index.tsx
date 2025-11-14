@@ -574,7 +574,7 @@ function TasksPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
+                        <SelectItem key={project.id} value={project.id} title={project.name}>
                           {project.name}
                         </SelectItem>
                       ))}

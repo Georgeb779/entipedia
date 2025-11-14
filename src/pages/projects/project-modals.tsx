@@ -214,7 +214,14 @@ export function DeleteProjectDialog({
         <DialogHeader>
           <DialogTitle>Eliminar proyecto</DialogTitle>
           <DialogDescription>
-            ¿Estás seguro de que deseas eliminar el proyecto {projectName ? `"${projectName}"` : ""}
+            ¿Estás seguro de que deseas eliminar el proyecto{" "}
+            {projectName ? (
+              <span className="inline-block max-w-full truncate" title={projectName}>
+                "{projectName}"
+              </span>
+            ) : (
+              ""
+            )}
             ? Esta acción no se puede deshacer.
           </DialogDescription>
         </DialogHeader>
