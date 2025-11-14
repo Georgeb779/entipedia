@@ -26,12 +26,13 @@ const DropdownMenuSubTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "text-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors outline-none select-none",
+      "max-w-full min-w-0",
       inset && "pl-8",
       className,
     )}
     {...props}
   >
-    {children}
+    <span className="truncate text-ellipsis whitespace-nowrap">{children}</span>
     <ChevronRight className="ml-auto h-4 w-4" />
   </DropdownMenuPrimitive.SubTrigger>
 ));
@@ -80,6 +81,7 @@ const DropdownMenuItem = React.forwardRef<
     ref={ref}
     className={cn(
       "text-foreground focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50",
+      "max-w-full min-w-0",
       inset && "pl-8",
       className,
     )}

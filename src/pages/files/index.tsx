@@ -216,8 +216,8 @@ export default function FilesPage() {
     [],
   );
 
-  type EditFormInput = z.input<ReturnType<typeof editSchema>>;
-  type EditFormSchema = z.output<ReturnType<typeof editSchema>>;
+  type EditFormInput = z.input<typeof editSchema>;
+  type EditFormSchema = z.output<typeof editSchema>;
 
   const editForm = useForm<EditFormInput, undefined, EditFormSchema>({
     resolver: zodResolver(editSchema),

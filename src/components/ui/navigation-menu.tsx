@@ -45,10 +45,14 @@ const NavigationMenuTrigger = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <NavigationMenuPrimitive.Trigger
     ref={ref}
-    className={cn(baseTriggerClasses, "group flex flex-wrap items-center gap-2", className)}
+    className={cn(
+      baseTriggerClasses,
+      "group flex max-w-full min-w-0 flex-wrap items-center gap-2",
+      className,
+    )}
     {...props}
   >
-    {children}
+    <span className="truncate text-ellipsis whitespace-nowrap">{children}</span>
     <ChevronDown
       className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-180"
       aria-hidden="true"

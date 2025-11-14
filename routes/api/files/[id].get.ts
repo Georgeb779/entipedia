@@ -51,7 +51,13 @@ export default defineHandler(async (event) => {
       throw new HTTPError("Failed to retrieve file from cloud storage.", { status: 500 });
     }
 
-    return sendStream(event, body as unknown as Readable);
+    // Convert Node.js Readable to ReadableStream if needed
+    if (body instanceof Readable) {
+      return sendStream(event, body);
+    }
+
+    // If it's already a ReadableStream, use it directly
+    return sendStream(event, body as ReadableStream);
   } catch (error) {
     const name = (error as { name?: string } | null)?.name;
     const status = (error as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata

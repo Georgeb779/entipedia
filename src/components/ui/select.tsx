@@ -6,7 +6,15 @@ import { cn } from "@/utils";
 
 const Select = SelectPrimitive.Root;
 const SelectGroup = SelectPrimitive.Group;
-const SelectValue = SelectPrimitive.Value;
+const SelectValue = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>) => {
+  const { className, ...rest } = props;
+  return (
+    <SelectPrimitive.Value
+      className={cn("max-w-full truncate text-ellipsis whitespace-nowrap", className)}
+      {...rest}
+    />
+  );
+};
 
 const SelectTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -15,7 +23,8 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "border-input bg-background/95 ring-offset-background text-foreground flex h-11 w-full items-center justify-between rounded-md border px-3 py-2 text-sm",
+      "border-input bg-background/95 ring-offset-background text-foreground flex h-11 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm",
+      "max-w-full min-w-0",
       "placeholder:text-muted-foreground focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
