@@ -164,3 +164,41 @@ export const useDownloadFile = (): UseMutationResult<void, Error, DownloadFileVa
     },
   });
 };
+
+type UpdateFileVariables = {
+  fileId: string;
+  data: {
+    description: string | null;
+    projectId: string | null;
+  };
+};
+
+export const useUpdateFile = (): UseMutationResult<StoredFile, Error, UpdateFileVariables> => {
+  const queryClient = useQueryClient();
+  const { refreshSession } = useAuthActions();
+
+  return useMutation({
+    mutationFn: async ({ fileId, data }) => {
+      const response = await fetch(`/api/files/${fileId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      await ensureOk(response, "Failed to update file.", () => {
+        void refreshSession();
+      });
+
+      const payload = (await response.json()) as { file: ApiFile };
+      const mapped = mapApiFile(payload.file);
+
+      void queryClient.invalidateQueries({ queryKey: FILE_KEYS.lists() });
+
+      return mapped;
+    },
+  });
+};

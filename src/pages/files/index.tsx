@@ -44,7 +44,14 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ALLOWED_FILE_TYPES, FILE_CATEGORY_LABELS, MAX_FILE_SIZE } from "@/constants";
-import { useDeleteFile, useDownloadFile, useFiles, useProjects, useUploadFile } from "@/hooks";
+import {
+  useDeleteFile,
+  useDownloadFile,
+  useFiles,
+  useProjects,
+  useUploadFile,
+  useUpdateFile,
+} from "@/hooks";
 import type { FileCategory, FileFilters, ProjectWithTaskCount, StoredFile } from "@/types";
 import {
   cn,
@@ -73,6 +80,11 @@ type UploadFormSchema = z.output<typeof uploadSchema>;
 type ProjectLookup = Map<string, ProjectWithTaskCount>;
 
 type FileDialogState = {
+  isOpen: boolean;
+  target: StoredFile | null;
+};
+
+type EditFileDialogState = {
   isOpen: boolean;
   target: StoredFile | null;
 };
@@ -106,6 +118,7 @@ export default function FilesPage() {
   const [filters, setFilters] = useState<FileFilters>({ projectId: "all", mimeType: "all" });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [deleteState, setDeleteState] = useState<FileDialogState>({ isOpen: false, target: null });
+  const [editState, setEditState] = useState<EditFileDialogState>({ isOpen: false, target: null });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -126,6 +139,7 @@ export default function FilesPage() {
   const uploadFile = useUploadFile();
   const deleteFile = useDeleteFile();
   const downloadFile = useDownloadFile();
+  const updateFile = useUpdateFile();
   const projectsQuery = useProjects({ sortBy: "name", sortOrder: "asc" });
 
   const projectMap: ProjectLookup = useMemo(() => {
@@ -178,6 +192,70 @@ export default function FilesPage() {
       name: project.name,
     }));
   }, [projectsQuery.data]);
+
+  const editSchema = useMemo(
+    () =>
+      z.object({
+        description: z
+          .string()
+          .trim()
+          .max(2000, "La descripción debe tener 2000 caracteres o menos.")
+          .default(""),
+        projectId: z
+          .union([
+            z.literal("all"),
+            z
+              .string()
+              .regex(
+                /^(?:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i,
+                "Selección de proyecto inválida.",
+              ),
+          ])
+          .default("all"),
+      }),
+    [],
+  );
+
+  type EditFormInput = z.input<ReturnType<typeof editSchema>>;
+  type EditFormSchema = z.output<ReturnType<typeof editSchema>>;
+
+  const editForm = useForm<EditFormInput, undefined, EditFormSchema>({
+    resolver: zodResolver(editSchema),
+    defaultValues: { description: "", projectId: "all" },
+  });
+
+  const handleEditOpen = (file: StoredFile) => {
+    setActionError(null);
+    setEditState({ isOpen: true, target: file });
+    editForm.reset({ description: file.description ?? "", projectId: file.projectId ?? "all" });
+  };
+
+  const handleEditOpenChange = (open: boolean) => {
+    if (!open) {
+      setEditState({ isOpen: false, target: null });
+      editForm.reset({ description: "", projectId: "all" });
+    }
+  };
+
+  const handleEditSubmit = editForm.handleSubmit(async (values) => {
+    if (!editState.target) {
+      return;
+    }
+
+    setActionError(null);
+    try {
+      await updateFile.mutateAsync({
+        fileId: editState.target.id,
+        data: {
+          description: values.description.trim().length > 0 ? values.description.trim() : null,
+          projectId: values.projectId === "all" ? null : values.projectId,
+        },
+      });
+      setEditState({ isOpen: false, target: null });
+    } catch (e) {
+      setActionError((e as Error).message || "Error al actualizar el archivo.");
+    }
+  });
 
   const uploadRootError = uploadForm.formState.errors.root?.message ?? null;
 
@@ -453,6 +531,15 @@ export default function FilesPage() {
           </Button>
           <Button
             type="button"
+            variant="secondary"
+            className="w-full justify-center"
+            onClick={() => handleEditOpen(file)}
+            disabled={updateFile.isPending}
+          >
+            {updateFile.isPending && editState.target?.id === file.id ? "Guardando..." : "Editar"}
+          </Button>
+          <Button
+            type="button"
             variant="destructive"
             className="w-full justify-center"
             onClick={() => onDelete(file)}
@@ -695,6 +782,17 @@ export default function FilesPage() {
                                   </Button>
                                   <Button
                                     type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handleEditOpen(file)}
+                                    disabled={updateFile.isPending}
+                                  >
+                                    {updateFile.isPending && editState.target?.id === file.id
+                                      ? "Guardando..."
+                                      : "Editar"}
+                                  </Button>
+                                  <Button
+                                    type="button"
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => openDeleteDialog(file)}
@@ -865,6 +963,73 @@ export default function FilesPage() {
                 {deleteFile.isPending ? "Eliminando..." : "Eliminar"}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editState.isOpen} onOpenChange={handleEditOpenChange}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Archivo</DialogTitle>
+              <DialogDescription>Actualiza el proyecto y la descripción.</DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Proyecto</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar proyecto" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="all">Sin proyecto</SelectItem>
+                          {projectOptions.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Contexto opcional para este archivo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {actionError && editState.isOpen ? (
+                  <p className="text-destructive text-sm">{actionError}</p>
+                ) : null}
+
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                      Cancelar
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit" disabled={updateFile.isPending}>
+                    {updateFile.isPending ? "Guardando..." : "Guardar cambios"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </Layout>
