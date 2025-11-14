@@ -17,6 +17,7 @@ Entipedia es un MVP funcional que permite:
 - Node.js 20+
 - PostgreSQL 16
 - npm 9+
+- Cuenta de Cloudflare (R2) y un bucket configurado
 
 ## Instalación rápida
 
@@ -33,6 +34,12 @@ Entipedia es un MVP funcional que permite:
    ```env
    DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/entipedia
    SESSION_SECRET=tu-clave-secreta-de-al-menos-32-caracteres
+
+   # Cloudflare R2 (obligatorio para subida/descarga de archivos)
+   R2_ACCOUNT_ID=xxxxxxxxxxxxxxxxxxxx
+   R2_ACCESS_KEY_ID=xxxxxxxxxxxxxxxxxxxx
+   R2_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   R2_BUCKET_NAME=entipedia
    ```
 
 3. **Prepara la base de datos:**
@@ -99,7 +106,7 @@ entipedia-fe/
 ## Tecnologías principales
 
 - **Frontend**: React 19, Vite 7, Tailwind CSS 4, shadcn/ui
-- **Backend**: Nitro 3 (H3), Drizzle ORM
+- **Backend**: Nitro 3 (H3), Drizzle ORM, Cloudflare R2 (AWS SDK v3)
 - **Base de datos**: PostgreSQL 16
 - **Autenticación**: Sesiones con cookies HTTP-only
 
@@ -119,6 +126,56 @@ entipedia-fe/
 
 - En desarrollo, usa `npm run db:push` para sincronizar
 - En producción, usa `npm run db:migrate`
+
+**Errores al subir/descargar archivos (R2):**
+
+- Verifica que todas las variables `R2_*` existan y sean correctas
+- Asegúrate de que el bucket existe y las credenciales tienen permisos de lectura/escritura
+- El endpoint usado es `https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com` con `region=auto`
+
+## Archivos: almacenamiento en Cloudflare R2
+
+La gestión de archivos usa Cloudflare R2 a través del SDK de AWS (S3 compatible). El backend expone endpoints autenticados y valida permisos por usuario.
+
+### Variables de entorno necesarias
+
+- `R2_ACCOUNT_ID`: ID de cuenta de Cloudflare
+- `R2_ACCESS_KEY_ID`: Access Key de R2
+- `R2_SECRET_ACCESS_KEY`: Secret Key de R2
+- `R2_BUCKET_NAME`: Nombre del bucket en R2
+
+Si falta cualquiera de estas variables, el servidor fallará al iniciar.
+
+### Límites y formatos
+
+- Tamaño máximo por archivo: definido en `MAX_FILE_SIZE` (ver `src/constants`)
+- Tipos permitidos: ver `ALLOWED_FILE_TYPES`
+- Los archivos se asocian opcionalmente a un proyecto y pueden tener descripción
+
+### Endpoints
+
+- `POST /api/files` — Subir un archivo
+  - FormData esperado: `file` (obligatorio), `projectId` (opcional), `description` (opcional)
+  - Respuesta: metadata del archivo almacenado
+
+- `GET /api/files/:id` — Descargar un archivo
+  - Responde como stream con headers `Content-Type`, `Content-Disposition` y `Content-Length`
+
+- `PATCH /api/files/:id` — Actualizar metadatos
+  - Cuerpo JSON: `{ "projectId?": string | "all", "description?": string }`
+  - Permite cambiar proyecto y/o descripción después de la subida
+
+- `DELETE /api/files/:id` — Eliminar un archivo
+
+- `GET /api/storage/health` — Salud de R2 (requiere sesión)
+
+### Flujo en la UI
+
+- En la página de Archivos puedes:
+  - Subir con arrastrar/soltar o selector
+  - Filtrar por proyecto o tipo
+  - Editar proyecto y descripción tras la subida (diálogo “Editar Archivo”)
+  - Descargar o eliminar
 
 ## Despliegue
 
