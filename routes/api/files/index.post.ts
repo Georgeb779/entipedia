@@ -1,13 +1,13 @@
 import { defineHandler } from "nitro/h3";
-import { HTTPError, readFormData } from "h3";
-import { join } from "node:path";
-import { promises as fs } from "node:fs";
+import { HTTPError, readMultipartFormData } from "h3";
 import { Buffer } from "node:buffer";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 import { getDb, files, projects } from "db";
 import type { AuthUser } from "@/types";
 import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
 import { generateUniqueFilename } from "@/utils";
+import { r2Client, R2_BUCKET_NAME } from "../../utils/r2-client";
 import { toIsoString } from "../../_utils/dates.ts";
 import { isValidUUID } from "../../_utils/uuid.ts";
 import { and, eq } from "drizzle-orm";
@@ -19,22 +19,45 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Authentication required.", { status: 401 });
   }
 
-  const form = await readFormData(event);
-  const fileEntry = form.get("file");
-  const descriptionEntry = form.get("description");
+  const parts = await readMultipartFormData(event);
 
-  if (!fileEntry || !(fileEntry instanceof Blob) || !("name" in fileEntry)) {
+  if (!parts || parts.length === 0) {
     throw new HTTPError("Invalid file upload payload.", { status: 400 });
   }
 
-  const file = fileEntry as Blob & { name?: string };
-  const filename = typeof file.name === "string" && file.name.length > 0 ? file.name : "file";
+  let fileEntry: { data: Uint8Array; filename?: string; type?: string; name?: string } | null =
+    null;
+  let descriptionEntry: string | null = null;
+  let projectIdEntry: string | null = null;
 
-  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+  for (const part of parts) {
+    if (part.name === "file" && part.data) {
+      fileEntry = {
+        data: part.data,
+        filename: part.filename,
+        type: part.type,
+        name: part.name,
+      };
+    } else if (part.name === "description" && part.data) {
+      descriptionEntry = new TextDecoder().decode(part.data);
+    } else if (part.name === "projectId" && part.data) {
+      projectIdEntry = new TextDecoder().decode(part.data);
+    }
+  }
+
+  if (!fileEntry || !fileEntry.data) {
+    throw new HTTPError("Invalid file upload payload.", { status: 400 });
+  }
+
+  const filename =
+    fileEntry.filename && fileEntry.filename.length > 0 ? fileEntry.filename : "file";
+  const mimeType = fileEntry.type || "application/octet-stream";
+
+  if (!ALLOWED_FILE_TYPES.includes(mimeType)) {
     throw new HTTPError("File type not allowed.", { status: 400 });
   }
 
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
+  const fileBuffer = Buffer.from(fileEntry.data);
 
   if (fileBuffer.byteLength === 0) {
     throw new HTTPError("Empty files are not allowed.", { status: 400 });
@@ -44,27 +67,19 @@ export default defineHandler(async (event) => {
     throw new HTTPError("File size exceeds limit.", { status: 413 });
   }
 
-  const uploadsDir = join(process.cwd(), "uploads");
   const storedFilename = generateUniqueFilename(filename);
-  const filePath = join(uploadsDir, storedFilename);
-  const relativePath = `uploads/${storedFilename}`;
 
   let projectId: string | null = null;
-  const projectIdEntry = form.get("projectId");
 
-  if (typeof projectIdEntry === "string" && isValidUUID(projectIdEntry)) {
+  if (projectIdEntry && isValidUUID(projectIdEntry)) {
     projectId = projectIdEntry;
   }
 
-  await fs.mkdir(uploadsDir, { recursive: true });
+  // No local directory creation required for cloud storage.
 
   let description: string | null = null;
 
   if (descriptionEntry !== null && descriptionEntry !== undefined) {
-    if (typeof descriptionEntry !== "string") {
-      throw new HTTPError("Description must be a string.", { status: 400 });
-    }
-
     const trimmed = descriptionEntry.trim();
 
     if (trimmed.length > 2000) {
@@ -74,12 +89,7 @@ export default defineHandler(async (event) => {
     description = trimmed.length > 0 ? trimmed : null;
   }
 
-  try {
-    await fs.writeFile(filePath, fileBuffer);
-  } catch (error) {
-    throw new HTTPError("Failed to save file.", { status: 500, cause: error });
-  }
-
+  // Validate project ownership BEFORE uploading to R2 to avoid orphaned objects.
   const db = getDb();
 
   if (projectId) {
@@ -95,14 +105,29 @@ export default defineHandler(async (event) => {
   }
 
   try {
+    const putCommand = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: storedFilename,
+      Body: fileBuffer,
+      ContentType: mimeType,
+      ContentLength: fileBuffer.byteLength,
+    });
+    await r2Client.send(putCommand);
+  } catch (error) {
+    throw new HTTPError("Failed to upload file to cloud storage.", { status: 500, cause: error });
+  }
+
+  try {
     const [newFile] = await db
       .insert(files)
       .values({
         filename,
         storedFilename,
-        mimeType: file.type,
+        mimeType,
         size: fileBuffer.byteLength,
-        path: relativePath,
+        // NOTE: During the R2 migration, `path` temporarily stores the object key.
+        // A later schema update will store the full R2 URL instead.
+        path: storedFilename,
         description,
         userId: context.user.id,
         projectId,
@@ -120,7 +145,11 @@ export default defineHandler(async (event) => {
       },
     };
   } catch (error) {
-    await fs.unlink(filePath).catch(() => undefined);
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: storedFilename,
+    });
+    await r2Client.send(deleteCommand).catch(() => undefined);
     if (error instanceof HTTPError) {
       throw error;
     }

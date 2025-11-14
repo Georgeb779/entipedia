@@ -1,14 +1,13 @@
 import { defineHandler, getRouterParam } from "nitro/h3";
 import { HTTPError, sendStream, setHeader } from "h3";
 import { and, eq } from "drizzle-orm";
-import { createReadStream } from "node:fs";
-import { promises as fs } from "node:fs";
-import { join } from "node:path";
-import { Buffer } from "node:buffer";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import type { Readable } from "node:stream";
 
 import { getDb, files } from "db";
 import type { AuthUser } from "@/types";
 import { isValidUUID } from "../../_utils/uuid.ts";
+import { r2Client, R2_BUCKET_NAME } from "../../utils/r2-client";
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -36,40 +35,36 @@ export default defineHandler(async (event) => {
     throw new HTTPError("File not found or access denied.", { status: 404 });
   }
 
-  const uploadsDir = join(process.cwd(), "uploads");
-  const filePath = join(uploadsDir, file.storedFilename);
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    throw new HTTPError("File not found on disk.", { status: 404 });
-  }
-
   setHeader(event, "Content-Type", file.mimeType);
   setHeader(event, "Content-Disposition", `attachment; filename="${file.filename}"`);
   setHeader(event, "Content-Length", file.size.toString());
 
-  const stream = createReadStream(filePath);
+  try {
+    const getCommand = new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: file.storedFilename,
+    });
+    const result = await r2Client.send(getCommand);
+    const body = result.Body;
 
-  const webStream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      stream.on("data", (chunk: string | Buffer) => {
-        const bufferChunk = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
-        controller.enqueue(
-          new Uint8Array(bufferChunk.buffer, bufferChunk.byteOffset, bufferChunk.byteLength),
-        );
-      });
-      stream.once("end", () => {
-        controller.close();
-      });
-      stream.once("error", (error) => {
-        controller.error(error);
-      });
-    },
-    cancel() {
-      stream.destroy();
-    },
-  });
+    if (!body) {
+      throw new HTTPError("Failed to retrieve file from cloud storage.", { status: 500 });
+    }
 
-  return sendStream(event, webStream);
+    return sendStream(event, body as unknown as Readable);
+  } catch (error) {
+    const name = (error as { name?: string } | null)?.name;
+    const status = (error as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata
+      ?.httpStatusCode;
+    if (name === "NoSuchKey" || name === "NotFound" || status === 404) {
+      throw new HTTPError("File not found in cloud storage.", { status: 404 });
+    }
+    if (error instanceof HTTPError) {
+      throw error;
+    }
+    throw new HTTPError("Failed to download file from cloud storage.", {
+      status: 500,
+      cause: error,
+    });
+  }
 });
