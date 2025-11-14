@@ -65,7 +65,7 @@ export function TaskFormModal({
                 <FormItem>
                   <FormLabel>Título</FormLabel>
                   <FormControl>
-                    <Input placeholder="Título de la tarea" {...field} />
+                    <Input placeholder="Título de la tarea" maxLength={255} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -81,6 +81,7 @@ export function TaskFormModal({
                   <FormControl>
                     <Textarea
                       placeholder="Descripción opcional"
+                      maxLength={2000}
                       value={field.value ?? ""}
                       onChange={(event) => field.onChange(event.target.value)}
                     />

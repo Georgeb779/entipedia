@@ -419,12 +419,24 @@ function TasksPage() {
       return (
         <TableRow key={task.id}>
           <TableCell className="text-foreground max-w-xs text-sm font-medium">
-            {task.title}
+            <div className="truncate" title={task.title}>
+              {task.title}
+            </div>
           </TableCell>
-          <TableCell className="text-muted-foreground text-sm">
-            {task.projectId !== null
-              ? (projects.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
-              : "Sin asignar"}
+          <TableCell className="text-muted-foreground max-w-[200px] text-sm">
+            <div
+              className="truncate"
+              title={
+                task.projectId !== null
+                  ? (projects.find((project) => project.id === task.projectId)?.name ??
+                    "Desconocido")
+                  : "Sin asignar"
+              }
+            >
+              {task.projectId !== null
+                ? (projects.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
+                : "Sin asignar"}
+            </div>
           </TableCell>
           <TableCell>
             <Badge className={cn("text-xs", TASK_STATUS_COLORS[task.status])}>
@@ -474,14 +486,14 @@ function TasksPage() {
         <div className="text-foreground px-0 sm:py-4 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
-              <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <header className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-nowrap">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold">Tareas</h1>
                   <p className="text-muted-foreground text-sm">
                     Gestiona tu trabajo con estatus, prioridades y fechas límite.
                   </p>
                 </div>
-                <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:w-auto lg:flex-nowrap">
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-nowrap">
                   <TabsList className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:gap-0">
                     <TabsTrigger value="board" className="h-10 text-sm sm:w-auto">
                       Tablero
@@ -493,16 +505,16 @@ function TasksPage() {
                   <Button
                     onClick={openCreateModal}
                     variant="secondary"
-                    className="w-full sm:w-auto lg:w-auto"
+                    className="w-full sm:ml-3 sm:w-auto lg:ml-4"
                   >
                     Crear tarea
                   </Button>
                 </div>
               </header>
 
-              <section className="flex flex-col gap-3 rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:gap-4 md:p-5">
-                <div className="w-full sm:max-w-xs">
-                  <Label className="text-muted-foreground mb-2 block text-sm">Estatus</Label>
+              <section className="grid gap-3 rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-4 shadow-sm sm:grid-cols-2 sm:gap-4 md:p-5 lg:grid-cols-3">
+                <div className="flex flex-col gap-2">
+                  <Label className="text-muted-foreground text-sm">Estatus</Label>
                   <Select
                     value={filters.status ?? "all"}
                     onValueChange={(value) =>
@@ -512,7 +524,7 @@ function TasksPage() {
                       }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 w-full">
                       <SelectValue placeholder="Filtrar por estatus" />
                     </SelectTrigger>
                     <SelectContent>
@@ -525,9 +537,8 @@ function TasksPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="w-full sm:max-w-xs">
-                  <Label className="text-muted-foreground mb-2 block text-sm">Prioridad</Label>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-muted-foreground text-sm">Prioridad</Label>
                   <Select
                     value={filters.priority ?? "all"}
                     onValueChange={(value) =>
@@ -537,7 +548,7 @@ function TasksPage() {
                       }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 w-full">
                       <SelectValue placeholder="Filtrar por prioridad" />
                     </SelectTrigger>
                     <SelectContent>
@@ -551,8 +562,8 @@ function TasksPage() {
                   </Select>
                 </div>
 
-                <div className="w-full sm:max-w-xs">
-                  <Label className="text-muted-foreground mb-2 block text-sm">Proyecto</Label>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-muted-foreground text-sm">Proyecto</Label>
                   <Select
                     value={
                       filters.projectId === undefined || filters.projectId === null
@@ -568,7 +579,7 @@ function TasksPage() {
                       }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 w-full">
                       <SelectValue placeholder="Filtrar por proyecto" />
                     </SelectTrigger>
                     <SelectContent>

@@ -412,7 +412,8 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center gap-3 md:hidden">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground rounded-full p-0 md:h-11 md:w-11"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground h-10 w-10"
                 onClick={openSidebar}
                 aria-label="Abrir navegación"
               >

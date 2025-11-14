@@ -405,7 +405,7 @@ export default function FilesPage() {
     const badgeClass = categoryBadgeClasses[category];
 
     return (
-      <article className="animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+      <article className="space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
         <header className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(246,201,14,0.16)] text-[#c08600]">
             <CategoryIcon className="h-5 w-5" aria-hidden="true" />
@@ -469,7 +469,7 @@ export default function FilesPage() {
     <ProtectedRoute>
       <Layout>
         <div className="text-foreground md:px-6">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-6 px-4 py-4 md:px-6">
             <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold">Archivos</h1>

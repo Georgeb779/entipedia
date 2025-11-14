@@ -315,10 +315,14 @@ function ProjectsPage() {
     return projects.map((project) => (
       <TableRow key={project.id}>
         <TableCell className="text-foreground max-w-xs text-sm font-medium">
-          {project.name}
+          <div className="truncate" title={project.name}>
+            {project.name}
+          </div>
         </TableCell>
-        <TableCell className="text-muted-foreground text-sm">
-          {project.description ? project.description : "Sin descripción"}
+        <TableCell className="text-muted-foreground max-w-md text-sm">
+          <div className="truncate" title={project.description ?? "Sin descripción"}>
+            {project.description ? project.description : "Sin descripción"}
+          </div>
         </TableCell>
         <TableCell>
           <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
@@ -357,7 +361,7 @@ function ProjectsPage() {
         <div className="text-foreground px-0 sm:py-4 md:px-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <Tabs value={activeView} onValueChange={handleViewChange}>
-              <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <header className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-nowrap">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold">Proyectos</h1>
                   <p className="text-muted-foreground text-sm">
@@ -365,7 +369,7 @@ function ProjectsPage() {
                     día con tus entregas.
                   </p>
                 </div>
-                <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:w-auto lg:flex-nowrap">
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-nowrap lg:gap-4">
                   <TabsList className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:gap-0">
                     <TabsTrigger value="board" className="h-10 text-sm sm:w-auto">
                       Tablero
@@ -377,7 +381,7 @@ function ProjectsPage() {
                   <Button
                     variant="secondary"
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="w-full sm:w-auto lg:w-auto"
+                    className="w-full sm:ml-3 sm:w-auto lg:ml-4"
                   >
                     Crear proyecto
                   </Button>
@@ -411,7 +415,7 @@ function ProjectsPage() {
                     />
                   </section>
                 )}
-                <p className="text-muted-foreground mt-3 text-center text-xs">
+                <p className="text-muted-foreground mt-3 hidden text-center text-xs md:block">
                   Puedes reordenar con mouse o teclado (Tab + flechas + Espacio/Enter) y, en
                   pantallas pequeñas, usar el menú “Mover a” de cada tarjeta para cambiar su
                   estatus.

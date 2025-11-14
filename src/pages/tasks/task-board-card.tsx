@@ -153,14 +153,14 @@ function TaskBoardCardLayout({
       style={style}
       {...restContainerProps}
       className={cn(
-        "group relative flex max-w-full flex-col gap-2 rounded-xl border border-black/5 bg-white p-4 text-neutral-900 shadow-sm transition-transform duration-150 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none sm:max-w-[360px] md:p-5",
+        "group relative flex w-full flex-col gap-2 rounded-xl border border-black/5 bg-white p-4 text-neutral-900 shadow-sm transition-transform duration-150 ease-out will-change-transform select-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F6C90E] focus-visible:ring-offset-2 focus-visible:outline-none md:p-5",
         isActive ? "ring-2 ring-[#F6C90E] ring-offset-2" : "",
         isDragging ? "z-10 scale-[1.02] shadow-lg" : "",
         containerClassName,
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {showDragHandle ? (
             <button
               type="button"
@@ -172,7 +172,7 @@ function TaskBoardCardLayout({
               <GripVertical className="h-5 w-5 text-neutral-400" aria-hidden="true" />
             </button>
           ) : null}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <span
               className={cn(
                 "flex h-4 w-4 items-center justify-center rounded-full",
@@ -181,7 +181,7 @@ function TaskBoardCardLayout({
             >
               <StatusIcon className={cn("h-4 w-4", statusDisplay.iconClass)} aria-hidden="true" />
             </span>
-            <span className="line-clamp-1 text-base font-semibold md:text-lg">{task.title}</span>
+            <span className="line-clamp-2 text-base font-semibold md:text-lg">{task.title}</span>
           </div>
         </div>
         {hasActions ? (
@@ -284,7 +284,8 @@ export function TaskBoardCardPreview({
   const previewContainerProps = {
     ref: inertRef,
     style: undefined,
-    className: "pointer-events-none scale-105 shadow-[0_20px_60px_rgba(0,0,0,0.3)] select-none",
+    className:
+      "pointer-events-none w-full max-w-md scale-105 select-none shadow-[0_20px_60px_rgba(0,0,0,0.3)]",
     "data-status": task.status,
   } as CardRenderProps<Task, TaskStatus>["containerProps"];
 

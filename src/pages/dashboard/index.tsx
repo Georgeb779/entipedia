@@ -12,7 +12,7 @@ import {
 } from "@/constants";
 import { useProjects, useTasks } from "@/hooks";
 import type { ProjectStatus, Task, TaskPriority, TaskStatus } from "@/types";
-import { formatTaskDate } from "@/utils";
+import { cn, formatTaskDate } from "@/utils";
 
 type TasksOverviewCardProps = {
   totalTasks: number;
@@ -33,14 +33,14 @@ const TasksOverviewCard = ({
 
   return (
     <article className="rounded-xl border border-black/5 bg-white p-4 shadow-sm sm:p-5 md:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-sm text-neutral-600">Tareas</p>
           <p className="mt-1 text-3xl font-semibold text-neutral-900">
             {totalTasks.toLocaleString()}
           </p>
         </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
           <CheckSquare className="h-[18px] w-[18px]" aria-hidden="true" />
         </div>
       </div>
@@ -59,10 +59,16 @@ const TasksOverviewCard = ({
         <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completado</p>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-700 sm:gap-4 sm:text-sm">
-        <span className="whitespace-nowrap">Por Hacer {todoTasks.toLocaleString()}</span>
-        <span className="whitespace-nowrap">En Progreso {inProgressTasks.toLocaleString()}</span>
-        <span className="whitespace-nowrap">Completado {completedTasks.toLocaleString()}</span>
+      <div className="mt-3 flex flex-col gap-1 text-xs text-neutral-700 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:text-sm">
+        <span className="rounded-md bg-neutral-100 px-2 py-1 sm:bg-transparent sm:px-0 sm:py-0">
+          Por Hacer {todoTasks.toLocaleString()}
+        </span>
+        <span className="rounded-md bg-neutral-100 px-2 py-1 sm:bg-transparent sm:px-0 sm:py-0">
+          En Progreso {inProgressTasks.toLocaleString()}
+        </span>
+        <span className="rounded-md bg-neutral-100 px-2 py-1 sm:bg-transparent sm:px-0 sm:py-0">
+          Completado {completedTasks.toLocaleString()}
+        </span>
       </div>
     </article>
   );
@@ -87,14 +93,14 @@ const ProjectsOverviewCard = ({
 
   return (
     <article className="rounded-xl border border-black/5 bg-white p-4 shadow-sm sm:p-5 md:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-sm text-neutral-600">Proyectos</p>
           <p className="mt-1 text-3xl font-semibold text-neutral-900">
             {totalProjects.toLocaleString()}
           </p>
         </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
           <FolderKanban className="h-[18px] w-[18px]" aria-hidden="true" />
         </div>
       </div>
@@ -113,10 +119,16 @@ const ProjectsOverviewCard = ({
         <p className="mt-2 text-sm text-neutral-600">{safeCompletion}% completado</p>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-700 sm:gap-4 sm:text-sm">
-        <span className="whitespace-nowrap">Por Hacer {todoProjects.toLocaleString()}</span>
-        <span className="whitespace-nowrap">En Progreso {inProgressProjects.toLocaleString()}</span>
-        <span className="whitespace-nowrap">Completado {completedProjects.toLocaleString()}</span>
+      <div className="mt-3 flex flex-col gap-1 text-xs text-neutral-700 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:text-sm">
+        <span className="rounded-md bg-neutral-100 px-2 py-1 sm:bg-transparent sm:px-0 sm:py-0">
+          Por Hacer {todoProjects.toLocaleString()}
+        </span>
+        <span className="rounded-md bg-neutral-100 px-2 py-1 sm:bg-transparent sm:px-0 sm:py-0">
+          En Progreso {inProgressProjects.toLocaleString()}
+        </span>
+        <span className="rounded-md bg-neutral-100 px-2 py-1 sm:bg-transparent sm:px-0 sm:py-0">
+          Completado {completedProjects.toLocaleString()}
+        </span>
       </div>
     </article>
   );
@@ -192,14 +204,14 @@ const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps)
   return (
     <article className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
       <Tabs defaultValue="recent">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 flex-1">
             <h2 className="text-2xl font-semibold text-neutral-900">Actividad de trabajo</h2>
             <p className="text-sm text-neutral-600">
               Sigue las actualizaciones recientes y las próximas fechas límite en un solo lugar.
             </p>
           </div>
-          <TabsList className="self-start bg-neutral-100">
+          <TabsList className="w-full shrink-0 bg-neutral-100 md:w-auto">
             <TabsTrigger value="recent">Recientes</TabsTrigger>
             {hasDue ? <TabsTrigger value="due">Próximas</TabsTrigger> : null}
           </TabsList>
@@ -215,25 +227,30 @@ const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps)
               const priority = resolvePriority(task.priority);
               const priorityLabel = priority ? TASK_PRIORITY_LABELS[priority] : null;
               const priorityClass = priority ? resolvePriorityBadgeClass(priority) : null;
+              const statusClass = resolveStatusBadgeClass(task.status);
 
               return (
                 <div
                   key={task.id}
                   className="border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
+                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm text-neutral-900" title={task.title}>
+                        {task.title}
+                      </p>
                       <p className="line-clamp-1 text-xs text-neutral-600">
                         Creada {formatTaskDate(task.createdAt)}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge className={resolveStatusBadgeClass(task.status)}>
+                    <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-end">
+                      <Badge className={cn("whitespace-nowrap", statusClass)}>
                         {TASK_STATUS_LABELS[task.status]}
                       </Badge>
                       {priority && priorityLabel && priorityClass ? (
-                        <Badge className={priorityClass}>{priorityLabel}</Badge>
+                        <Badge className={cn("whitespace-nowrap", priorityClass)}>
+                          {priorityLabel}
+                        </Badge>
                       ) : null}
                     </div>
                   </div>
@@ -255,15 +272,21 @@ const WorkActivityTabs = ({ recentTasks, upcomingTasks }: WorkActivityTabsProps)
                   key={task.id}
                   className="border-b border-black/5 pb-2 last:border-b-0 last:pb-0"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="line-clamp-1 text-sm text-neutral-900">{task.title}</p>
+                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm text-neutral-900" title={task.title}>
+                        {task.title}
+                      </p>
                       <p className="line-clamp-1 text-xs text-neutral-600">
                         Fecha de Vencimiento: {formatTaskDate(task.dueDate)}
                       </p>
                     </div>
                     {priority && priorityLabel && priorityClass ? (
-                      <Badge className={priorityClass}>{priorityLabel}</Badge>
+                      <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-end">
+                        <Badge className={cn("whitespace-nowrap", priorityClass)}>
+                          {priorityLabel}
+                        </Badge>
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -354,7 +377,7 @@ const DashboardPage = () => {
     <ProtectedRoute>
       <Layout>
         <div className="bg-[#FFFCF5]">
-          <div className="mx-auto max-w-7xl md:px-6 md:py-4">
+          <div className="mx-auto max-w-7xl min-w-0 px-4 py-4 md:px-6">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-3xl font-semibold">Panel</h1>
@@ -371,7 +394,7 @@ const DashboardPage = () => {
             </header>
 
             <div className="mt-6">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+              <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                 {stats.totalTasks > 0 ? (
                   <TasksOverviewCard
                     totalTasks={stats.totalTasks}

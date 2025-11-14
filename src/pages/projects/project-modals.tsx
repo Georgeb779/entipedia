@@ -73,7 +73,7 @@ export function ProjectFormModal({
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input {...field} autoFocus disabled={isPending} />
+                    <Input {...field} maxLength={255} autoFocus disabled={isPending} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -90,6 +90,7 @@ export function ProjectFormModal({
                     <Textarea
                       {...field}
                       value={field.value ?? ""}
+                      maxLength={2000}
                       className="min-h-[100px] resize-none"
                       disabled={isPending}
                     />

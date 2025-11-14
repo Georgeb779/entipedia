@@ -553,7 +553,7 @@ function ClientsPage() {
         <button
           type="button"
           onClick={() => handleCellClick(client, field)}
-          className="w-full text-left"
+          className="w-full cursor-pointer text-left transition-colors hover:bg-[rgba(28,36,49,0.04)]"
         >
           {displayValue}
         </button>
@@ -681,7 +681,7 @@ function ClientsPage() {
   };
 
   const ClientMobileCard = ({ client, onEdit, onDelete, isDeleting }: ClientMobileCardProps) => (
-    <article className="animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
+    <article className="space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
       <header className="space-y-2">
         <h3 className="text-lg font-semibold text-[#1C2431]">{client.name}</h3>
         <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
@@ -723,7 +723,7 @@ function ClientsPage() {
     <ProtectedRoute>
       <Layout>
         <div className="text-foreground md:px-6">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-6 px-4 py-4 md:px-6">
             <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold">Clientes</h1>
@@ -844,11 +844,13 @@ function ClientsPage() {
                       ) : (
                         clients.map((client) => (
                           <TableRow key={client.id}>
-                            <TableCell>
+                            <TableCell className="max-w-xs">
                               {renderEditableCell(
                                 client,
                                 "name",
-                                <span className="font-medium">{client.name}</span>,
+                                <span className="truncate font-medium" title={client.name}>
+                                  {client.name}
+                                </span>,
                               )}
                             </TableCell>
                             <TableCell>
