@@ -2,12 +2,46 @@ import { defineHandler, getRouterParam } from "nitro/h3";
 import { HTTPError, sendStream, setHeader } from "h3";
 import { and, eq } from "drizzle-orm";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import type { Readable } from "node:stream";
+import { Readable } from "node:stream";
+import { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 import { getDb, files } from "db";
 import type { AuthUser } from "@/types";
 import { isValidUUID } from "../../_utils/uuid.ts";
 import { r2Client, R2_BUCKET_NAME } from "../../utils/r2-client";
+
+function normalizeToWebStream(body: unknown): ReadableStream<Uint8Array> {
+  if (body instanceof NodeReadableStream) {
+    return body as unknown as ReadableStream<Uint8Array>;
+  }
+
+  if (body instanceof Readable) {
+    const webStream = Readable.toWeb(body) as NodeReadableStream;
+    return webStream as unknown as ReadableStream<Uint8Array>;
+  }
+
+  if (body instanceof Uint8Array || typeof body === "string") {
+    const nodeReadable = Readable.from([body]);
+    const webStream = Readable.toWeb(nodeReadable) as NodeReadableStream;
+    return webStream as unknown as ReadableStream<Uint8Array>;
+  }
+
+  if (typeof (body as { pipe?: unknown })?.pipe === "function") {
+    const nodeReadable = body as Readable;
+    const webStream = Readable.toWeb(nodeReadable) as NodeReadableStream;
+    return webStream as unknown as ReadableStream<Uint8Array>;
+  }
+
+  if (
+    typeof (body as { [Symbol.asyncIterator]?: unknown })?.[Symbol.asyncIterator] === "function"
+  ) {
+    const nodeReadable = Readable.from(body as AsyncIterable<Uint8Array>);
+    const webStream = Readable.toWeb(nodeReadable) as NodeReadableStream;
+    return webStream as unknown as ReadableStream<Uint8Array>;
+  }
+
+  throw new HTTPError("Unsupported stream type from cloud storage.", { status: 500 });
+}
 
 export default defineHandler(async (event) => {
   const context = event.context as { user: AuthUser | null };
@@ -51,23 +85,22 @@ export default defineHandler(async (event) => {
       throw new HTTPError("Failed to retrieve file from cloud storage.", { status: 500 });
     }
 
-    // Convert Node.js Readable to ReadableStream if needed
-    if (body instanceof Readable) {
-      return sendStream(event, body);
-    }
+    const webStream = normalizeToWebStream(body);
 
-    // If it's already a ReadableStream, use it directly
-    return sendStream(event, body as ReadableStream);
+    return sendStream(event, webStream);
   } catch (error) {
     const name = (error as { name?: string } | null)?.name;
     const status = (error as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata
       ?.httpStatusCode;
+
     if (name === "NoSuchKey" || name === "NotFound" || status === 404) {
       throw new HTTPError("File not found in cloud storage.", { status: 404 });
     }
+
     if (error instanceof HTTPError) {
       throw error;
     }
+
     throw new HTTPError("Failed to download file from cloud storage.", {
       status: 500,
       cause: error,

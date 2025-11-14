@@ -1,4 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import type { NodeJsClient } from "@smithy/types";
 
 // Cloudflare R2 configuration is S3 compatible.
 // We validate required environment variables early to surface misconfiguration fast.
@@ -23,7 +24,7 @@ if (!R2_BUCKET_NAME) {
 
 // Endpoint pattern: https://{accountId}.r2.cloudflarestorage.com
 // Region is set to 'auto' per Cloudflare's guidance.
-export const r2Client = new S3Client({
+const baseR2Client = new S3Client({
   region: "auto",
   endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
   credentials: {
@@ -32,5 +33,7 @@ export const r2Client = new S3Client({
   },
   forcePathStyle: true,
 });
+
+export const r2Client = baseR2Client as NodeJsClient<S3Client>;
 
 export type R2ObjectKey = string;
