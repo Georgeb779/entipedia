@@ -347,7 +347,7 @@ function TasksPage() {
     return (
       <article
         className={cn(
-          "animate-card-fade-in space-y-3 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm",
+          "space-y-3 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm",
           className,
         )}
       >
@@ -595,13 +595,13 @@ function TasksPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-3 xl:hidden">
+                      <div className="space-y-3 will-change-transform xl:hidden">
                         {activeTasks.length === 0 ? (
                           <p className="text-muted-foreground py-8 text-center text-sm">
                             No hay tareas que coincidan con los filtros actuales.
                           </p>
                         ) : (
-                          activeTasks.map((task, index) => {
+                          activeTasks.map((task) => {
                             const isEditing =
                               updateTask.isPending && taskBeingEdited?.id === task.id;
                             const isDeleting =
@@ -616,7 +616,6 @@ function TasksPage() {
                                 onEdit={handleEditOpen}
                                 onDelete={handleDeleteTask}
                                 isUpdating={isMutating}
-                                className={index < 4 ? `stagger-${index + 1}` : undefined}
                               />
                             );
                           })

@@ -10,7 +10,7 @@ export default function UserDetail() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-5 py-10 md:px-6">
+        <div className="text-foreground px-5 md:px-6">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
             <Button asChild variant="ghost" size="sm" className="w-fit gap-2">
               <Link to="/users">

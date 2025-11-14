@@ -437,8 +437,8 @@ function ProjectsPage() {
                           No se encontraron proyectos.
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          {projects.map((project, index) => (
+                        <div className="space-y-4 will-change-transform">
+                          {projects.map((project) => (
                             <ProjectMobileCard
                               key={project.id}
                               project={project}
@@ -448,7 +448,6 @@ function ProjectsPage() {
                               isDeleting={
                                 deleteProject.isPending && projectPendingDeletion?.id === project.id
                               }
-                              className={index < 4 ? `stagger-${index + 1}` : undefined}
                             />
                           ))}
                         </div>

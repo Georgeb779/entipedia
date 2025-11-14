@@ -169,7 +169,7 @@ export function ProjectFormModal({
                   Cancelar
                 </Button>
               </DialogClose>
-              <Button type="submit" variant="secondary" disabled={isPending}>
+              <Button type="submit" disabled={isPending}>
                 {isPending ? `${submitLabel}...` : submitLabel}
               </Button>
             </DialogFooter>

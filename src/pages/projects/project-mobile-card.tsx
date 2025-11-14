@@ -28,7 +28,7 @@ export function ProjectMobileCard({
   return (
     <article
       className={cn(
-        "animate-card-fade-in space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm",
+        "space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm",
         className,
       )}
     >

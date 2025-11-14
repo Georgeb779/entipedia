@@ -468,7 +468,7 @@ export default function FilesPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="text-foreground px-6 py-10">
+        <div className="text-foreground md:px-6">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
