@@ -314,32 +314,34 @@ function ProjectsPage() {
 
     return projects.map((project) => (
       <TableRow key={project.id}>
-        <TableCell className="text-foreground max-w-xs text-sm font-medium">
+        <TableCell className="text-foreground max-w-[150px] text-sm font-medium">
           <div className="truncate" title={project.name}>
             {project.name}
           </div>
         </TableCell>
-        <TableCell className="text-muted-foreground max-w-md text-sm">
+        <TableCell className="text-muted-foreground max-w-[180px] text-sm">
           <div className="truncate" title={project.description ?? "Sin descripción"}>
             {project.description ? project.description : "Sin descripción"}
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell className="text-center">
           <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
             {PROJECT_STATUS_LABELS[project.status]}
           </Badge>
         </TableCell>
-        <TableCell>
+        <TableCell className="text-center">
           <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
             {PROJECT_PRIORITY_LABELS[project.priority]}
           </Badge>
         </TableCell>
-        <TableCell className="text-muted-foreground text-sm">{project.taskCount} tareas</TableCell>
-        <TableCell className="text-muted-foreground text-sm">
-          {formatTaskDateTime(project.createdAt)}
+        <TableCell className="text-muted-foreground text-center text-sm">
+          {project.taskCount} tareas
+        </TableCell>
+        <TableCell className="text-muted-foreground max-w-[130px] text-sm whitespace-nowrap">
+          <div className="truncate">{formatTaskDateTime(project.createdAt)}</div>
         </TableCell>
         <TableCell className="text-right text-sm">
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
             <Button variant="ghost" size="sm" onClick={() => handleNavigateToDetails(project)}>
               Ver
             </Button>
@@ -369,7 +371,7 @@ function ProjectsPage() {
                     día con tus entregas.
                   </p>
                 </div>
-                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-nowrap lg:gap-4">
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-col-reverse lg:flex-nowrap lg:items-end lg:gap-4">
                   <TabsList className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:gap-0">
                     <TabsTrigger value="board" className="h-10 text-sm sm:w-auto">
                       Tablero
@@ -473,18 +475,20 @@ function ProjectsPage() {
                       ) : null}
                       <div
                         ref={tableScrollRef}
-                        className="horizontal-scroll-container rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
+                        className="horizontal-scroll-container w-full rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
                       >
-                        <Table className="w-full table-auto">
+                        <Table className="min-w-max table-auto">
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Nombre</TableHead>
-                              <TableHead>Descripción</TableHead>
-                              <TableHead>Estatus</TableHead>
-                              <TableHead>Prioridad</TableHead>
-                              <TableHead>Tareas</TableHead>
-                              <TableHead>Creado</TableHead>
-                              <TableHead className="text-right">Acciones</TableHead>
+                              <TableHead className="whitespace-nowrap">Nombre</TableHead>
+                              <TableHead className="whitespace-nowrap">Descripción</TableHead>
+                              <TableHead className="whitespace-nowrap">Estatus</TableHead>
+                              <TableHead className="whitespace-nowrap">Prioridad</TableHead>
+                              <TableHead className="whitespace-nowrap">Tareas</TableHead>
+                              <TableHead className="whitespace-nowrap">Creado</TableHead>
+                              <TableHead className="text-right whitespace-nowrap">
+                                Acciones
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>{renderProjectTableRows()}</TableBody>

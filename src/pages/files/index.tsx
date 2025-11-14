@@ -584,7 +584,7 @@ export default function FilesPage() {
                   ref={tableScrollRef}
                   className="horizontal-scroll-container rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
                 >
-                  <Table className="w-full table-auto">
+                  <Table className="min-w-max table-auto">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nombre</TableHead>
@@ -642,18 +642,37 @@ export default function FilesPage() {
                                   >
                                     <CategoryIcon className="h-5 w-5" aria-hidden="true" />
                                   </button>
-                                  <div className="max-w-xs">
-                                    <p className="text-sm font-medium">{file.filename}</p>
-                                    <p className="text-muted-foreground text-xs">{file.mimeType}</p>
+                                  <div className="max-w-[150px]">
+                                    <p
+                                      className="truncate text-sm font-medium"
+                                      title={file.filename}
+                                    >
+                                      {file.filename}
+                                    </p>
+                                    <p
+                                      className="text-muted-foreground truncate text-xs"
+                                      title={file.mimeType}
+                                    >
+                                      {file.mimeType}
+                                    </p>
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell>
-                                <span className="text-sm text-neutral-700">
-                                  {file.description && file.description.length > 0
-                                    ? file.description
-                                    : "Sin descripción"}
-                                </span>
+                              <TableCell className="max-w-[150px]">
+                                <div
+                                  className="truncate"
+                                  title={
+                                    file.description && file.description.length > 0
+                                      ? file.description
+                                      : "Sin descripción"
+                                  }
+                                >
+                                  <span className="text-sm text-neutral-700">
+                                    {file.description && file.description.length > 0
+                                      ? file.description
+                                      : "Sin descripción"}
+                                  </span>
+                                </div>
                               </TableCell>
                               <TableCell>
                                 <Badge className={cn("uppercase", badgeClass)}>
@@ -664,7 +683,7 @@ export default function FilesPage() {
                               <TableCell>{formatFileSize(file.size)}</TableCell>
                               <TableCell>{formatFileDate(file.createdAt)}</TableCell>
                               <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
+                                <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
                                   <Button
                                     type="button"
                                     variant="outline"

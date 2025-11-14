@@ -418,12 +418,12 @@ function TasksPage() {
 
       return (
         <TableRow key={task.id}>
-          <TableCell className="text-foreground max-w-xs text-sm font-medium">
+          <TableCell className="text-foreground max-w-[150px] text-sm font-medium">
             <div className="truncate" title={task.title}>
               {task.title}
             </div>
           </TableCell>
-          <TableCell className="text-muted-foreground max-w-[200px] text-sm">
+          <TableCell className="text-muted-foreground max-w-[140px] text-sm">
             <div
               className="truncate"
               title={
@@ -456,7 +456,7 @@ function TasksPage() {
             {formatTaskDate(task.dueDate)}
           </TableCell>
           <TableCell className="text-right text-sm">
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
               <Button
                 variant="ghost"
                 size="sm"
@@ -493,7 +493,7 @@ function TasksPage() {
                     Gestiona tu trabajo con estatus, prioridades y fechas límite.
                   </p>
                 </div>
-                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-nowrap">
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:flex-col-reverse lg:flex-nowrap lg:items-end">
                   <TabsList className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:gap-0">
                     <TabsTrigger value="board" className="h-10 text-sm sm:w-auto">
                       Tablero
@@ -634,10 +634,20 @@ function TasksPage() {
                       </div>
 
                       <div className="relative hidden xl:block">
-                        {showLeftIndicator ? <span className="scroll-indicator-left" /> : null}
-                        {showRightIndicator ? <span className="scroll-indicator-right" /> : null}
-                        <div ref={tableScrollRef} className="horizontal-scroll-container">
-                          <Table className="w-full table-auto">
+                        {showLeftIndicator ? (
+                          <div
+                            className="scroll-indicator scroll-indicator-left"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        {showRightIndicator ? (
+                          <div
+                            className="scroll-indicator scroll-indicator-right"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <div ref={tableScrollRef} className="horizontal-scroll-container w-full">
+                          <Table className="min-w-max table-auto">
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Tarea</TableHead>
