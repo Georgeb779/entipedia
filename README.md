@@ -15,45 +15,98 @@ Entipedia es un MVP funcional que permite:
 ## Requisitos
 
 - Node.js 20+
-- PostgreSQL 16
 - npm 9+
+- PostgreSQL 14 o 16 (con extensiones `uuid-ossp`/`pgcrypto` disponibles)
 - Cuenta de Cloudflare (R2) y un bucket configurado
 
-## Instalación rápida
+## Puesta en marcha rápida
 
-1. **Instala dependencias:**
+### 1. Clonar e instalar dependencias
 
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/Georgeb779/entipedia.git
+cd entipedia/entipedia-fe
+npm install
+```
 
-2. **Configura variables de entorno:**
+### 2. Configurar base de datos local
 
-   Crea un archivo `.env` en la raíz del proyecto:
+#### macOS con Homebrew
 
-   ```env
-   DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/entipedia
-   SESSION_SECRET=tu-clave-secreta-de-al-menos-32-caracteres
+```bash
+brew install postgresql@14
+brew services start postgresql@14
 
-   # Cloudflare R2 (obligatorio para subida/descarga de archivos)
-   R2_ACCOUNT_ID=xxxxxxxxxxxxxxxxxxxx
-   R2_ACCESS_KEY_ID=xxxxxxxxxxxxxxxxxxxx
-   R2_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   R2_BUCKET_NAME=entipedia
-   ```
+# Crear usuario y base de datos esperados por el proyecto
+/opt/homebrew/opt/postgresql@14/bin/createuser -s postgres
+/opt/homebrew/opt/postgresql@14/bin/createdb entipedia
+```
 
-3. **Prepara la base de datos:**
+#### Windows (PowerShell)
 
-   ```bash
-   npm run db:push
-   ```
+- Instala PostgreSQL 14 con `winget` o el instalador oficial:
 
-4. **Inicia el servidor de desarrollo:**
-   ```bash
-   npm run dev
-   ```
+  ```powershell
+  winget install PostgreSQL.PostgreSQL.14
+  # o
+  choco install postgresql14 -y
+  ```
 
-¡Listo! El frontend estará en http://localhost:5000 y la API en http://localhost:5999/api/\*
+- Agrega el directorio `bin` a tu `PATH` si el instalador no lo hizo (por defecto `C:\Program Files\PostgreSQL\14\bin`).
+- Inicia el servicio desde el panel de servicios o ejecuta:
+
+  ```powershell
+  net start postgresql-x64-14
+  ```
+
+- Crea el usuario y la base de datos si no existen (ajustando la ruta si instalaste en otra carpeta):
+
+  ```powershell
+  "C:\Program Files\PostgreSQL\14\bin\createuser.exe" -s postgres
+  "C:\Program Files\PostgreSQL\14\bin\createdb.exe" entipedia
+  ```
+
+#### Alternativa con Docker
+
+```bash
+docker run --name entipedia-postgres \
+  -e POSTGRES_PASSWORD=$(openssl rand -hex 16) \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=entipedia \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+### 3. Variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto y completa:
+
+```env
+DATABASE_URL=postgresql://postgres:@localhost:5432/entipedia
+SESSION_SECRET=tu-clave-secreta-de-al-menos-32-caracteres
+
+# Cloudflare R2 (obligatorio para subida/descarga de archivos)
+R2_ACCOUNT_ID=xxxxxxxxxxxxxxxxxxxx
+R2_ACCESS_KEY_ID=xxxxxxxxxxxxxxxxxxxx
+R2_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+R2_BUCKET_NAME=entipedia
+```
+
+### 4. Inicializar el esquema de la base de datos
+
+```bash
+npm run db:push
+```
+
+Si prefieres migraciones versionadas: `npm run db:generate` seguido de `npm run db:migrate`.
+
+### 5. Ejecutar el entorno de desarrollo
+
+```bash
+npm run dev
+```
+
+El frontend queda en http://localhost:5000 y la API en http://localhost:5999/api/\*
 
 ## PostgreSQL con Docker (opcional)
 
