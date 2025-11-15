@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -85,9 +86,7 @@ export type CardRenderProps<
 
 type KanbanBoardProps<TItem extends { id: string; status: TStatus }, TStatus extends string> = {
   items: TItem[];
-  /** Non-empty ordered collection of statuses to render columns for. */
   statuses: readonly TStatus[];
-  /** Display titles for every status present in `statuses`. */
   statusTitles: Record<TStatus, string>;
   emptyColumnMessage: string;
   resolveStatus: (value: unknown) => TStatus | null;
@@ -103,6 +102,7 @@ type KanbanColumnProps<TItem extends { id: string; status: TStatus }, TStatus ex
   status: TStatus;
   items: TItem[];
   activeId: string | null;
+  recentlyMovedId: string | null;
   isUpdating?: boolean;
   emptyColumnMessage: string;
   renderCard: (props: CardRenderProps<TItem, TStatus>) => ReactNode;
@@ -112,6 +112,7 @@ type KanbanColumnProps<TItem extends { id: string; status: TStatus }, TStatus ex
 type SortableCardProps<TItem extends { id: string; status: TStatus }, TStatus extends string> = {
   item: TItem;
   activeId: string | null;
+  recentlyMovedId: string | null;
   renderCard: (props: CardRenderProps<TItem, TStatus>) => ReactNode;
   onMoveStatus: (item: TItem, newStatus: TStatus) => void;
 };
@@ -129,6 +130,7 @@ const EmptyPlaceholder = ({ message }: { message: string }) => (
 const SortableCard = <TItem extends { id: string; status: TStatus }, TStatus extends string>({
   item,
   activeId,
+  recentlyMovedId,
   renderCard,
   onMoveStatus,
 }: SortableCardProps<TItem, TStatus>) => {
@@ -137,6 +139,8 @@ const SortableCard = <TItem extends { id: string; status: TStatus }, TStatus ext
     data: { status: item.status },
   });
 
+  const shouldHide = isDragging || activeId === item.id || recentlyMovedId === item.id;
+
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -144,7 +148,7 @@ const SortableCard = <TItem extends { id: string; status: TStatus }, TStatus ext
     touchAction: "none",
     userSelect: "none",
     willChange: "transform",
-    opacity: isDragging ? 0 : 1,
+    visibility: shouldHide ? "hidden" : undefined,
   };
 
   const containerProps = {
@@ -179,6 +183,7 @@ const KanbanColumn = <TItem extends { id: string; status: TStatus }, TStatus ext
   status,
   items,
   activeId,
+  recentlyMovedId,
   isUpdating,
   emptyColumnMessage,
   renderCard,
@@ -220,6 +225,7 @@ const KanbanColumn = <TItem extends { id: string; status: TStatus }, TStatus ext
                 key={item.id}
                 item={item}
                 activeId={activeId}
+                recentlyMovedId={recentlyMovedId}
                 renderCard={renderCard}
                 onMoveStatus={onMoveStatus}
               />
@@ -246,6 +252,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
   const isMobile = useIsMobile();
   const [activeId, setActiveId] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
+  const [recentlyMovedId, setRecentlyMovedId] = useState<string | null>(null);
   const hasStatuses = statuses.length > 0;
   const emptyStatusesContent = useMemo(
     () => (
@@ -304,6 +311,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
     const sourceId = String(event.active.id);
     if (sourceId) {
       setActiveId(sourceId);
+      setRecentlyMovedId(null);
       setBodyDragState(true);
     }
   }, []);
@@ -311,15 +319,23 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
-      setActiveId(null);
-      setBodyDragState(false);
+
+      const cleanup = (shouldClearRecentlyMoved = false) => {
+        if (shouldClearRecentlyMoved) {
+          setRecentlyMovedId(null);
+        }
+        setActiveId(null);
+        setBodyDragState(false);
+      };
 
       if (!over) {
+        cleanup(true);
         return;
       }
 
       const itemId = String(active.id);
       if (!itemId) {
+        cleanup(true);
         return;
       }
 
@@ -330,15 +346,24 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
       const nextStatus = dataStatus ?? idStatus;
 
       if (!nextStatus) {
+        cleanup(true);
         return;
       }
 
       const currentItem = itemLookup.get(itemId);
-      if (!currentItem || currentItem.status === nextStatus) {
+      if (!currentItem) {
+        cleanup(true);
+        return;
+      }
+
+      if (currentItem.status === nextStatus) {
+        cleanup(true);
         return;
       }
 
       onStatusChange(itemId, nextStatus);
+      setRecentlyMovedId(itemId);
+      cleanup();
     },
     [itemLookup, onStatusChange, resolveStatus],
   );
@@ -346,6 +371,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
     setBodyDragState(false);
+    setRecentlyMovedId(null);
   }, []);
 
   const onMoveStatus = useCallback(
@@ -539,6 +565,20 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
     [restrictToBoardBounds],
   );
 
+  useEffect(() => {
+    if (recentlyMovedId === null || typeof window === "undefined") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRecentlyMovedId(null);
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [recentlyMovedId]);
+
   if (!hasStatuses) {
     return emptyStatusesContent;
   }
@@ -572,6 +612,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
                 status={status}
                 items={buckets[status]}
                 activeId={activeId}
+                recentlyMovedId={recentlyMovedId}
                 isUpdating={isUpdating}
                 emptyColumnMessage={emptyColumnMessage}
                 renderCard={renderCard}
