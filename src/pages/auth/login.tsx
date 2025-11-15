@@ -63,6 +63,7 @@ const Login = () => {
   const onSubmit = async (values: LoginFormValues) => {
     form.clearErrors("root");
     setResendSuccessMessage(null);
+    setEmailNeedsVerification(null);
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -130,6 +131,7 @@ const Login = () => {
         type: "server",
         message: "No se pudo iniciar sesión. Intenta nuevamente.",
       });
+      setEmailNeedsVerification(null);
     }
   };
 
@@ -151,9 +153,18 @@ const Login = () => {
 
       if (response.ok) {
         setEmailNeedsVerification(null);
-        setResendSuccessMessage(
-          "Correo de verificación enviado. Por favor, revisa tu bandeja de entrada",
-        );
+        try {
+          const data = await response.json();
+          const message =
+            typeof data?.message === "string" && data.message.length > 0
+              ? data.message
+              : "Correo de verificación enviado. Por favor, revisa tu bandeja de entrada";
+          setResendSuccessMessage(message);
+        } catch {
+          setResendSuccessMessage(
+            "Correo de verificación enviado. Por favor, revisa tu bandeja de entrada",
+          );
+        }
       } else {
         try {
           const errorText = await response.text();
@@ -167,11 +178,6 @@ const Login = () => {
             form.setError("root", {
               type: "server",
               message: "Por favor, espera 2 minutos antes de solicitar otro correo",
-            });
-          } else if (errorData?.code === "USER_NOT_FOUND") {
-            form.setError("root", {
-              type: "server",
-              message: "Usuario no encontrado",
             });
           } else {
             form.setError("root", {

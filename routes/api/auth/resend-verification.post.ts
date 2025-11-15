@@ -4,9 +4,7 @@ import { eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { getDb, users, emailVerificationTokens } from "db";
 import { sendVerificationEmail } from "../../utils/email";
-
-const rateLimitMap = new Map<string, number>();
-const RATE_LIMIT_MS = 120000;
+import { checkRateLimit } from "../../utils/rate-limit";
 
 export default defineHandler(async (event) => {
   const payload = await readBody<{ email?: string }>(event);
@@ -17,10 +15,9 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Email is required.", { status: 400 });
   }
 
-  const lastRequestTime = rateLimitMap.get(email);
-  const now = Date.now();
+  const isRateLimited = await checkRateLimit(email);
 
-  if (lastRequestTime && now - lastRequestTime < RATE_LIMIT_MS) {
+  if (isRateLimited) {
     throw new HTTPError(
       JSON.stringify({
         code: "RATE_LIMITED",
@@ -35,17 +32,13 @@ export default defineHandler(async (event) => {
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   if (!user) {
-    throw new HTTPError(
-      JSON.stringify({
-        code: "USER_NOT_FOUND",
-        message: "Usuario no encontrado.",
-      }),
-      { status: 404 },
-    );
+    return {
+      success: true,
+      message: "Correo de verificación enviado. Por favor, revisa tu bandeja de entrada.",
+    };
   }
 
   if (user.emailVerified) {
-    rateLimitMap.set(email, now);
     return {
       success: true,
       message: "Tu correo ya está verificado. Puedes iniciar sesión",
@@ -70,8 +63,6 @@ export default defineHandler(async (event) => {
       status: 500,
     });
   }
-
-  rateLimitMap.set(email, now);
 
   return {
     success: true,

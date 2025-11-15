@@ -1,5 +1,5 @@
 import { defineHandler } from "nitro/h3";
-import { HTTPError, readBody } from "h3";
+import { HTTPError, readBody, setResponseStatus } from "h3";
 import { eq } from "drizzle-orm";
 
 import { getDb, users } from "db";
@@ -40,14 +40,12 @@ export default defineHandler(async (event) => {
   }
 
   if (!user.emailVerified) {
-    throw new HTTPError(
-      JSON.stringify({
-        code: "EMAIL_NOT_VERIFIED",
-        message:
-          "Tu correo electrónico no ha sido verificado. Por favor, revisa tu bandeja de entrada.",
-      }),
-      { status: 403 },
-    );
+    setResponseStatus(event, 403);
+    return {
+      code: "EMAIL_NOT_VERIFIED",
+      message:
+        "Tu correo electrónico no ha sido verificado. Por favor, revisa tu bandeja de entrada.",
+    };
   }
 
   const session = await getSession(event);
