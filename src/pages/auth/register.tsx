@@ -93,24 +93,18 @@ const Register = () => {
           <div className="space-y-4 text-center">
             <LogoMark size="md" className="mx-auto" />
             <div className="space-y-4">
-              <h1 className="text-3xl font-semibold tracking-tight">
-                ¡Revisa tu correo electrónico!
-              </h1>
+              <h1 className="text-3xl font-semibold tracking-tight">¡Cuenta creada!</h1>
               <p className="text-muted-foreground text-sm">
-                Te hemos enviado un correo de verificación a tu dirección. Haz clic en el enlace del
-                correo para activar tu cuenta.
+                Tu cuenta está lista. Ahora puedes iniciar sesión con tus credenciales para comenzar
+                a usar Entipedia.
               </p>
-              <p className="text-muted-foreground text-xs">El enlace expirará en 24 horas.</p>
             </div>
           </div>
 
           <div className="text-muted-foreground space-y-1 text-center text-sm">
-            <p>
-              ¿Ya verificaste tu cuenta?{" "}
-              <Link to="/auth/login" className="text-primary hover:text-primary/80 hover:underline">
-                Inicia sesión
-              </Link>
-            </p>
+            <Link to="/auth/login" className="text-primary hover:text-primary/80 hover:underline">
+              Ir a iniciar sesión
+            </Link>
           </div>
         </div>
       </div>
