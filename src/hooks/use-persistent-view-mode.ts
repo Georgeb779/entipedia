@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
 type ViewModeResolver<T extends string> = (value: string | null | undefined) => T;
@@ -50,20 +50,21 @@ export function usePersistentViewMode<T extends string>({
   const defaultValue = useMemo(() => resolve(null), [resolve]);
   const serializer = useCallback((value: T) => (serialize ? serialize(value) : value), [serialize]);
 
-  const view = useMemo<T>(() => {
+  const initialView = useMemo<T>(() => {
     const rawParam = searchParams.get(paramName);
     if (rawParam !== null) {
       return resolve(rawParam);
     }
-
     const stored = readPersistedValue(storageKey, resolve);
     if (stored) {
       return stored;
     }
-
     return defaultValue;
   }, [searchParams, paramName, resolve, storageKey, defaultValue]);
 
+  const [view, setViewState] = useState<T>(initialView);
+
+  // Persist whenever view changes.
   useEffect(() => {
     writePersistedValue(storageKey, view);
   }, [storageKey, view]);
@@ -90,15 +91,14 @@ export function usePersistentViewMode<T extends string>({
 
   const setView = useCallback(
     (value: T) => {
+      setViewState(value);
       const serialized = serializer(value);
       const next = new URLSearchParams(searchParams);
-
       if (value === defaultValue) {
         next.delete(paramName);
       } else {
         next.set(paramName, serialized);
       }
-
       setSearchParams(next, { replace: true });
     },
     [defaultValue, paramName, searchParams, serializer, setSearchParams],
