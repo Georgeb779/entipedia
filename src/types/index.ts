@@ -133,9 +133,11 @@ export type FileUploadProgress = {
 
 export type FileCategory = "image" | "document" | "video" | "audio" | "archive" | "other";
 
+export type AuthUnauthenticatedReason = "logout" | "expired" | "unauthorized" | "error";
+
 export type AuthState =
   | { status: "loading" }
-  | { status: "unauthenticated" }
+  | { status: "unauthenticated"; reason?: AuthUnauthenticatedReason }
   | { status: "authenticated"; user: AuthUser };
 
 export type AuthActions = {

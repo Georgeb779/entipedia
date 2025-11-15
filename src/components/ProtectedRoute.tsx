@@ -49,13 +49,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (auth.status === "unauthenticated") {
-    return (
-      <Navigate
-        to="/auth/login"
-        replace
-        state={{ from: redirectTarget, message: "Tu sesión expiró. Vuelve a iniciar sesión." }}
-      />
-    );
+    const redirectState =
+      auth.reason === "expired"
+        ? {
+            from: redirectTarget,
+            message: "Tu sesión expiró. Vuelve a iniciar sesión.",
+          }
+        : { from: redirectTarget };
+
+    return <Navigate to="/auth/login" replace state={redirectState} />;
   }
 
   return <>{children ?? <Outlet />}</>;

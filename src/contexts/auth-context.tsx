@@ -1,11 +1,18 @@
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AuthActionsContext, AuthStateContext } from "@/contexts/auth-context.shared";
-import type { ApiAuthUser, AuthActions, AuthState, AuthUser } from "@/types";
+import type {
+  ApiAuthUser,
+  AuthActions,
+  AuthState,
+  AuthUnauthenticatedReason,
+  AuthUser,
+} from "@/types";
 import { mapApiAuthUser } from "@/utils";
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [state, setState] = useState<AuthState>({ status: "loading" });
+  const hasAuthenticatedRef = useRef(false);
 
   const fetchSession = useCallback(async () => {
     try {
@@ -20,24 +27,28 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         startTransition(() => {
           setState({ status: "authenticated", user: authUser });
         });
+        hasAuthenticatedRef.current = true;
         return;
       }
 
       if (response.status === 401) {
+        const reason: AuthUnauthenticatedReason = hasAuthenticatedRef.current
+          ? "expired"
+          : "unauthorized";
         startTransition(() => {
-          setState({ status: "unauthenticated" });
+          setState({ status: "unauthenticated", reason });
         });
         return;
       }
     } catch {
       startTransition(() => {
-        setState({ status: "unauthenticated" });
+        setState({ status: "unauthenticated", reason: "error" });
       });
       return;
     }
 
     startTransition(() => {
-      setState({ status: "unauthenticated" });
+      setState({ status: "unauthenticated", reason: "error" });
     });
   }, []);
 
@@ -49,6 +60,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     startTransition(() => {
       setState({ status: "authenticated", user });
     });
+    hasAuthenticatedRef.current = true;
   }, []);
 
   const logout = useCallback(async () => {
@@ -59,8 +71,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       });
     } finally {
       startTransition(() => {
-        setState({ status: "unauthenticated" });
+        setState({ status: "unauthenticated", reason: "logout" });
       });
+      hasAuthenticatedRef.current = false;
     }
   }, []);
 
