@@ -509,6 +509,11 @@
   animation: none;
 }
 
+.dragging {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

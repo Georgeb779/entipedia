@@ -1,6 +1,7 @@
 import {
   useCallback,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -14,6 +15,7 @@ import {
   DragOverEvent,
   DragStartEvent,
   KeyboardSensor,
+  type Modifier,
   PointerSensor,
   TouchSensor,
   closestCorners,
@@ -27,11 +29,39 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { restrictToFirstScrollableAncestor, restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import { cn } from "@/utils";
 import { useIsMobile } from "@/hooks";
+
+let activeBodyDragOwners = 0;
+
+const setBodyDragState = (enabled: boolean) => {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  if (enabled) {
+    if (activeBodyDragOwners === 0) {
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+    }
+    activeBodyDragOwners += 1;
+    return;
+  }
+
+  if (activeBodyDragOwners === 0) {
+    return;
+  }
+
+  activeBodyDragOwners -= 1;
+  if (activeBodyDragOwners === 0) {
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }
+};
 
 type CardContainerProps = Omit<HTMLAttributes<HTMLDivElement>, "ref" | "style"> & {
   ref: (element: HTMLElement | null) => void;
@@ -114,6 +144,7 @@ const SortableCard = <TItem extends { id: string; status: TStatus }, TStatus ext
     touchAction: "none",
     userSelect: "none",
     willChange: "transform",
+    opacity: isDragging ? 0 : 1,
   };
 
   const containerProps = {
@@ -214,6 +245,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
 }: KanbanBoardProps<TItem, TStatus>) => {
   const isMobile = useIsMobile();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
   const hasStatuses = statuses.length > 0;
   const emptyStatusesContent = useMemo(
     () => (
@@ -226,10 +258,10 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
 
   const sensors = useSensors(
     useSensor(TouchSensor, {
-      activationConstraint: { distance: 15, delay: 250 },
+      activationConstraint: { tolerance: 8, delay: 250 },
     }),
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 12 },
+      activationConstraint: { distance: 6 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -272,6 +304,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
     const sourceId = String(event.active.id);
     if (sourceId) {
       setActiveId(sourceId);
+      setBodyDragState(true);
     }
   }, []);
 
@@ -279,6 +312,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
     (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
+      setBodyDragState(false);
 
       if (!over) {
         return;
@@ -311,6 +345,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
+    setBodyDragState(false);
   }, []);
 
   const onMoveStatus = useCallback(
@@ -471,6 +506,39 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
     statuses,
   ]);
 
+  const restrictToBoardBounds = useCallback<Modifier>(({ transform, activeNodeRect }) => {
+    const container = boardRef.current;
+    if (!container || !activeNodeRect || !transform) {
+      return transform;
+    }
+
+    const bounds = container.getBoundingClientRect();
+    const adjusted = { ...transform };
+
+    const currentLeft = activeNodeRect.left + transform.x;
+    const currentRight = currentLeft + activeNodeRect.width;
+    if (currentLeft < bounds.left) {
+      adjusted.x += bounds.left - currentLeft;
+    } else if (currentRight > bounds.right) {
+      adjusted.x -= currentRight - bounds.right;
+    }
+
+    const currentTop = activeNodeRect.top + transform.y;
+    const currentBottom = currentTop + activeNodeRect.height;
+    if (currentTop < bounds.top) {
+      adjusted.y += bounds.top - currentTop;
+    } else if (currentBottom > bounds.bottom) {
+      adjusted.y -= currentBottom - bounds.bottom;
+    }
+
+    return adjusted;
+  }, []);
+
+  const dragModifiers = useMemo(
+    () => [restrictToFirstScrollableAncestor, restrictToWindowEdges, restrictToBoardBounds],
+    [restrictToBoardBounds],
+  );
+
   if (!hasStatuses) {
     return emptyStatusesContent;
   }
@@ -487,9 +555,16 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
+      modifiers={dragModifiers}
     >
-      <div className="-mx-2 overflow-x-auto overscroll-x-contain pb-1.5 md:mx-0">
-        <div className="flex snap-x snap-mandatory gap-3 px-2 md:grid md:grid-cols-2 md:gap-5 md:px-0 xl:grid-cols-3">
+      <div
+        ref={boardRef}
+        className={cn(
+          "-mx-2 overflow-x-auto overscroll-x-contain pb-1.5 md:mx-0",
+          activeId !== null && "dragging",
+        )}
+      >
+        <div className="flex snap-x snap-mandatory gap-3 px-2 md:grid md:grid-cols-2 md:gap-5 md:px-0 lg:overflow-hidden xl:grid-cols-3">
           {statuses.map((status) => (
             <div key={status} className="min-w-[280px] snap-start sm:min-w-[340px] md:min-w-0">
               <KanbanColumn
@@ -506,7 +581,9 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
           ))}
         </div>
       </div>
-      <DragOverlay>{activeItem && renderPreview ? renderPreview(activeItem) : null}</DragOverlay>
+      <DragOverlay modifiers={dragModifiers}>
+        {activeItem && renderPreview ? renderPreview(activeItem) : null}
+      </DragOverlay>
     </DndContext>
   );
 };
