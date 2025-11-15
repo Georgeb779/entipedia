@@ -39,6 +39,17 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Invalid email or password.", { status: 401 });
   }
 
+  if (!user.emailVerified) {
+    throw new HTTPError(
+      JSON.stringify({
+        code: "EMAIL_NOT_VERIFIED",
+        message:
+          "Tu correo electrónico no ha sido verificado. Por favor, revisa tu bandeja de entrada.",
+      }),
+      { status: 403 },
+    );
+  }
+
   const session = await getSession(event);
 
   await session.update({ userId: user.id });

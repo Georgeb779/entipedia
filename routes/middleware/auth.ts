@@ -43,6 +43,11 @@ export default defineHandler(async (event) => {
     return;
   }
 
+  if (!user.emailVerified) {
+    await session.clear();
+    return;
+  }
+
   context.user = {
     id: user.id,
     email: user.email,

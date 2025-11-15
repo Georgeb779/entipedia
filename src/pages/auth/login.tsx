@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -30,6 +30,9 @@ const Login = () => {
   const location = useLocation();
   const auth = useAuth();
   const { login } = useAuthActions();
+  const [emailNeedsVerification, setEmailNeedsVerification] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccessMessage, setResendSuccessMessage] = useState<string | null>(null);
 
   const { redirectPath, infoMessage } = useMemo(() => {
     const state = (location.state as { from?: string; message?: string } | null) ?? null;
@@ -59,6 +62,7 @@ const Login = () => {
 
   const onSubmit = async (values: LoginFormValues) => {
     form.clearErrors("root");
+    setResendSuccessMessage(null);
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -69,13 +73,53 @@ const Login = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          try {
+            const errorText = await response.text();
+            let errorData: { code?: string; message?: string } | null = null;
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              errorData = { message: errorText };
+            }
+            if (errorData?.code === "EMAIL_NOT_VERIFIED") {
+              setEmailNeedsVerification(values.email);
+              form.setError("root", {
+                type: "server",
+                message: "Tu correo electrónico no ha sido verificado",
+              });
+              return;
+            }
+
+            setEmailNeedsVerification(null);
+            form.setError("root", {
+              type: "server",
+              message:
+                typeof errorData?.message === "string" && errorData.message.length > 0
+                  ? errorData.message
+                  : "No se pudo iniciar sesión. Intenta nuevamente.",
+            });
+            return;
+          } catch {
+            setEmailNeedsVerification(null);
+            form.setError("root", {
+              type: "server",
+              message: "No se pudo iniciar sesión. Intenta nuevamente.",
+            });
+            return;
+          }
+        }
+
         const errorMessage =
           response.status === 401
             ? "Correo electrónico o contraseña inválidos."
             : "No se pudo iniciar sesión. Intenta nuevamente.";
         form.setError("root", { type: "server", message: errorMessage });
+        setEmailNeedsVerification(null);
         return;
       }
+
+      setEmailNeedsVerification(null);
 
       const data: { user: ApiAuthUser } = await response.json();
 
@@ -86,6 +130,72 @@ const Login = () => {
         type: "server",
         message: "No se pudo iniciar sesión. Intenta nuevamente.",
       });
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!emailNeedsVerification) {
+      return;
+    }
+
+    setIsResending(true);
+    form.clearErrors("root");
+    setResendSuccessMessage(null);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailNeedsVerification }),
+      });
+
+      if (response.ok) {
+        setEmailNeedsVerification(null);
+        setResendSuccessMessage(
+          "Correo de verificación enviado. Por favor, revisa tu bandeja de entrada",
+        );
+      } else {
+        try {
+          const errorText = await response.text();
+          let errorData: { code?: string; message?: string } | null = null;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText };
+          }
+          if (errorData?.code === "RATE_LIMITED") {
+            form.setError("root", {
+              type: "server",
+              message: "Por favor, espera 2 minutos antes de solicitar otro correo",
+            });
+          } else if (errorData?.code === "USER_NOT_FOUND") {
+            form.setError("root", {
+              type: "server",
+              message: "Usuario no encontrado",
+            });
+          } else {
+            form.setError("root", {
+              type: "server",
+              message:
+                typeof errorData?.message === "string" && errorData.message.length > 0
+                  ? errorData.message
+                  : "No se pudo enviar el correo. Intenta nuevamente",
+            });
+          }
+        } catch {
+          form.setError("root", {
+            type: "server",
+            message: "No se pudo enviar el correo. Intenta nuevamente",
+          });
+        }
+      }
+    } catch {
+      form.setError("root", {
+        type: "server",
+        message: "No se pudo enviar el correo. Intenta nuevamente",
+      });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -145,9 +255,28 @@ const Login = () => {
             />
 
             {form.formState.errors.root ? (
-              <p className="text-destructive text-sm font-medium" role="alert">
-                {form.formState.errors.root.message}
-              </p>
+              <div className="space-y-2">
+                <p className="text-destructive text-sm font-medium" role="alert">
+                  {form.formState.errors.root.message}
+                </p>
+                {emailNeedsVerification ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={isResending || form.formState.isSubmitting}
+                    onClick={handleResendVerification}
+                  >
+                    {isResending ? "Enviando..." : "Reenviar correo de verificación"}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+
+            {resendSuccessMessage ? (
+              <div className="bg-secondary/30 text-secondary-foreground rounded-xl px-4 py-3 text-sm font-medium">
+                {resendSuccessMessage}
+              </div>
             ) : null}
 
             <Button
