@@ -57,6 +57,8 @@ export default defineHandler(async (event) => {
       id: user.id,
       email: user.email,
       name: user.name,
+      emailVerified: user.emailVerified,
+      emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     } satisfies AuthUser;

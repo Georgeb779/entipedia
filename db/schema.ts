@@ -1,5 +1,14 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const taskStatusEnum = pgEnum("taskStatus", ["todo", "in_progress", "done"]);
 export const projectStatusEnum = pgEnum("projectStatus", ["todo", "in_progress", "done"]);
@@ -11,11 +20,23 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
+});
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const projects = pgTable("projects", {
@@ -98,3 +119,6 @@ export type NewFile = InferInsertModel<typeof files>;
 
 export type Client = InferSelectModel<typeof clients>;
 export type NewClient = InferInsertModel<typeof clients>;
+
+export type EmailVerificationToken = InferSelectModel<typeof emailVerificationTokens>;
+export type NewEmailVerificationToken = InferInsertModel<typeof emailVerificationTokens>;

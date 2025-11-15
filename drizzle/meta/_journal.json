@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1763158200000,
+      "tag": "0001_convert_ids_to_uuid",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763233474136,
+      "tag": "0001_marvelous_silver_samurai",
+      "breakpoints": true
+    }
+  ]
+}
