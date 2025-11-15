@@ -3,6 +3,7 @@ import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 const baseTriggerClasses = cn(
   "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -42,23 +43,34 @@ const NavigationMenuItem = NavigationMenuPrimitive.Item;
 const NavigationMenuTrigger = React.forwardRef<
   React.ComponentRef<typeof NavigationMenuPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <NavigationMenuPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      baseTriggerClasses,
-      "group flex max-w-full min-w-0 flex-wrap items-center gap-2",
-      className,
-    )}
-    {...props}
-  >
-    <span className="truncate text-ellipsis whitespace-nowrap">{children}</span>
-    <ChevronDown
-      className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-180"
-      aria-hidden="true"
-    />
-  </NavigationMenuPrimitive.Trigger>
-));
+>(({ className, children, ...props }, ref) => {
+  const textChild = typeof children === "string" ? children : null;
+  const triggerTitle = textChild ?? undefined;
+  const triggerContent = textChild ? TruncateText(textChild, { maxLength: 32 }) : children;
+
+  return (
+    <NavigationMenuPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        baseTriggerClasses,
+        "group flex max-w-full min-w-0 flex-wrap items-center gap-2",
+        className,
+      )}
+      {...props}
+    >
+      <span
+        className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+        title={triggerTitle}
+      >
+        {triggerContent}
+      </span>
+      <ChevronDown
+        className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-180"
+        aria-hidden="true"
+      />
+    </NavigationMenuPrimitive.Trigger>
+  );
+});
 NavigationMenuTrigger.displayName = NavigationMenuPrimitive.Trigger.displayName;
 
 const NavigationMenuContent = React.forwardRef<

@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -21,21 +22,32 @@ const DropdownMenuSubTrigger = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
     inset?: boolean;
   }
->(({ className, inset, children, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubTrigger
-    ref={ref}
-    className={cn(
-      "text-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors outline-none select-none",
-      "max-w-full min-w-0",
-      inset && "pl-8",
-      className,
-    )}
-    {...props}
-  >
-    <span className="truncate text-ellipsis whitespace-nowrap">{children}</span>
-    <ChevronRight className="ml-auto h-4 w-4" />
-  </DropdownMenuPrimitive.SubTrigger>
-));
+>(({ className, inset, children, ...props }, ref) => {
+  const textChild = typeof children === "string" ? children : null;
+  const itemTitle = textChild ?? undefined;
+  const itemContent = textChild ? TruncateText(textChild, { maxLength: 40 }) : children;
+
+  return (
+    <DropdownMenuPrimitive.SubTrigger
+      ref={ref}
+      className={cn(
+        "text-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors outline-none select-none",
+        "max-w-full min-w-0",
+        inset && "pl-8",
+        className,
+      )}
+      {...props}
+    >
+      <span
+        className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+        title={itemTitle}
+      >
+        {itemContent}
+      </span>
+      <ChevronRight className="ml-auto h-4 w-4" />
+    </DropdownMenuPrimitive.SubTrigger>
+  );
+});
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
 
 const DropdownMenuSubContent = React.forwardRef<

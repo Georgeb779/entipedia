@@ -11,6 +11,7 @@ import {
 import { FILE_CATEGORY_LABELS } from "@/constants";
 import type { ProjectWithTaskCount, StoredFile } from "@/types";
 import { cn, formatFileDate, formatFileSize, getFileCategory, getFileCategoryIcon } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 import { CATEGORY_ICONS } from "./icons";
 import * as React from "react";
 
@@ -112,6 +113,14 @@ export default function FileTable({
 
                 const isDownloading = downloadingId === file.id;
                 const isEditing = updateFileIsPending && editTargetId === file.id;
+                const filenameLabel = TruncateText(file.filename, { maxLength: 32 });
+                const mimeLabel = TruncateText(file.mimeType, { maxLength: 40 });
+                const descriptionLabel =
+                  file.description && file.description.length > 0
+                    ? file.description
+                    : "Sin descripción";
+                const truncatedDescription = TruncateText(descriptionLabel, { maxLength: 80 });
+                const truncatedProjectName = TruncateText(projectName, { maxLength: 40 });
 
                 return (
                   <TableRow key={file.id}>
@@ -127,41 +136,39 @@ export default function FileTable({
                           <CategoryIcon className="h-5 w-5" aria-hidden="true" />
                         </button>
                         <div className="max-w-[120px]">
-                          <p className="truncate text-sm font-medium" title={file.filename}>
-                            {file.filename}
+                          <p
+                            className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap"
+                            title={file.filename}
+                          >
+                            {filenameLabel}
                           </p>
                           <p
-                            className="text-muted-foreground truncate text-xs"
+                            className="text-muted-foreground overflow-hidden text-xs text-ellipsis whitespace-nowrap"
                             title={file.mimeType}
                           >
-                            {file.mimeType}
+                            {mimeLabel}
                           </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[120px]">
-                      <div
-                        className="truncate"
-                        title={
-                          file.description && file.description.length > 0
-                            ? file.description
-                            : "Sin descripción"
-                        }
+                      <span
+                        className="block overflow-hidden text-sm text-ellipsis whitespace-nowrap text-neutral-700"
+                        title={descriptionLabel}
                       >
-                        <span className="text-sm text-neutral-700">
-                          {file.description && file.description.length > 0
-                            ? file.description
-                            : "Sin descripción"}
-                        </span>
-                      </div>
+                        {truncatedDescription}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge className={cn("uppercase", badgeClass)}>{categoryLabel}</Badge>
                     </TableCell>
                     <TableCell className="max-w-[120px]">
-                      <div className="truncate" title={projectName}>
-                        <span className="text-sm">{projectName}</span>
-                      </div>
+                      <span
+                        className="block overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                        title={projectName}
+                      >
+                        {truncatedProjectName}
+                      </span>
                     </TableCell>
                     <TableCell>{formatFileSize(file.size)}</TableCell>
                     <TableCell>{formatFileDate(file.createdAt)}</TableCell>

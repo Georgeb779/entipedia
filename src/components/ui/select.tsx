@@ -3,6 +3,7 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 const Select = SelectPrimitive.Root;
 const SelectGroup = SelectPrimitive.Group;
@@ -11,7 +12,7 @@ const SelectValue = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitiv
   return (
     <SelectPrimitive.Value
       className={cn(
-        "max-w-full flex-1 truncate overflow-hidden text-left text-ellipsis whitespace-nowrap",
+        "max-w-full flex-1 overflow-hidden text-left text-ellipsis whitespace-nowrap",
         "min-w-0",
         className,
       )}
@@ -86,26 +87,37 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 const SelectItem = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex w-full min-w-0 items-center rounded-sm py-2 pr-2 pl-8 text-sm outline-none select-none",
-      "cursor-default focus:bg-[rgba(246,201,14,0.12)] focus:text-[#1C2431] data-disabled:pointer-events-none data-disabled:opacity-50",
-      className,
-    )}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
-    <SelectPrimitive.ItemText className="w-full max-w-[250px] flex-1 overflow-hidden">
-      <span className="block w-full max-w-[250px] truncate ...">{children}</span>
-    </SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
-));
+>(({ className, children, ...props }, ref) => {
+  const textChild = typeof children === "string" ? children : null;
+  const itemTitle = textChild ?? undefined;
+  const itemContent = textChild ? TruncateText(textChild, { maxLength: 60 }) : children;
+
+  return (
+    <SelectPrimitive.Item
+      ref={ref}
+      className={cn(
+        "relative flex w-full min-w-0 items-center rounded-sm py-2 pr-2 pl-8 text-sm outline-none select-none",
+        "cursor-default focus:bg-[rgba(246,201,14,0.12)] focus:text-[#1C2431] data-disabled:pointer-events-none data-disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    >
+      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        <SelectPrimitive.ItemIndicator>
+          <Check className="h-4 w-4" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+      <SelectPrimitive.ItemText className="w-full max-w-[250px] flex-1 overflow-hidden">
+        <span
+          className="block w-full max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap"
+          title={itemTitle}
+        >
+          {itemContent}
+        </span>
+      </SelectPrimitive.ItemText>
+    </SelectPrimitive.Item>
+  );
+});
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
 const SelectSeparator = React.forwardRef<

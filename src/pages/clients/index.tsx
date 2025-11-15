@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -50,6 +51,7 @@ import {
   formatCurrencyDOP,
   parseCurrencyDOP,
 } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 const clientSchema = z
   .object({
@@ -683,7 +685,12 @@ function ClientsPage() {
   const ClientMobileCard = ({ client, onEdit, onDelete, isDeleting }: ClientMobileCardProps) => (
     <article className="space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
       <header className="space-y-2">
-        <h3 className="truncate text-lg font-semibold text-[#1C2431] ...">{client.name}</h3>
+        <h3
+          className="overflow-hidden text-lg font-semibold text-ellipsis whitespace-nowrap text-[#1C2431] ..."
+          title={client.name}
+        >
+          {TruncateText(client.name, { maxLength: 60 })}
+        </h3>
         <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
           {CLIENT_TYPE_LABELS[client.type]}
         </Badge>
@@ -842,69 +849,78 @@ function ClientsPage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        clients.map((client) => (
-                          <TableRow key={client.id}>
-                            <TableCell className="max-w-xs">
-                              {renderEditableCell(
-                                client,
-                                "name",
-                                <span className="truncate font-medium" title={client.name}>
-                                  {client.name}
-                                </span>,
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {renderEditableCell(
-                                client,
-                                "type",
-                                <Badge className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}>
-                                  {CLIENT_TYPE_LABELS[client.type]}
-                                </Badge>,
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {renderEditableCell(
-                                client,
-                                "value",
-                                <span>{formatCurrencyDOP(client.value)}</span>,
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {renderEditableCell(
-                                client,
-                                "startDate",
-                                <span>{formatClientDate(client.startDate)}</span>,
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {renderEditableCell(
-                                client,
-                                "endDate",
-                                <span>{formatClientDate(client.endDate)}</span>,
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => handleEditOpen(client)}
-                                >
-                                  Editar
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleOpenDelete(client)}
-                                >
-                                  Eliminar
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        clients.map((client) => {
+                          const truncatedClientName = TruncateText(client.name, { maxLength: 20 });
+
+                          return (
+                            <TableRow key={client.id}>
+                              <TableCell className="max-w-xs">
+                                {renderEditableCell(
+                                  client,
+                                  "name",
+                                  <span
+                                    className="block overflow-hidden font-medium text-ellipsis whitespace-nowrap"
+                                    title={client.name}
+                                  >
+                                    {truncatedClientName}
+                                  </span>,
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {renderEditableCell(
+                                  client,
+                                  "type",
+                                  <Badge
+                                    className={cn("uppercase", CLIENT_TYPE_COLORS[client.type])}
+                                  >
+                                    {CLIENT_TYPE_LABELS[client.type]}
+                                  </Badge>,
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {renderEditableCell(
+                                  client,
+                                  "value",
+                                  <span>{formatCurrencyDOP(client.value)}</span>,
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {renderEditableCell(
+                                  client,
+                                  "startDate",
+                                  <span>{formatClientDate(client.startDate)}</span>,
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {renderEditableCell(
+                                  client,
+                                  "endDate",
+                                  <span>{formatClientDate(client.endDate)}</span>,
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handleEditOpen(client)}
+                                  >
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleOpenDelete(client)}
+                                  >
+                                    Eliminar
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       )}
                     </TableBody>
                   </Table>
@@ -945,6 +961,9 @@ function ClientsPage() {
           <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Crear Cliente</DialogTitle>
+              <DialogDescription>
+                Ingresa los datos del cliente y define fechas, tipo y valor del contrato.
+              </DialogDescription>
             </DialogHeader>
             <Form {...createForm}>
               <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
@@ -1068,6 +1087,10 @@ function ClientsPage() {
           <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Editar Cliente</DialogTitle>
+              <DialogDescription>
+                Actualiza la información del cliente y guarda los cambios para mantener tus datos al
+                día.
+              </DialogDescription>
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
@@ -1189,11 +1212,11 @@ function ClientsPage() {
           <DialogContent className="space-y-4 sm:space-y-5">
             <DialogHeader>
               <DialogTitle>Eliminar Cliente</DialogTitle>
+              <DialogDescription>
+                ¿Estás seguro de que quieres eliminar "{clientToDelete?.name ?? "este cliente"}"?
+                Esta acción no se puede deshacer.
+              </DialogDescription>
             </DialogHeader>
-            <p className="text-muted-foreground text-sm">
-              ¿Estás seguro de que quieres eliminar "{clientToDelete?.name ?? "este cliente"}"? Esta
-              acción no se puede deshacer.
-            </p>
             {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
             <DialogFooter className="gap-2">
               <DialogClose asChild>

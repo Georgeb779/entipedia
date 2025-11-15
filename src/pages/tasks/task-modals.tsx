@@ -24,6 +24,7 @@ import {
 } from "@/components/ui";
 import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/constants";
 import type { Project } from "@/types";
+import TruncateText from "@/utils/truncate-text";
 
 import type { TaskFormSchema } from "./task-schema";
 
@@ -238,8 +239,11 @@ export function DeleteTaskDialog({
 
         <p className="text-sm text-[#1C2431]">
           ¿Estás seguro de que deseas eliminar la tarea{" "}
-          <span className="block truncate font-semibold" title={taskTitle ?? "seleccionada"}>
-            {taskTitle ?? "seleccionada"}
+          <span
+            className="font-bold"
+            title={TruncateText(taskTitle, { maxLength: 20 }) ?? "seleccionada"}
+          >
+            {TruncateText(taskTitle, { maxLength: 20 }) ?? "seleccionada"}
           </span>
           ? Esta acción no se puede deshacer.
         </p>

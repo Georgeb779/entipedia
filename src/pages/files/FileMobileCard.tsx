@@ -2,6 +2,7 @@ import { Badge, Button } from "@/components/ui";
 import { FILE_CATEGORY_LABELS } from "@/constants";
 import type { StoredFile } from "@/types";
 import { cn, formatFileDate, formatFileSize, getFileCategory, getFileCategoryIcon } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 import { CATEGORY_ICONS } from "./icons";
 
 export type FileMobileCardProps = {
@@ -43,6 +44,7 @@ export default function FileMobileCard({
             : category === "archive"
               ? "bg-[#FDE6E6] text-[#A61B1B]"
               : "bg-[#F1F5F9] text-[#1C2431]";
+  const truncatedProjectName = TruncateText(projectName, { maxLength: 60 });
 
   return (
     <article className="space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
@@ -63,8 +65,11 @@ export default function FileMobileCard({
         <div className="flex flex-wrap items-center gap-2">
           <Badge className={cn("uppercase", badgeClass)}>{categoryLabel}</Badge>
 
-          <span className="max-w-60 truncate text-xs text-[#1C2431] ..." title={projectName}>
-            Proyecto: {projectName}
+          <span
+            className="max-w-60 overflow-hidden text-xs text-ellipsis whitespace-nowrap text-[#1C2431] ..."
+            title={projectName}
+          >
+            Proyecto: {truncatedProjectName}
           </span>
         </div>
       </div>

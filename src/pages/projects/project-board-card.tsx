@@ -168,7 +168,7 @@ function ProjectBoardCardLayout({
               <button
                 type="button"
                 onClick={onView}
-                className="text-left text-base font-semibold transition-colors hover:text-[#E8B90D] md:text-lg"
+                className="cursor-pointer text-left text-base font-semibold transition-colors hover:text-[#E8B90D] md:text-lg"
               >
                 <span className="line-clamp-2">{project.name}</span>
               </button>

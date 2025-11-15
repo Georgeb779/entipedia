@@ -7,6 +7,7 @@ import {
 } from "@/constants";
 import type { ProjectWithTaskCount } from "@/types";
 import { cn, formatTaskDateTime } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 type ProjectMobileCardProps = {
   project: ProjectWithTaskCount;
@@ -25,6 +26,12 @@ export function ProjectMobileCard({
   isDeleting,
   className,
 }: ProjectMobileCardProps) {
+  const projectDescription = project.description
+    ? project.description
+    : "Sin descripción proporcionada.";
+  const truncatedName = TruncateText(project.name, { maxLength: 60 });
+  const truncatedDescription = TruncateText(projectDescription, { maxLength: 100 });
+
   return (
     <article
       className={cn(
@@ -33,11 +40,17 @@ export function ProjectMobileCard({
       )}
     >
       <header className="space-y-2">
-        <h3 className="max-w-60 truncate text-lg font-semibold text-[#1C2431] ...">
-          {project.name}
+        <h3
+          className="max-w-60 overflow-hidden text-lg font-semibold text-ellipsis whitespace-nowrap text-[#1C2431] ..."
+          title={project.name}
+        >
+          {truncatedName}
         </h3>
-        <p className="text-muted-foreground max-w-md truncate text-sm ...">
-          {project.description ? project.description : "Sin descripción proporcionada."}
+        <p
+          className="text-muted-foreground max-w-md overflow-hidden text-sm text-ellipsis whitespace-nowrap ..."
+          title={projectDescription}
+        >
+          {truncatedDescription}
         </p>
       </header>
       <div className="flex flex-wrap items-center gap-2">

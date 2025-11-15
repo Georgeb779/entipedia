@@ -34,6 +34,7 @@ import {
 } from "@/hooks";
 import type { ProjectStatus, ProjectWithTaskCount } from "@/types";
 import { cn, formatTaskDateTime } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 import { ProjectBoardCard, ProjectBoardCardPreview } from "./project-board-card";
 import { ProjectMobileCard } from "./project-mobile-card";
@@ -50,6 +51,10 @@ import {
   type ProjectViewMode,
   type ProjectSchema,
 } from "./project-schema";
+
+const PROJECT_NAME_MAX_LENGTH = 40;
+const PROJECT_DESCRIPTION_MAX_LENGTH = 80;
+const PROJECT_DATE_MAX_LENGTH = 32;
 
 function ProjectsPage() {
   const navigate = useNavigate();
@@ -299,49 +304,72 @@ function ProjectsPage() {
       );
     }
 
-    return projects.map((project) => (
-      <TableRow key={project.id}>
-        <TableCell className="text-foreground max-w-[150px] text-sm font-medium">
-          <div className="truncate" title={project.name}>
-            {project.name}
-          </div>
-        </TableCell>
-        <TableCell className="text-muted-foreground max-w-[180px] text-sm">
-          <div className="truncate" title={project.description ?? "Sin descripción"}>
-            {project.description ? project.description : "Sin descripción"}
-          </div>
-        </TableCell>
-        <TableCell className="text-center">
-          <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
-            {PROJECT_STATUS_LABELS[project.status]}
-          </Badge>
-        </TableCell>
-        <TableCell className="text-center">
-          <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
-            {PROJECT_PRIORITY_LABELS[project.priority]}
-          </Badge>
-        </TableCell>
-        <TableCell className="text-muted-foreground text-center text-sm">
-          {project.taskCount} tareas
-        </TableCell>
-        <TableCell className="text-muted-foreground max-w-[130px] text-sm whitespace-nowrap">
-          <div className="truncate">{formatTaskDateTime(project.createdAt)}</div>
-        </TableCell>
-        <TableCell className="text-right text-sm">
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-            <Button variant="ghost" size="sm" onClick={() => handleNavigateToDetails(project)}>
-              Ver
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(project)}>
-              Editar
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(project)}>
-              Eliminar
-            </Button>
-          </div>
-        </TableCell>
-      </TableRow>
-    ));
+    return projects.map((project) => {
+      const projectDescription = project.description ?? "Sin descripción";
+      const truncatedName = TruncateText(project.name, { maxLength: PROJECT_NAME_MAX_LENGTH });
+      const truncatedDescription = TruncateText(projectDescription, {
+        maxLength: PROJECT_DESCRIPTION_MAX_LENGTH,
+      });
+      const createdAtLabel = formatTaskDateTime(project.createdAt);
+      const truncatedCreatedAt = TruncateText(createdAtLabel, {
+        maxLength: PROJECT_DATE_MAX_LENGTH,
+      });
+
+      return (
+        <TableRow key={project.id}>
+          <TableCell className="text-foreground max-w-[150px] text-sm font-medium">
+            <span
+              className="block overflow-hidden text-ellipsis whitespace-nowrap"
+              title={project.name}
+            >
+              {truncatedName}
+            </span>
+          </TableCell>
+          <TableCell className="text-muted-foreground max-w-[180px] text-sm">
+            <span
+              className="block overflow-hidden text-ellipsis whitespace-nowrap"
+              title={projectDescription}
+            >
+              {truncatedDescription}
+            </span>
+          </TableCell>
+          <TableCell className="text-center">
+            <Badge className={cn("uppercase", PROJECT_STATUS_COLORS[project.status])}>
+              {PROJECT_STATUS_LABELS[project.status]}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-center">
+            <Badge className={cn("uppercase", PROJECT_PRIORITY_COLORS[project.priority])}>
+              {PROJECT_PRIORITY_LABELS[project.priority]}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-muted-foreground text-center text-sm">
+            {project.taskCount} tareas
+          </TableCell>
+          <TableCell className="text-muted-foreground max-w-[130px] text-sm whitespace-nowrap">
+            <span
+              className="block overflow-hidden text-ellipsis whitespace-nowrap"
+              title={createdAtLabel}
+            >
+              {truncatedCreatedAt}
+            </span>
+          </TableCell>
+          <TableCell className="text-right text-sm">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+              <Button variant="ghost" size="sm" onClick={() => handleNavigateToDetails(project)}>
+                Ver
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(project)}>
+                Editar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(project)}>
+                Eliminar
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
+      );
+    });
   };
 
   return (

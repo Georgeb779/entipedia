@@ -2,6 +2,7 @@ import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 type TabsListProps = React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>;
 
@@ -28,20 +29,29 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 const TabsTrigger = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.Trigger>,
   TabsTriggerProps
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "inline-flex w-full min-w-5 items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
-      "max-w-full min-w-0 truncate",
-      "hover:text-foreground focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none",
-      "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
-      "data-[state=inactive]:text-muted-foreground data-[state=inactive]:cursor-pointer",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, children, ...props }, ref) => {
+  const triggerTitle = typeof children === "string" ? children : undefined;
+  const triggerContent =
+    typeof children === "string" ? TruncateText(children, { maxLength: 24 }) : children;
+
+  return (
+    <TabsPrimitive.Trigger
+      ref={ref}
+      title={triggerTitle}
+      className={cn(
+        "inline-flex w-full min-w-5 items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
+        "max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+        "hover:text-foreground focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none",
+        "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+        "data-[state=inactive]:text-muted-foreground data-[state=inactive]:cursor-pointer",
+        className,
+      )}
+      {...props}
+    >
+      {triggerContent}
+    </TabsPrimitive.Trigger>
+  );
+});
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
 const TabsContent = React.forwardRef<

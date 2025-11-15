@@ -43,6 +43,7 @@ import {
 } from "@/hooks";
 import type { Project, Task, TaskFilters, TaskStatus } from "@/types";
 import { cn, formatTaskDate } from "@/utils";
+import TruncateText from "@/utils/truncate-text";
 
 import { TaskBoardCard, TaskBoardCardPreview } from "./task-board-card";
 import { DeleteTaskDialog, TaskFormModal } from "./task-modals";
@@ -59,6 +60,9 @@ import {
   type TaskViewMode,
   type TaskFormSchema,
 } from "./task-schema";
+
+const TASK_TITLE_MAX_LENGTH = 60;
+const TASK_PROJECT_MAX_LENGTH = 40;
 
 function TasksPage() {
   const [activeView, setActiveView] = usePersistentViewMode<TaskViewMode>({
@@ -332,6 +336,7 @@ function TasksPage() {
         ? (projectList.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
         : "Sin asignar";
     const priority = task.priority && isTaskPriority(task.priority) ? task.priority : null;
+    const truncatedTitle = TruncateText(task.title, { maxLength: TASK_TITLE_MAX_LENGTH });
 
     return (
       <article
@@ -342,8 +347,11 @@ function TasksPage() {
       >
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <h3 className="max-w-60 truncate text-sm font-medium text-[#1C2431] ...">
-              {task.title}
+            <h3
+              className="max-w-60 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-[#1C2431] ..."
+              title={task.title}
+            >
+              {truncatedTitle}
             </h3>
             {task.description ? (
               <p className="text-muted-foreground line-clamp-2 text-xs">{task.description}</p>
@@ -406,28 +414,32 @@ function TasksPage() {
 
     return activeTasks.map((task) => {
       const priority = task.priority && isTaskPriority(task.priority) ? task.priority : null;
+      const projectName =
+        task.projectId !== null
+          ? (projects.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
+          : "Sin asignar";
+      const truncatedTitle = TruncateText(task.title, { maxLength: TASK_TITLE_MAX_LENGTH });
+      const truncatedProjectName = TruncateText(projectName, {
+        maxLength: TASK_PROJECT_MAX_LENGTH,
+      });
 
       return (
         <TableRow key={task.id}>
           <TableCell className="text-foreground max-w-[150px] text-sm font-medium">
-            <div className="truncate" title={task.title}>
-              {task.title}
-            </div>
+            <span
+              className="block overflow-hidden text-ellipsis whitespace-nowrap"
+              title={task.title}
+            >
+              {truncatedTitle}
+            </span>
           </TableCell>
           <TableCell className="text-muted-foreground max-w-[140px] text-sm">
-            <div
-              className="truncate"
-              title={
-                task.projectId !== null
-                  ? (projects.find((project) => project.id === task.projectId)?.name ??
-                    "Desconocido")
-                  : "Sin asignar"
-              }
+            <span
+              className="block overflow-hidden text-ellipsis whitespace-nowrap"
+              title={projectName}
             >
-              {task.projectId !== null
-                ? (projects.find((project) => project.id === task.projectId)?.name ?? "Desconocido")
-                : "Sin asignar"}
-            </div>
+              {truncatedProjectName}
+            </span>
           </TableCell>
           <TableCell>
             <Badge className={cn("text-xs", TASK_STATUS_COLORS[task.status])}>

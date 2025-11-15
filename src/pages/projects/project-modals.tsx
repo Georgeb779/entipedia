@@ -25,6 +25,7 @@ import {
 } from "@/components/ui";
 import { PROJECT_PRIORITY_OPTIONS, PROJECT_STATUS_OPTIONS } from "@/constants";
 import type { ProjectStatus } from "@/types";
+import TruncateText from "@/utils/truncate-text";
 
 import type { ProjectFormInput, ProjectSchema } from "./project-schema";
 
@@ -62,6 +63,10 @@ export function ProjectFormModal({
       <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto sm:space-y-5">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            Completa la información del proyecto y actualiza los detalles necesarios antes de
+            guardar.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -216,8 +221,12 @@ export function DeleteProjectDialog({
           <DialogDescription>
             ¿Estás seguro de que deseas eliminar el proyecto{" "}
             {projectName ? (
-              <span className="inline-block max-w-full truncate" title={projectName}>
-                "{projectName}"
+              <span title={projectName}>
+                "
+                <span className="font-bold text-[#1C2431]">
+                  {TruncateText(projectName, { maxLength: 20 })}
+                </span>
+                "
               </span>
             ) : (
               ""

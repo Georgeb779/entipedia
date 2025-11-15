@@ -41,6 +41,8 @@ import { cn, formatFileSize, validateFileSize, validateFileType } from "@/utils"
 import FileMobileCard from "./FileMobileCard";
 import FileTable from "./FileTable";
 
+const uuidRegex = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+
 const uploadSchema = z.object({
   description: z
     .string()
@@ -48,7 +50,7 @@ const uploadSchema = z.object({
     .max(2000, "La descripción debe tener 2000 caracteres o menos.")
     .default(""),
   projectId: z
-    .union([z.literal("all"), z.string().regex(/^\d+$/, "Selección de proyecto inválida.")])
+    .union([z.literal("all"), z.string().regex(uuidRegex, "Selección de proyecto inválida.")])
     .default("all"),
 });
 
@@ -158,15 +160,7 @@ export default function FilesPage() {
           .max(2000, "La descripción debe tener 2000 caracteres o menos.")
           .default(""),
         projectId: z
-          .union([
-            z.literal("all"),
-            z
-              .string()
-              .regex(
-                /^(?:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i,
-                "Selección de proyecto inválida.",
-              ),
-          ])
+          .union([z.literal("all"), z.string().regex(uuidRegex, "Selección de proyecto inválida.")])
           .default("all"),
       }),
     [],

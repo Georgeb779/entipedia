@@ -168,7 +168,7 @@ function ProjectDetailContent({ projectId, navigate }: ProjectDetailContentProps
         <TableCell className="text-right">
           <Link
             to="/tasks"
-            className="max-w-60 truncate text-sm font-medium text-[#1C2431] underline-offset-4 hover:underline ..."
+            className="max-w-60 text-sm font-medium text-[#1C2431] underline-offset-4 hover:underline ..."
           >
             View
           </Link>

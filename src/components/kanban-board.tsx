@@ -447,7 +447,7 @@ const KanbanBoard = <TItem extends { id: string; status: TStatus }, TStatus exte
             <TabsTrigger
               key={status}
               value={status}
-              className="h-8 truncate rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
+              className="h-8 rounded-md px-2 text-[12px] leading-4 whitespace-nowrap data-[state=active]:bg-yellow-200 data-[state=active]:text-[#1C2431]"
             >
               {statusTitles[status]} ({buckets[status].length})
             </TabsTrigger>
