@@ -15,18 +15,6 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Email is required.", { status: 400 });
   }
 
-  const isRateLimited = await checkRateLimit(email);
-
-  if (isRateLimited) {
-    throw new HTTPError(
-      JSON.stringify({
-        code: "RATE_LIMITED",
-        message: "Por favor, espera 2 minutos antes de solicitar otro correo de verificación.",
-      }),
-      { status: 429 },
-    );
-  }
-
   const db = getDb();
 
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -43,6 +31,18 @@ export default defineHandler(async (event) => {
       success: true,
       message: "Tu correo ya está verificado. Puedes iniciar sesión",
     };
+  }
+
+  const isRateLimited = await checkRateLimit(email);
+
+  if (isRateLimited) {
+    throw new HTTPError(
+      JSON.stringify({
+        code: "RATE_LIMITED",
+        message: "Por favor, espera 2 minutos antes de solicitar otro correo de verificación.",
+      }),
+      { status: 429 },
+    );
   }
 
   await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, user.id));

@@ -8,7 +8,6 @@ const RATE_LIMIT_MS = 120000; // 2 minutes
  * Updates the last request timestamp if the limit has not been exceeded.
  * @param email - The email address to check
  * @returns true if rate limit is exceeded, false otherwise
- * @throws HTTPError with status 429 if rate limit is exceeded
  */
 export async function checkRateLimit(email: string): Promise<boolean> {
   const db = getDb();
