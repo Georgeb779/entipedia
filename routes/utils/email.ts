@@ -1,11 +1,17 @@
 import { Resend } from "resend";
 import { HTTPError } from "h3";
 
+const shouldSkipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === "true";
+
 export const sendVerificationEmail = async (
   email: string,
   token: string,
   name: string,
 ): Promise<void> => {
+  if (shouldSkipEmailVerification) {
+    return;
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     throw new HTTPError("Server configuration error: RESEND_API_KEY not set.", { status: 500 });
