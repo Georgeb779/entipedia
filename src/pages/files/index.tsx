@@ -2,20 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Archive,
-  File as FileIcon,
-  FileText,
-  Image as ImageIcon,
-  LucideIcon,
-  Music,
-  UploadCloud,
-  Video,
-} from "lucide-react";
+import { UploadCloud } from "lucide-react";
 
 import { Button, Layout, ProtectedRoute } from "@/components";
 import {
-  Badge,
   Dialog,
   DialogClose,
   DialogContent,
@@ -35,15 +25,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   Textarea,
 } from "@/components/ui";
-import { ALLOWED_FILE_TYPES, FILE_CATEGORY_LABELS, MAX_FILE_SIZE } from "@/constants";
+import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
 import {
   useDeleteFile,
   useDownloadFile,
@@ -52,16 +36,10 @@ import {
   useUploadFile,
   useUpdateFile,
 } from "@/hooks";
-import type { FileCategory, FileFilters, ProjectWithTaskCount, StoredFile } from "@/types";
-import {
-  cn,
-  formatFileDate,
-  formatFileSize,
-  getFileCategory,
-  getFileCategoryIcon,
-  validateFileSize,
-  validateFileType,
-} from "@/utils";
+import type { FileFilters, ProjectWithTaskCount, StoredFile } from "@/types";
+import { cn, formatFileSize, validateFileSize, validateFileType } from "@/utils";
+import FileMobileCard from "./FileMobileCard";
+import FileTable from "./FileTable";
 
 const uploadSchema = z.object({
   description: z
@@ -89,29 +67,6 @@ type EditFileDialogState = {
   target: StoredFile | null;
 };
 
-const iconComponents: Record<string, LucideIcon> = {
-  Archive,
-  File: FileIcon,
-  FileText,
-  Image: ImageIcon,
-  Music,
-  Video,
-};
-
-const categoryBadgeClasses: Record<FileCategory, string> = {
-  image: "bg-[rgba(246,201,14,0.16)] text-[#1C2431]",
-  document: "bg-[rgba(28,36,49,0.08)] text-[#1C2431]",
-  video: "bg-[#E6F0FF] text-[#1C2431]",
-  audio: "bg-[#E7F5E5] text-[#1C2431]",
-  archive: "bg-[#FDE6E6] text-[#A61B1B]",
-  other: "bg-[#F1F5F9] text-[#1C2431]",
-};
-
-const resolveCategoryIcon = (category: FileCategory): LucideIcon => {
-  const iconName = getFileCategoryIcon(category);
-  return iconComponents[iconName] ?? FileIcon;
-};
-
 const formatMaxUploadSize = () => formatFileSize(MAX_FILE_SIZE);
 
 export default function FilesPage() {
@@ -122,6 +77,7 @@ export default function FilesPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const [showLeftIndicator, setShowLeftIndicator] = useState(false);
@@ -436,9 +392,12 @@ export default function FilesPage() {
   const handleDownload = async (file: StoredFile) => {
     setActionError(null);
     try {
+      setDownloadingId(file.id);
       await downloadFile.mutateAsync({ fileId: file.id, filename: file.filename });
     } catch {
       setActionError("Error al descargar el archivo.");
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -459,100 +418,6 @@ export default function FilesPage() {
   const filesLoading = filesQuery.isLoading;
   const filesError = filesQuery.error ? "Error al cargar archivos." : null;
   const deleteDialogError = actionError && deleteState.isOpen ? actionError : null;
-
-  type FileMobileCardProps = {
-    file: StoredFile;
-    projectName: string;
-    onDownload: (file: StoredFile) => void;
-    onDelete: (file: StoredFile) => void;
-    isDownloading: boolean;
-    isDeleting: boolean;
-  };
-
-  const FileMobileCard = ({
-    file,
-    projectName,
-    onDownload,
-    onDelete,
-    isDownloading,
-    isDeleting,
-  }: FileMobileCardProps) => {
-    const category = getFileCategory(file.mimeType);
-    const CategoryIcon = resolveCategoryIcon(category);
-    const categoryLabel = FILE_CATEGORY_LABELS[category];
-    const badgeClass = categoryBadgeClasses[category];
-
-    return (
-      <article className="space-y-4 rounded-lg border border-[rgba(0,0,0,0.05)] bg-white p-4 shadow-sm">
-        <header className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(246,201,14,0.16)] text-[#c08600]">
-            <CategoryIcon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="line-clamp-2 text-sm font-semibold text-[#1C2431]">{file.filename}</h3>
-            <p className="text-muted-foreground text-xs">{file.mimeType}</p>
-          </div>
-        </header>
-
-        <div className="text-muted-foreground space-y-2 text-sm">
-          <p className="line-clamp-2">
-            {file.description && file.description.length > 0 ? file.description : "Sin descripción"}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className={cn("uppercase", badgeClass)}>{categoryLabel}</Badge>
-            <span className="truncate text-xs text-[#1C2431]" title={projectName}>
-              {projectName}
-            </span>
-          </div>
-        </div>
-
-        <dl className="text-muted-foreground grid grid-cols-2 gap-3 text-xs">
-          <div className="space-y-1">
-            <dt className="text-foreground text-xs font-semibold tracking-wide uppercase">
-              Tamaño
-            </dt>
-            <dd>{formatFileSize(file.size)}</dd>
-          </div>
-          <div className="space-y-1">
-            <dt className="text-foreground text-xs font-semibold tracking-wide uppercase">
-              Subido
-            </dt>
-            <dd>{formatFileDate(file.createdAt)}</dd>
-          </div>
-        </dl>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full justify-center"
-            onClick={() => onDownload(file)}
-            disabled={isDownloading}
-          >
-            {isDownloading ? "Descargando..." : "Descargar"}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full justify-center"
-            onClick={() => handleEditOpen(file)}
-            disabled={updateFile.isPending}
-          >
-            {updateFile.isPending && editState.target?.id === file.id ? "Guardando..." : "Editar"}
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            className="w-full justify-center"
-            onClick={() => onDelete(file)}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Eliminando..." : "Eliminar"}
-          </Button>
-        </div>
-      </article>
-    );
-  };
 
   return (
     <ProtectedRoute>
@@ -645,6 +510,7 @@ export default function FilesPage() {
                         ? (projectMap.get(file.projectId)?.name ?? "Proyecto desconocido")
                         : "Sin asignar";
                       const isDeleting = deleteFile.isPending && deleteState.target?.id === file.id;
+                      const isEditing = updateFile.isPending && editState.target?.id === file.id;
 
                       return (
                         <FileMobileCard
@@ -653,169 +519,31 @@ export default function FilesPage() {
                           projectName={projectName}
                           onDownload={(target) => void handleDownload(target)}
                           onDelete={(target) => openDeleteDialog(target)}
-                          isDownloading={downloadFile.isPending}
+                          onEdit={(target) => handleEditOpen(target)}
+                          isDownloading={downloadingId === file.id}
                           isDeleting={isDeleting}
+                          isEditing={isEditing}
                         />
                       );
                     })}
                   </div>
                 )}
               </div>
-
-              <div className="relative hidden xl:block">
-                {showLeftIndicator ? (
-                  <div className="scroll-indicator scroll-indicator-left" aria-hidden="true" />
-                ) : null}
-                {showRightIndicator ? (
-                  <div className="scroll-indicator scroll-indicator-right" aria-hidden="true" />
-                ) : null}
-                <div
-                  ref={tableScrollRef}
-                  className="horizontal-scroll-container rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
-                >
-                  <Table className="min-w-max table-auto">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Proyecto</TableHead>
-                        <TableHead>Tamaño</TableHead>
-                        <TableHead>Subido</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filesLoading ? (
-                        <TableRow>
-                          <TableCell className="py-8 text-center" colSpan={7}>
-                            <span className="text-muted-foreground text-sm">
-                              Cargando archivos...
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ) : filesError ? (
-                        <TableRow>
-                          <TableCell className="py-8 text-center" colSpan={7}>
-                            <span className="text-destructive text-sm">{filesError}</span>
-                          </TableCell>
-                        </TableRow>
-                      ) : filteredFiles.length === 0 ? (
-                        <TableRow>
-                          <TableCell className="py-8 text-center" colSpan={7}>
-                            <span className="text-muted-foreground text-sm">
-                              No se encontraron archivos.
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredFiles.map((file) => {
-                          const category = getFileCategory(file.mimeType);
-                          const CategoryIcon = resolveCategoryIcon(category);
-                          const categoryLabel = FILE_CATEGORY_LABELS[category];
-                          const badgeClass = categoryBadgeClasses[category];
-                          const projectName = file.projectId
-                            ? (projectMap.get(file.projectId)?.name ?? "Proyecto desconocido")
-                            : "Sin asignar";
-
-                          return (
-                            <TableRow key={file.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleDownload(file)}
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(246,201,14,0.16)] text-[#c08600] transition-colors hover:bg-[rgba(246,201,14,0.26)] disabled:opacity-60"
-                                    disabled={downloadFile.isPending}
-                                    aria-label={`Descargar ${file.filename}`}
-                                  >
-                                    <CategoryIcon className="h-5 w-5" aria-hidden="true" />
-                                  </button>
-                                  <div className="max-w-[150px]">
-                                    <p
-                                      className="truncate text-sm font-medium"
-                                      title={file.filename}
-                                    >
-                                      {file.filename}
-                                    </p>
-                                    <p
-                                      className="text-muted-foreground truncate text-xs"
-                                      title={file.mimeType}
-                                    >
-                                      {file.mimeType}
-                                    </p>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="max-w-[150px]">
-                                <div
-                                  className="truncate"
-                                  title={
-                                    file.description && file.description.length > 0
-                                      ? file.description
-                                      : "Sin descripción"
-                                  }
-                                >
-                                  <span className="text-sm text-neutral-700">
-                                    {file.description && file.description.length > 0
-                                      ? file.description
-                                      : "Sin descripción"}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={cn("uppercase", badgeClass)}>
-                                  {categoryLabel}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="max-w-[150px]">
-                                <div className="truncate" title={projectName}>
-                                  <span className="text-sm">{projectName}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{formatFileSize(file.size)}</TableCell>
-                              <TableCell>{formatFileDate(file.createdAt)}</TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => void handleDownload(file)}
-                                    disabled={downloadFile.isPending}
-                                  >
-                                    {downloadFile.isPending ? "Descargando..." : "Descargar"}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => handleEditOpen(file)}
-                                    disabled={updateFile.isPending}
-                                  >
-                                    {updateFile.isPending && editState.target?.id === file.id
-                                      ? "Guardando..."
-                                      : "Editar"}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => openDeleteDialog(file)}
-                                    disabled={deleteFile.isPending}
-                                  >
-                                    Eliminar
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+              <FileTable
+                filteredFiles={filteredFiles}
+                filesLoading={filesLoading}
+                filesError={filesError}
+                projectMap={projectMap}
+                tableScrollRef={tableScrollRef}
+                showLeftIndicator={showLeftIndicator}
+                showRightIndicator={showRightIndicator}
+                downloadingId={downloadingId}
+                onDownload={(f) => void handleDownload(f)}
+                onEditOpen={(f) => handleEditOpen(f)}
+                onDeleteOpen={(f) => openDeleteDialog(f)}
+                updateFileIsPending={updateFile.isPending}
+                editTargetId={editState.target?.id ?? null}
+              />
             </section>
           </div>
         </div>

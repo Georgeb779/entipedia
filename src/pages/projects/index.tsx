@@ -464,7 +464,7 @@ function ProjectsPage() {
                         ref={tableScrollRef}
                         className="horizontal-scroll-container w-full rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-5 shadow-sm md:p-6"
                       >
-                        <Table className="min-w-max table-auto">
+                        <Table className="table-auto">
                           <TableHeader>
                             <TableRow>
                               <TableHead className="whitespace-nowrap">Nombre</TableHead>

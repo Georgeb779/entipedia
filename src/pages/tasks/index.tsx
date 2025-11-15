@@ -638,7 +638,7 @@ function TasksPage() {
                           />
                         ) : null}
                         <div ref={tableScrollRef} className="horizontal-scroll-container w-full">
-                          <Table className="min-w-max table-auto">
+                          <Table className="table-auto">
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Tarea</TableHead>
