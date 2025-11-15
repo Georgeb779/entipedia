@@ -1,12 +1,10 @@
 import { defineHandler } from "nitro/h3";
 import { HTTPError, readBody } from "h3";
 import { eq } from "drizzle-orm";
-import { getDb, users } from "db";
-import { getSession } from "../../utils/session";
+import { randomBytes } from "node:crypto";
+import { getDb, users, emailVerificationTokens } from "db";
 import { hashPassword } from "../../utils/password";
-
-const toIsoString = (value: Date | string) =>
-  value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+import { sendVerificationEmail } from "../../utils/email";
 
 export default defineHandler(async (event) => {
   const payload = await readBody<{
@@ -68,17 +66,24 @@ export default defineHandler(async (event) => {
     throw new HTTPError("Failed to create user.", { status: 500 });
   }
 
-  const session = await getSession(event);
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  await session.update({ userId: newUser.id });
+  try {
+    await db.insert(emailVerificationTokens).values({
+      userId: newUser.id,
+      token,
+      expiresAt,
+    });
+
+    await sendVerificationEmail(newUser.email, token, newUser.name);
+  } catch {
+    await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, newUser.id));
+    await db.delete(users).where(eq(users.id, newUser.id));
+    throw new HTTPError("Failed to send verification email.", { status: 500 });
+  }
 
   return {
-    user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      createdAt: toIsoString(newUser.createdAt),
-      updatedAt: toIsoString(newUser.updatedAt),
-    },
+    message: "Registration successful. Please check your email to verify your account.",
   };
 });

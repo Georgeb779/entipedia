@@ -1,11 +1,10 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState } from "react";
+import { Link } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button, LogoMark } from "@/components";
-import { useAuth, useAuthActions } from "@/hooks";
 import {
   Form,
   FormControl,
@@ -15,8 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { ApiAuthUser } from "@/types";
-import { mapApiAuthUser } from "@/utils";
 
 const registerSchema = z
   .object({
@@ -41,9 +38,7 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const navigate = useNavigate();
-  const auth = useAuth();
-  const { login } = useAuthActions();
+  const [registrationComplete, setRegistrationComplete] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -55,12 +50,6 @@ const Register = () => {
     },
   });
 
-  useEffect(() => {
-    if (auth.status === "authenticated") {
-      navigate("/", { replace: true });
-    }
-  }, [auth.status, navigate]);
-
   const onSubmit = async (values: RegisterFormValues) => {
     form.clearErrors("root");
 
@@ -68,7 +57,6 @@ const Register = () => {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           name: values.name,
           email: values.email,
@@ -89,10 +77,7 @@ const Register = () => {
         return;
       }
 
-      const data: { user: ApiAuthUser } = await response.json();
-
-      login(mapApiAuthUser(data.user));
-      navigate("/", { replace: true });
+      setRegistrationComplete(true);
     } catch {
       form.setError("root", {
         type: "server",
@@ -100,6 +85,37 @@ const Register = () => {
       });
     }
   };
+
+  if (registrationComplete) {
+    return (
+      <div className="text-foreground flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdfcf9] via-[#f8f1e6] to-[#f3e6d4] px-4 py-16">
+        <div className="border-border/30 w-full max-w-md space-y-10 rounded-[2.25rem] border bg-white/90 p-10 shadow-[0_32px_80px_rgba(34,31,27,0.08)] backdrop-blur">
+          <div className="space-y-4 text-center">
+            <LogoMark size="md" className="mx-auto" />
+            <div className="space-y-4">
+              <h1 className="text-3xl font-semibold tracking-tight">
+                ¡Revisa tu correo electrónico!
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Te hemos enviado un correo de verificación a tu dirección. Haz clic en el enlace del
+                correo para activar tu cuenta.
+              </p>
+              <p className="text-muted-foreground text-xs">El enlace expirará en 24 horas.</p>
+            </div>
+          </div>
+
+          <div className="text-muted-foreground space-y-1 text-center text-sm">
+            <p>
+              ¿Ya verificaste tu cuenta?{" "}
+              <Link to="/auth/login" className="text-primary hover:text-primary/80 hover:underline">
+                Inicia sesión
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="text-foreground flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdfcf9] via-[#f8f1e6] to-[#f3e6d4] px-4 py-16">
