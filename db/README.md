@@ -34,6 +34,8 @@ Relationships:
    - `npm run db:generate` to create a migration snapshot.
    - `npm run db:migrate` to apply migrations to your database.
 
+**Note**: If you encounter NOT NULL constraint errors with `db:push`, ensure you're using `drizzle-kit` version 0.31.7 or later, which includes fixes for PostgreSQL 18 compatibility.
+
 ## Development Workflow
 
 - Modify `schema.ts` whenever tables or columns change.
