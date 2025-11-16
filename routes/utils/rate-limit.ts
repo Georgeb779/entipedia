@@ -1,38 +1,95 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb, rateLimits } from "db";
 
-const RATE_LIMIT_MS = 120000; // 2 minutes
+type RateLimitOptions = {
+  identifier: string;
+  scope: string;
+  limit: number;
+  windowMs: number;
+};
 
-/**
- * Checks if an email has exceeded the rate limit for verification email resends.
- * Updates the last request timestamp if the limit has not been exceeded.
- * @param email - The email address to check
- * @returns true if rate limit is exceeded, false otherwise
- */
-export async function checkRateLimit(email: string): Promise<boolean> {
+type RateLimitResult = {
+  limited: boolean;
+  remaining: number;
+  retryAfterMs?: number;
+};
+
+const normalizeIdentifier = (value: string) => value.trim().toLowerCase();
+
+export async function checkRateLimit(options: RateLimitOptions): Promise<RateLimitResult> {
+  const { identifier, scope, limit, windowMs } = options;
+  const normalizedIdentifier = normalizeIdentifier(identifier);
   const db = getDb();
   const now = new Date();
+  const windowBoundary = now.getTime() - windowMs;
 
   const [existingLimit] = await db
     .select()
     .from(rateLimits)
-    .where(eq(rateLimits.email, email))
+    .where(and(eq(rateLimits.identifier, normalizedIdentifier), eq(rateLimits.scope, scope)))
     .limit(1);
 
-  if (existingLimit) {
-    const timeSinceLastRequest = now.getTime() - existingLimit.lastRequestAt.getTime();
-
-    if (timeSinceLastRequest < RATE_LIMIT_MS) {
-      return true;
-    }
-
-    await db.update(rateLimits).set({ lastRequestAt: now }).where(eq(rateLimits.email, email));
-  } else {
+  if (!existingLimit) {
     await db.insert(rateLimits).values({
-      email,
+      identifier: normalizedIdentifier,
+      scope,
+      requestCount: 1,
+      windowStartedAt: now,
       lastRequestAt: now,
     });
+
+    return {
+      limited: false,
+      remaining: Math.max(limit - 1, 0),
+    };
   }
 
-  return false;
+  const windowStartedAtMs = existingLimit.windowStartedAt.getTime();
+
+  if (windowStartedAtMs <= windowBoundary) {
+    await db
+      .update(rateLimits)
+      .set({
+        requestCount: 1,
+        windowStartedAt: now,
+        lastRequestAt: now,
+      })
+      .where(eq(rateLimits.id, existingLimit.id));
+
+    return {
+      limited: false,
+      remaining: Math.max(limit - 1, 0),
+    };
+  }
+
+  if (existingLimit.requestCount >= limit) {
+    const elapsedMs = now.getTime() - windowStartedAtMs;
+    const retryAfterMs = windowMs - elapsedMs;
+
+    await db
+      .update(rateLimits)
+      .set({ lastRequestAt: now })
+      .where(eq(rateLimits.id, existingLimit.id));
+
+    return {
+      limited: true,
+      remaining: 0,
+      retryAfterMs: retryAfterMs > 0 ? retryAfterMs : 0,
+    };
+  }
+
+  const updatedCount = existingLimit.requestCount + 1;
+
+  await db
+    .update(rateLimits)
+    .set({
+      requestCount: updatedCount,
+      lastRequestAt: now,
+    })
+    .where(eq(rateLimits.id, existingLimit.id));
+
+  return {
+    limited: false,
+    remaining: Math.max(limit - updatedCount, 0),
+  };
 }
