@@ -22,6 +22,8 @@ import {
   type TeamMember,
 } from "@/data/users";
 import { useAuth } from "@/hooks";
+import { useProjects } from "@/hooks/use-projects";
+import { useTasks } from "@/hooks/use-tasks";
 import { cn } from "@/utils";
 
 type UserProfileMode = "summary" | "detail";
@@ -61,28 +63,54 @@ const getInitials = (name: string) => {
   return `${first.charAt(0)}${second.charAt(0)}`.toUpperCase();
 };
 
-const resolveStats = (member: TeamMember, mode: UserProfileMode) =>
-  mode === "detail"
+const resolveStats = (
+  member: TeamMember,
+  mode: UserProfileMode,
+  metrics?: { projects: number | null; tasksInProgress: number | null },
+) => {
+  const projectsValue = typeof metrics?.projects === "number" ? metrics.projects : member.projects;
+  const tasksInProgressValue =
+    typeof metrics?.tasksInProgress === "number" ? metrics.tasksInProgress : member.tasksInProgress;
+
+  return mode === "detail"
     ? [
-        { label: "Proyectos activos", value: member.projects.toString() },
-        { label: "Tareas en curso", value: member.tasksInProgress.toString() },
+        { label: "Proyectos activos", value: projectsValue.toString() },
+        { label: "Tareas en curso", value: tasksInProgressValue.toString() },
         { label: "Equipo", value: member.team },
       ]
     : [
-        { label: "Proyectos activos", value: member.projects.toString() },
-        { label: "Tareas en curso", value: member.tasksInProgress.toString() },
+        { label: "Proyectos activos", value: projectsValue.toString() },
+        { label: "Tareas en curso", value: tasksInProgressValue.toString() },
         { label: "Última actividad", value: member.lastActive },
       ];
+};
 
 export default function UserProfileContent({ mode = "detail" }: UserProfileContentProps) {
   const auth = useAuth();
   const member = useMemo(() => resolveActiveMember(auth), [auth]);
+  const { data: projects } = useProjects();
+  const { data: tasks } = useTasks();
 
   const displayName = member.name || DEFAULT_TEAM_MEMBER.name;
   const displayEmail = member.email || DEFAULT_TEAM_MEMBER.email;
   const initials = useMemo(() => getInitials(displayName), [displayName]);
 
-  const stats = useMemo(() => resolveStats(member, mode), [member, mode]);
+  const derivedMetrics = useMemo(() => {
+    const projectsCount = projects
+      ? projects.filter((project) => project.status !== "done").length
+      : null;
+
+    const tasksInProgressCount = tasks
+      ? tasks.filter((task) => task.status === "in_progress").length
+      : null;
+
+    return { projects: projectsCount, tasksInProgress: tasksInProgressCount };
+  }, [projects, tasks]);
+
+  const stats = useMemo(
+    () => resolveStats(member, mode, derivedMetrics),
+    [derivedMetrics, member, mode],
+  );
 
   const infoRows =
     mode === "detail"

@@ -8,7 +8,7 @@ Entipedia es un MVP funcional que permite:
 
 - Gestionar proyectos con tableros Kanban
 - Organizar tareas con filtros y vistas personalizadas
-- Administrar clientes y contratos
+- Administrar clientes
 - Subir y organizar archivos por proyecto
 - Autenticación segura con sesiones
 
@@ -25,7 +25,7 @@ Entipedia es un MVP funcional que permite:
 
 ```bash
 git clone https://github.com/Georgeb779/entipedia.git
-cd entipedia/entipedia-fe
+cd entipedia/entipedia
 npm install
 ```
 
@@ -44,26 +44,26 @@ brew services start postgresql@14
 
 #### Windows (PowerShell)
 
-- Instala PostgreSQL 14 con `winget` o el instalador oficial:
+- Instala PostgreSQL 14 or 16 con `winget` o el instalador oficial:
 
   ```powershell
-  winget install PostgreSQL.PostgreSQL.14
+  winget install PostgreSQL.PostgreSQL.14 or 16
   # o
-  choco install postgresql14 -y
+  choco install postgresql14 or 16 -y
   ```
 
-- Agrega el directorio `bin` a tu `PATH` si el instalador no lo hizo (por defecto `C:\Program Files\PostgreSQL\14\bin`).
+- Agrega el directorio `bin` a tu `PATH` si el instalador no lo hizo (por defecto `C:\Program Files\PostgreSQL\14 or 16 \bin`).
 - Inicia el servicio desde el panel de servicios o ejecuta:
 
   ```powershell
-  net start postgresql-x64-14
+  net start postgresql-x64-14 or 16
   ```
 
 - Crea el usuario y la base de datos si no existen (ajustando la ruta si instalaste en otra carpeta):
 
   ```powershell
-  "C:\Program Files\PostgreSQL\14\bin\createuser.exe" -s postgres
-  "C:\Program Files\PostgreSQL\14\bin\createdb.exe" entipedia
+  "C:\Program Files\PostgreSQL\14 or 16 \bin\createuser.exe" -s postgres
+  "C:\Program Files\PostgreSQL\14 or 16 \bin\createdb.exe" entipedia
   ```
 
 #### Alternativa con Docker
@@ -139,7 +139,7 @@ docker run --name entipedia-postgres \
 ## Estructura del proyecto
 
 ```
-entipedia-fe/
+entipedia/
 ├── routes/api/          # Endpoints de la API (Nitro)
 │   ├── auth/           # Autenticación
 │   ├── projects/       # Proyectos
@@ -222,7 +222,7 @@ Si falta cualquiera de estas variables, el servidor fallará al iniciar.
 
 - `GET /api/storage/health` — Salud de R2 (requiere sesión)
 
-### Flujo en la UI
+### Flujo en la UI de archivos
 
 - En la página de Archivos puedes:
   - Subir con arrastrar/soltar o selector
