@@ -38,6 +38,14 @@ const joinedFormatter = new Intl.DateTimeFormat("es", {
   year: "numeric",
 });
 
+const lastActiveFormatter = new Intl.DateTimeFormat("es", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 const formatJoinedDate = (value: string) => {
   const parsed = new Date(value);
 
@@ -46,6 +54,16 @@ const formatJoinedDate = (value: string) => {
   }
 
   return joinedFormatter.format(parsed);
+};
+
+const formatLastActive = (value: string) => {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return lastActiveFormatter.format(parsed);
 };
 
 const getInitials = (name: string) => {
@@ -112,14 +130,21 @@ export default function UserProfileContent({ mode = "detail" }: UserProfileConte
     [derivedMetrics, member, mode],
   );
 
+  const formattedJoinedAt = useMemo(() => formatJoinedDate(member.joinedAt), [member.joinedAt]);
+
+  const formattedLastActive = useMemo(
+    () => formatLastActive(member.lastActive),
+    [member.lastActive],
+  );
+
   const infoRows =
     mode === "detail"
       ? [
-          { label: "Miembro desde", value: formatJoinedDate(member.joinedAt) },
-          { label: "Última actividad", value: member.lastActive },
+          { label: "Miembro desde", value: formattedJoinedAt },
+          { label: "Última actividad", value: formattedLastActive },
         ]
       : [
-          { label: "Miembro desde", value: member.joinedAt },
+          { label: "Miembro desde", value: formattedJoinedAt },
           { label: "Ubicación", value: member.location },
         ];
 

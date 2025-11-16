@@ -87,7 +87,6 @@ export default function Layout({ children }: LayoutProps) {
   const bodyTouchActionRef = useRef<string | undefined>(undefined);
 
   const authenticatedName = auth.status === "authenticated" ? auth.user.name : undefined;
-  const userEmail = auth.status === "authenticated" ? auth.user.email : "";
 
   const initials = useMemo(() => getInitials(authenticatedName), [authenticatedName]);
   const userName = authenticatedName ?? "Invitado";
@@ -437,10 +436,7 @@ export default function Layout({ children }: LayoutProps) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">{userName}</p>
-                    {userEmail ? (
-                      <p className="text-muted-foreground text-xs">{userEmail}</p>
-                    ) : null}
+                    <p className="max-w-44 truncate text-sm font-medium ...">{userName}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

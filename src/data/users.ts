@@ -3,7 +3,7 @@ import type { AuthState } from "@/types";
 export type MemberStatus = "active" | "invited" | "away";
 
 export type TeamMember = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: string;
@@ -31,7 +31,7 @@ export const MEMBER_STATUS_STYLES: Record<MemberStatus, string> = {
 };
 
 export const DEFAULT_TEAM_MEMBER: TeamMember = {
-  id: 0,
+  id: "default-member",
   name: "Equipo Entipedia",
   email: "equipo@entipedia.com",
   role: "Colaborador principal",
@@ -50,14 +50,6 @@ export const DEFAULT_TEAM_MEMBER: TeamMember = {
   ],
 };
 
-const resolveMemberId = (value: unknown): number => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  return DEFAULT_TEAM_MEMBER.id;
-};
-
 export const resolveActiveMember = (auth: AuthState): TeamMember => {
   if (auth.status !== "authenticated") {
     return DEFAULT_TEAM_MEMBER;
@@ -67,9 +59,17 @@ export const resolveActiveMember = (auth: AuthState): TeamMember => {
 
   return {
     ...DEFAULT_TEAM_MEMBER,
-    id: resolveMemberId(user.id),
-    name: user.name,
-    email: user.email,
+    id: typeof user.id === "string" && user.id.length > 0 ? user.id : DEFAULT_TEAM_MEMBER.id,
+    name: user.name ?? DEFAULT_TEAM_MEMBER.name,
+    email: user.email ?? DEFAULT_TEAM_MEMBER.email,
+    joinedAt:
+      user.createdAt instanceof Date ? user.createdAt.toISOString() : DEFAULT_TEAM_MEMBER.joinedAt,
+    lastActive:
+      user.updatedAt instanceof Date
+        ? user.updatedAt.toISOString()
+        : DEFAULT_TEAM_MEMBER.lastActive,
     status: "active",
+    projects: 0,
+    tasksInProgress: 0,
   };
 };
