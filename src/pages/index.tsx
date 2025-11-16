@@ -43,29 +43,35 @@ export default function Home(): JSX.Element {
   }
 
   return (
-    <div className="text-foreground relative flex min-h-screen flex-col items-center bg-[radial-gradient(110%_140%_at_30%_0%,#fff8d6,rgba(255,243,205,0.9)_45%,#fff9ee_100%)] px-6 pb-24">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(95%_85%_at_80%_35%,rgba(253,239,182,0.65),transparent_70%)] opacity-70" />
-      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col gap-24 pt-24">
-        <section className="grid items-center gap-16 text-left md:grid-cols-[1.05fr,0.95fr]">
-          <div className="space-y-8">
-            <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/70 px-4 py-1 text-xs font-medium tracking-[0.2em] text-neutral-600 uppercase shadow-sm">
-              <span>Clientes, proyectos y archivos en un flujo visual</span>
+    <div className="text-foreground relative flex min-h-screen flex-col items-center bg-[radial-gradient(125%_150%_at_30%_-5%,#fffef6,rgba(255,246,224,0.92)_44%,#fffaf0_100%)] px-5 pb-20 sm:px-6 sm:pb-24">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(95%_85%_at_80%_35%,rgba(253,239,182,0.45),transparent_70%)] opacity-70" />
+      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 pt-16 md:gap-24 md:pt-24">
+        <section className="grid items-center gap-12 text-left md:grid-cols-[1.05fr,0.95fr] md:gap-16">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="inline-flex max-w-xs flex-wrap items-center gap-2 rounded-full border border-white/60 bg-white/80 px-5 py-1 text-[11px] font-medium tracking-[0.14em] text-neutral-600 uppercase shadow-sm sm:max-w-none sm:text-xs sm:tracking-[0.2em]">
+              <span className="hidden sm:block">
+                Clientes, proyectos y archivos en un flujo visual
+              </span>
+              <span className="sm:hidden">Organiza clientes, proyectos y archivos</span>
             </div>
-            <div className="space-y-4">
-              <h1 className="max-w-[760px] text-5xl leading-[1.08] font-semibold tracking-tight text-neutral-900 md:text-6xl">
-                Gestiona clientes, proyectos y archivos en un solo lugar
+            <div className="space-y-3 sm:space-y-4">
+              <h1 className="max-w-[640px] text-3xl leading-tight font-semibold tracking-tight text-neutral-900 sm:text-4xl md:max-w-[760px] md:text-5xl md:leading-[1.08]">
+                <span className="block">Todo tu trabajo en un solo lugar</span>
+                <span className="mt-1 block text-neutral-800 sm:text-neutral-900">
+                  Clientes, proyectos y archivos juntos
+                </span>
               </h1>
-              <p className="max-w-xl text-lg text-neutral-600">
-                Seguimiento de clientes (personas y empresas) con valores de contrato y fechas,
-                tableros Kanban para tareas y proyectos, y archivos categorizados por tipo
-                vinculados a proyectos.
-              </p>
+              <div className="max-w-md space-y-1.5 text-base text-neutral-600 sm:max-w-xl sm:text-lg">
+                <p>Gestiona clientes y contratos con fechas claras.</p>
+                <p>Organiza tareas y proyectos en tableros Kanban.</p>
+                <p>Guarda archivos por tipo y proyecto sin perder contexto.</p>
+              </div>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <Link to="/auth/register" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full rounded-lg px-5 py-3 text-base font-medium shadow-sm aria-busy:cursor-wait sm:w-auto"
+                  className="w-full rounded-lg px-5 py-3.5 text-base font-medium shadow-sm aria-busy:cursor-wait sm:w-auto"
                   aria-label="Crear un espacio de trabajo en Entipedia"
                   role="button"
                 >
@@ -76,7 +82,7 @@ export default function Home(): JSX.Element {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="text-foreground w-full rounded-lg border border-neutral-200 bg-white px-5 py-3 text-base font-medium shadow-sm hover:bg-neutral-50 sm:w-auto"
+                  className="text-foreground w-full rounded-lg border border-neutral-200 bg-white px-5 py-3.5 text-base font-medium shadow-sm hover:bg-neutral-50 sm:w-auto"
                   aria-label="Iniciar sesión en Entipedia"
                   role="button"
                 >
@@ -109,8 +115,8 @@ export default function Home(): JSX.Element {
           </div>
 
           <div className="relative flex items-center justify-center">
-            <div className="from-primary/40 absolute -inset-y-14 -right-10 -left-16 rounded-[48px] bg-linear-to-br via-white to-white opacity-70 blur-2xl" />
-            <div className="shadow-primary/20 relative w-full max-w-md rounded-3xl border border-black/10 bg-white/90 p-10 shadow-xl">
+            <div className="from-primary/30 absolute -inset-y-12 -right-10 -left-16 rounded-[48px] bg-linear-to-br via-white to-white opacity-70 blur-2xl" />
+            <div className="shadow-primary/15 relative w-full max-w-md rounded-3xl border border-black/10 bg-white/90 p-8 shadow-xl sm:p-10">
               <div className="flex items-center gap-3">
                 <LogoMark size="sm" />
                 <div>

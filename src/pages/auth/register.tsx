@@ -89,7 +89,7 @@ const Register = () => {
   if (registrationComplete) {
     return (
       <div className="text-foreground flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdfcf9] via-[#f8f1e6] to-[#f3e6d4] px-4 py-16">
-        <div className="border-border/30 w-full max-w-md space-y-10 rounded-[2.25rem] border bg-white/90 p-10 shadow-[0_32px_80px_rgba(34,31,27,0.08)] backdrop-blur">
+        <div className="border-border/30 w-full max-w-md rounded-[2.25rem] border bg-white/90 p-4 shadow-[0_32px_80px_rgba(34,31,27,0.08)] backdrop-blur md:space-y-10 md:p-10">
           <div className="space-y-4 text-center">
             <LogoMark size="md" className="mx-auto" />
             <div className="space-y-4">
@@ -113,7 +113,7 @@ const Register = () => {
 
   return (
     <div className="text-foreground flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdfcf9] via-[#f8f1e6] to-[#f3e6d4] px-4 py-16">
-      <div className="border-border/30 w-full max-w-md space-y-10 rounded-[2.25rem] border bg-white/90 p-10 shadow-[0_32px_80px_rgba(34,31,27,0.08)] backdrop-blur">
+      <div className="border-border/30 w-full max-w-md rounded-[2.25rem] border bg-white/90 p-4 shadow-[0_32px_80px_rgba(34,31,27,0.08)] backdrop-blur md:space-y-10 md:p-10">
         <div className="space-y-4 text-center">
           <LogoMark size="md" className="mx-auto" />
           <div className="space-y-1">
