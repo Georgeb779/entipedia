@@ -4,7 +4,6 @@ import { HTTPError, readBody } from "h3";
 import { getDb, clients } from "db";
 import type { AuthUser } from "@/types";
 import { toIsoString } from "../../_utils/dates.ts";
-import { checkRateLimit } from "../../utils/rate-limit.ts";
 
 type CreateClientPayload = {
   name?: string;
@@ -19,26 +18,6 @@ export default defineHandler(async (event) => {
 
   if (!context.user) {
     throw new HTTPError("Authentication required.", { status: 401 });
-  }
-
-  const rateLimit = await checkRateLimit({
-    identifier: context.user.id,
-    scope: "clients:create",
-    limit: 20,
-    windowMs: 60_000,
-  });
-
-  if (rateLimit.limited) {
-    throw new HTTPError(
-      "Has alcanzado el límite de creación de clientes. Intenta nuevamente en unos segundos.",
-      {
-        status: 429,
-        data: {
-          code: "RATE_LIMITED",
-          retryAfterMs: rateLimit.retryAfterMs ?? 0,
-        },
-      },
-    );
   }
 
   const payload = await readBody<CreateClientPayload>(event);

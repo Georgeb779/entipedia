@@ -6,7 +6,6 @@ import {
   pgTable,
   text,
   timestamp,
-  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -40,24 +39,12 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const rateLimits = pgTable(
-  "rate_limits",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    identifier: varchar("identifier", { length: 255 }).notNull(),
-    scope: varchar("scope", { length: 100 }).notNull(),
-    requestCount: integer("request_count").notNull(),
-    windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull(),
-    lastRequestAt: timestamp("last_request_at", { withTimezone: true }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    identifierScopeKey: uniqueIndex("rate_limits_identifier_scope_unique").on(
-      table.identifier,
-      table.scope,
-    ),
-  }),
-);
+export const rateLimits = pgTable("rate_limits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  lastRequestAt: timestamp("last_request_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),

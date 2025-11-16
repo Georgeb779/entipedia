@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { getDb, users, emailVerificationTokens } from "db";
 import { sendVerificationEmail } from "../../utils/email";
-import { checkRateLimit } from "../../utils/rate-limit.ts";
+import { checkRateLimit } from "../../utils/rate-limit";
 
 export default defineHandler(async (event) => {
   const payload = await readBody<{ email?: string }>(event);
@@ -33,21 +33,16 @@ export default defineHandler(async (event) => {
     };
   }
 
-  const rateLimit = await checkRateLimit({
-    identifier: email,
-    scope: "auth:resend-verification",
-    limit: 1,
-    windowMs: 120_000,
-  });
+  const isRateLimited = await checkRateLimit(email);
 
-  if (rateLimit.limited) {
-    throw new HTTPError("Por favor, espera antes de solicitar otro correo de verificación.", {
-      status: 429,
-      data: {
+  if (isRateLimited) {
+    throw new HTTPError(
+      JSON.stringify({
         code: "RATE_LIMITED",
-        retryAfterMs: rateLimit.retryAfterMs ?? 120_000,
-      },
-    });
+        message: "Por favor, espera 2 minutos antes de solicitar otro correo de verificación.",
+      }),
+      { status: 429 },
+    );
   }
 
   await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, user.id));
